@@ -1,0 +1,118 @@
+name: gymkey
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^2.3.6
+  flutter_secure_storage: ^8.1.0
+  country_code_picker: ^3.3.0
+  lottie: ^2.3.1
+  animated_text_kit: ^4.2.2
+  smooth_page_indicator: ^1.1.0
+  http: ^0.13.6
+  shared_preferences: ^2.2.0
+  hugeicons_pro: ^0.0.1
+  flutter_svg: ^2.0.7
+  intl: ^0.18.1
+  cached_network_image: ^3.3.1
+  url_launcher: ^6.3.0
+  pdf: ^3.11.0
+  printing: ^5.13.0
+  path_provider: ^2.1.4
+  share_plus: ^10.0.2
+  flutter_pdfview: ^1.4.3
+  universal_html: ^2.2.4
+  open_file: ^3.5.10
+  pdfx: ^2.6.0
+  permission_handler: ^11.3.1
+  external_path: ^2.2.0
+  flutter_slidable: ^3.1.0
+  widgets_to_image: ^2.0.1
+  carousel_slider: ^5.0.0
+  shimmer: ^3.0.0
+  fl_chart: ^0.70.0
+  flutter_zoom_drawer: ^3.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/images/logo.png
+    - assets/images/logo_dark.png
+    - assets/images/not_found_frame.svg
+    - assets/images/not_found_frame_dark.svg
+    - assets/images/avatars/boy_1.png
+    - assets/images/avatars/boy_2.png
+    - assets/images/avatars/boy_3.png
+    - assets/images/avatars/boy_4.png
+    - assets/images/avatars/boy_5.png
+    - assets/images/avatars/boy_6.png
+    - assets/images/avatars/boy_7.png
+    - assets/images/avatars/boy_8.png
+    - assets/images/avatars/boy_9.png
+    - assets/images/avatars/boy_10.png
+    - assets/images/avatars/boy_11.png
+    - assets/images/avatars/boy_12.png
+    - assets/images/avatars/boy_13.png
+    - assets/images/avatars/boy_14.png
+    - assets/images/avatars/boy_15.png
+    - assets/images/avatars/boy_16.png
+    - assets/images/avatars/boy_17.png
+    - assets/images/avatars/boy_18.png
+    - assets/images/avatars/girl_1.png
+    - assets/images/avatars/girl_2.png
+    - assets/images/avatars/girl_3.png
+    - assets/images/avatars/girl_4.png
+    - assets/images/avatars/girl_5.png
+    - assets/images/avatars/girl_6.png
+    - assets/images/avatars/girl_7.png
+    - assets/images/avatars/girl_8.png
+    - assets/images/avatars/girl_9.png
+    - assets/images/avatars/girl_10.png
+    - assets/images/avatars/girl_11.png
+    - assets/images/avatars/girl_12.png
+    - assets/images/avatars/girl_13.png
+    - assets/images/avatars/girl_14.png
+    - assets/images/avatars/girl_15.png
+    - assets/images/avatars/girl_16.png
+    - assets/images/avatars/girl_17.png
+    - assets/images/avatars/girl_18.png
+    - assets/images/avatars/girl_19.png
+    - assets/images/avatars/girl_20.png
+    - assets/images/reciepts/paid.png
+    - assets/images/reciepts/paid-dark.png
+    - assets/images/reciepts/received.png
+    - assets/images/reciepts/received-dark.png
+    - assets/images/reciepts/bill_bg.png
+    - assets/images/reciepts/bill_bg_dark.png
+    - assets/images/dashboard/chat_image.png
+    - assets/images/dashboard/faqs_image.png
+  fonts:
+    - family: PoppinsLight
+      fonts:
+        - asset: assets/fonts/poppins_light.ttf
+    - family: PoppinsRegular
+      fonts:
+        - asset: assets/fonts/poppins_regular.ttf
+    - family: PoppinsMedium
+      fonts:
+        - asset: assets/fonts/poppins_medium.ttf
+    - family: PoppinsSemiBold
+      fonts:
+        - asset: assets/fonts/poppins_semibold.ttf
+    - family: PoppinsBold
+      fonts:
+        - asset: assets/fonts/poppins_bold.ttf
