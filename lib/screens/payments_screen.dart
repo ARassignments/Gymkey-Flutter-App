@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:intl/intl.dart';
-import '/components/dialog_payment_reciept.dart';
+// import '/components/dialog_payment_reciept.dart';
 import '/Models/customer_single_model.dart';
 import '/components/appsnackbar.dart';
 import '/Models/payment_model.dart';
@@ -92,14 +92,14 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
       Navigator.pop(context);
       setState(() {
         _customer = customer;
-        PaymentReceiptBottomSheet.showRecieptPreview(
-          context,
-          payment,
-          "https://www.y2ksolutions.com/Payment/PaymentPrint/${payment.Id}",
-          "${payment.UserName}-${user!["FullName"]}-Payment_Reciept-${DateFormat('dd-MMM-yyyy').format(payment.PaymentDate)}_#${payment.Id}",
-          customer,
-          reciptPreview,
-        );
+        // PaymentReceiptBottomSheet.showRecieptPreview(
+        //   context,
+        //   payment,
+        //   "https://www.y2ksolutions.com/Payment/PaymentPrint/${payment.Id}",
+        //   "${payment.UserName}-${user!["FullName"]}-Payment_Reciept-${DateFormat('dd-MMM-yyyy').format(payment.PaymentDate)}_#${payment.Id}",
+        //   customer,
+        //   reciptPreview,
+        // );
       });
     } catch (e) {
       debugPrint("❌ Error fetching customer: $e");

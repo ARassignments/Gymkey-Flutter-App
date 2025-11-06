@@ -5,7 +5,7 @@ import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '/components/appsnackbar.dart';
-import '/components/dialog_orderdetail_pdf.dart';
+// import '/components/dialog_orderdetail_pdf.dart';
 import '/utils/session_manager.dart';
 import '/theme/theme.dart';
 import '../components/loading_screen.dart';
@@ -161,12 +161,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             actions: [
               IconButton(
                 onPressed: () {
-                  PdfBottomSheet.showPdfPreview(
-                    context,
-                    "https://y2ksolutions.com/Order/OrderInvoiceView/${order.Id}", // API URL
-                    "${order.UserName}-${user!["FullName"]}-Order Reciept-${_formatDate(order.OrderDate)}-ID_${order.Id}",
-                    order.Contact,
-                  );
+                  // PdfBottomSheet.showPdfPreview(
+                  //   context,
+                  //   "https://y2ksolutions.com/Order/OrderInvoiceView/${order.Id}", // API URL
+                  //   "${order.UserName}-${user!["FullName"]}-Order Reciept-${_formatDate(order.OrderDate)}-ID_${order.Id}",
+                  //   order.Contact,
+                  // );
                 },
                 icon: const Icon(HugeIconsStroke.pdf01, size: 20),
               ),

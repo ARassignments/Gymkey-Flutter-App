@@ -9,7 +9,7 @@ import '/components/dashboard_slider.dart';
 import '/screens/scraps_screen.dart';
 import '/components/appsnackbar.dart';
 import '/components/customer_search_field.dart';
-import '/components/dialog_orderdetail_pdf.dart';
+// import '/components/dialog_orderdetail_pdf.dart';
 import '/screens/payments_screen.dart';
 import '/Models/ledger_model.dart';
 import '/screens/customers_screen.dart';
@@ -1518,12 +1518,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 onDateRangeTap: () => _selectDateRangeLedger(context),
                 ledgerLength: _allLedgers.length,
                 onWhatsappTap: () {
-                  PdfBottomSheet.showPdfPreview(
-                    context,
-                    "https://y2ksolutions.com/Logbook/LedgerPrint?UserId=${_selectedCustomerId?.UserId}&OrganizationId=${user?["OrganizationId"]}&FromDate=${DateFormat('yyyy-MM-dd').format(_fromDateLedger)}&ToDate=${DateFormat('yyyy-MM-dd').format(_toDateLedger)}", // API URL
-                    "${_selectedCustomerId?.UserName}-Ledger Reciept-${DateFormat('yyyy-MM-dd').format(_fromDateLedger)}-${DateFormat('yyyy-MM-dd').format(_toDateLedger)}",
-                    "${_selectedCustomerId?.PhoneNo}",
-                  );
+                  // PdfBottomSheet.showPdfPreview(
+                  //   context,
+                  //   "https://y2ksolutions.com/Logbook/LedgerPrint?UserId=${_selectedCustomerId?.UserId}&OrganizationId=${user?["OrganizationId"]}&FromDate=${DateFormat('yyyy-MM-dd').format(_fromDateLedger)}&ToDate=${DateFormat('yyyy-MM-dd').format(_toDateLedger)}", // API URL
+                  //   "${_selectedCustomerId?.UserName}-Ledger Reciept-${DateFormat('yyyy-MM-dd').format(_fromDateLedger)}-${DateFormat('yyyy-MM-dd').format(_toDateLedger)}",
+                  //   "${_selectedCustomerId?.PhoneNo}",
+                  // );
                 },
               ),
               const SizedBox(height: 10),
@@ -2004,14 +2004,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 label: "Home",
               ),
               BottomNavigationBarItem(
+                icon: Icon(HugeIconsStroke.userMultiple02),
+                activeIcon: Icon(HugeIconsSolid.userMultiple02),
+                label: "Products",
+              ),
+              BottomNavigationBarItem(
                 icon: Icon(HugeIconsStroke.shoppingBasket01),
                 activeIcon: Icon(HugeIconsSolid.shoppingBasket01),
                 label: "Orders",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(HugeIconsStroke.userMultiple02),
-                activeIcon: Icon(HugeIconsSolid.userMultiple02),
-                label: "Ledgers",
               ),
               BottomNavigationBarItem(
                 icon: Icon(HugeIconsStroke.user03),

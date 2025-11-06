@@ -3,7 +3,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:intl/intl.dart';
 import '/components/appsnackbar.dart';
-import '/components/dialog_scrap_reciept.dart';
+// import '/components/dialog_scrap_reciept.dart';
 import '/Models/customer_single_model.dart';
 import '/Models/scrap_model.dart';
 import '/components/loading_screen.dart';
@@ -92,13 +92,13 @@ class _ScrapsScreenState extends State<ScrapsScreen> {
       Navigator.pop(context);
       setState(() {
         _customer = customer;
-        ScrapReceiptBottomSheet.showRecieptPreview(
-          context,
-          scrap,
-          "https://www.y2ksolutions.com/Scrap/ScrapPrint/${scrap.Id}",
-          "${scrap.UserName}-${user!["FullName"]}-Scrap Reciept-${scrap.CreatedAt}-ID_${scrap.Id}",
-          customer,
-        );
+        // ScrapReceiptBottomSheet.showRecieptPreview(
+        //   context,
+        //   scrap,
+        //   "https://www.y2ksolutions.com/Scrap/ScrapPrint/${scrap.Id}",
+        //   "${scrap.UserName}-${user!["FullName"]}-Scrap Reciept-${scrap.CreatedAt}-ID_${scrap.Id}",
+        //   customer,
+        // );
       });
     } catch (e) {
       debugPrint("❌ Error fetching customer: $e");
