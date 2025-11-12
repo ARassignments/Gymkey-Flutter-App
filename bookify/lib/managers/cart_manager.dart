@@ -7,13 +7,12 @@ class CartManager {
   static final _firestore = FirebaseFirestore.instance;
   static final _auth = FirebaseAuth.instance;
 
-  // User's cart reference
   static CollectionReference<Map<String, dynamic>> _userCartRef() {
     final uid = _auth.currentUser?.uid;
+    if (uid == null) throw Exception('User not logged in');
     return _firestore.collection('users').doc(uid).collection('cartItems');
   }
 
-  // Add item to cart
   static Future<void> addToCart(CartItem item) async {
     try {
       final ref = _userCartRef().doc(item.bookId);
@@ -28,24 +27,26 @@ class CartManager {
     }
   }
 
-  // Remove item from cart
-  static Future<void> removeFromCart(
-    String bookId,
-    BuildContext context,
-  ) async {
-    try {
-      await _userCartRef().doc(bookId).delete();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Item removed from cart")));
-    } catch (e) {
+static Future<void> removeFromCart(String bookId, BuildContext context, {State? state}) async {
+  try {
+    await _userCartRef().doc(bookId).delete();
+
+    // ✅ Only show Snackbar if widget is mounted
+    if (state != null && state.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Item removed from cart")),
+      );
+    }
+  } catch (e) {
+    if (state != null && state.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error removing item: ${e.toString()}")),
       );
     }
   }
+}
 
-  // Update item quantity in cart
+
   static Future<void> updateQuantity(
     String bookId,
     int quantity,
@@ -64,14 +65,13 @@ class CartManager {
     }
   }
 
-  // Get the stream of cart items
   static Stream<List<CartItem>> getCartStream() {
-    return _userCartRef().snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) => CartItem.fromMap(doc.data())).toList();
-    });
+    return _userCartRef().snapshots().map(
+      (snapshot) =>
+          snapshot.docs.map((doc) => CartItem.fromMap(doc.data())).toList(),
+    );
   }
 
-  // Batch delete for multiple cart items (for order placement)
   static Future<void> batchRemoveCartItems(List<CartItem> cartItems) async {
     try {
       final batch = FirebaseFirestore.instance.batch();

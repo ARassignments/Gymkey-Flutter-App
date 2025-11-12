@@ -147,13 +147,7 @@ class _CartScreenState extends State<CartScreen> {
                                                 color: MyColors.primary,
                                               ),
                                             ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              item.author,
-                                              style: const TextStyle(
-                                                color: Colors.deepOrange,
-                                              ),
-                                            ),
+                                           
                                             const SizedBox(height: 8),
                                             Row(
                                               children: [

@@ -1,10 +1,6 @@
 import 'dart:io' show Platform;
-import 'package:flutter/services.dart'; // SystemNavigator.pop()
-import 'package:bookify/screens/all_books.dart';
+import 'package:flutter/services.dart';
 import 'package:bookify/screens/book_detail_page.dart';
-import 'package:bookify/screens/categories/best_seller.dart';
-import 'package:bookify/screens/categories/featured_books.dart';
-import 'package:bookify/screens/categories/popular_books.dart';
 import 'package:bookify/utils/constants/colors.dart';
 import 'package:bookify/utils/themes/custom_themes/app_navbar.dart';
 import 'package:bookify/utils/themes/custom_themes/bookcard.dart';
@@ -25,8 +21,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController searchController = TextEditingController();
   final user = FirebaseAuth.instance.currentUser;
 
-  // double-back to exit helper
   DateTime? _lastBack;
+
   Future<bool> _onWillPop() async {
     final now = DateTime.now();
     final pressedTwice =
@@ -47,69 +43,42 @@ class _HomeScreenState extends State<HomeScreen> {
       ..removeCurrentSnackBar()
       ..showSnackBar(
         const SnackBar(
-          content: Text('Tap one more to exit'),
+          content: Text('Tap once more to exit'),
           duration: Duration(seconds: 2),
         ),
       );
     return false;
   }
 
-List<String> categories = [];
+  List<String> categories = [];
 
-@override
-void initState() {
-  super.initState();
-  fetchCategories();
-}
-
-Future<void> fetchCategories() async {
-  try {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('categories').get();
-    final fetchedCategories =
-        snapshot.docs.map((doc) => doc['name'] as String).toList();
-
-    if (mounted) {
-      setState(() {
-        categories = fetchedCategories;
-      });
-    }
-  } catch (e) {
-    print('Error fetching categories: $e');
-  }
-}
-
-
-  void navigateToCategory(String title) {
-    if (title == 'Novels') {
-      Navigator.pushNamed(context, '/novels');
-    } else if (title == 'Self Love') {
-      Navigator.pushNamed(context, '/self-love');
-    } else if (title == 'Science') {
-      Navigator.pushNamed(context, '/science');
-    } else if (title == 'Romance') {
-      Navigator.pushNamed(context, '/romance');
-    } else if (title == 'History') {
-      Navigator.pushNamed(context, '/history');
-    } else if (title == 'Fantasy') {
-      Navigator.pushNamed(context, '/fantasy');
-    } else if (title == 'Poetry') {
-      Navigator.pushNamed(context, '/poetry');
-    } else if (title == 'Action') {
-      Navigator.pushNamed(context, '/action');
-    } else {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("No page found for category: $title")),
-      );
-    }
+  @override
+  void initState() {
+    super.initState();
+    fetchCategories();
   }
 
-  final auth = FirebaseAuth.instance;
+  Future<void> fetchCategories() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('categories')
+          .get();
+      final fetchedCategories = snapshot.docs
+          .map((doc) => doc['name'] as String)
+          .toList();
+
+      if (mounted) {
+        setState(() {
+          categories = fetchedCategories;
+        });
+      }
+    } catch (e) {
+      print('Error fetching categories: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // wrap Scaffold with WillPopScope
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
@@ -122,160 +91,90 @@ Future<void> fetchCategories() async {
               const SizedBox(height: 30),
               CustomNavBar(searchController: searchController),
               const SizedBox(height: 10),
-
               Expanded(
                 child: SingleChildScrollView(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 20),
-
-                        // ===== Gym-Style Slider =====
-                        SizedBox(
-                          height: 220,
-                          child: PageView(
-                            controller: PageController(viewportFraction: 0.85),
-                            children: [
-                              _buildSliderCard(
-                                title: 'Get Fit with GymX',
-                                subtitle: 'Top Fitness Programs',
-                                image: 'assets/images/banner1.webp',
-                              ),
-                              _buildSliderCard(
-                                title: 'Yoga & Stretching',
-                                subtitle: 'Relax & Flex',
-                                image: 'assets/images/banner1.webp',
-                              ),
-                              _buildSliderCard(
-                                title: 'Muscle Building',
-                                subtitle: 'Strength & Power',
-                                image: 'assets/images/banner1.webp',
-                              ),
-                            ],
-                          ),
-                        ),
+                        _buildSlider(),
                         const SizedBox(height: 30),
 
-                        // ===== Categories =====
-                       SizedBox(
-                        height: 45,
-                        child: categories.isEmpty
+                        // ===== Dynamic Categories Section =====
+                        categories.isEmpty
                             ? const Center(child: CircularProgressIndicator())
-                            : ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: categories.length,
-                                itemBuilder: (context, index) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 10),
-                                    child: GestureDetector(
-                                      onTap: () => navigateToCategory(categories[index]),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 10,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(25),
-                                          border: Border.all(
-                                            color: MyColors.primary,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          categories[index],
-                                          style: const TextStyle(
-                                            color: MyColors.primary,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Categories",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                      color: Color(0xFF0059a7),
                                     ),
-                                  );
-                                },
+                                  ),
+                                  const SizedBox(height: 10),
+                                  SizedBox(
+                                    height: 45,
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: categories.length,
+                                      itemBuilder: (context, index) {
+                                        final category = categories[index];
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                            right: 10,
+                                          ),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 10,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(25),
+                                              border: Border.all(
+                                                color: MyColors.primary,
+                                              ),
+                                            ),
+                                            child: Text(
+                                              category,
+                                              style: const TextStyle(
+                                                color: MyColors.primary,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ),
-                      ),
 
                         const SizedBox(height: 30),
 
-                        // ===== Featured Books Section =====
-                        _buildSectionHeader(
-                          context,
-                          'Featured Products',
-                          onSeeAll: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const FeaturedPage()),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        _buildHorizontalBookList(
-                          FirebaseFirestore.instance
-                              .collection('books')
-                              .where('is_featured', isEqualTo: true)
-                              .get(),
-                        ),
-
-                        const SizedBox(height: 30),
-                        _buildSectionHeader(
-                          context,
-                          'Popular Products',
-                          onSeeAll: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const PopularPage()),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        _buildHorizontalBookList(
-                          FirebaseFirestore.instance
-                              .collection('books')
-                              .where('is_popular', isEqualTo: true)
-                              .get(),
-                        ),
-
-                        const SizedBox(height: 30),
-                        _buildSectionHeader(
-                          context,
-                          'Best Selling Products',
-                          onSeeAll: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const BestSellerPage()),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        _buildHorizontalBookList(
-                          FirebaseFirestore.instance
-                              .collection('books')
-                              .where('is_best_selling', isEqualTo: true)
-                              .get(),
-                        ),
-
-                        const SizedBox(height: 30),
-                        _buildSectionHeader(
-                          context,
-                          'Explore All Products',
-                          onSeeAll: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const AllBooksPage()),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        _buildHorizontalBookList(
-                          FirebaseFirestore.instance.collection('books').get(),
-                        ),
-                        const SizedBox(height: 30),
+                        // ===== Dynamic Product Sections per Category =====
+                        ...categories.map((category) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionHeader(context, category),
+                              const SizedBox(height: 10),
+                              _buildHorizontalBookList(
+                                FirebaseFirestore.instance
+                                    .collection('books')
+                                    .where('category', isEqualTo: category)
+                                    .get(),
+                              ),
+                              const SizedBox(height: 30),
+                            ],
+                          );
+                        }).toList(),
                       ],
                     ),
                   ),
@@ -288,11 +187,38 @@ Future<void> fetchCategories() async {
     );
   }
 
-  // ===== Helper: Slider Card =====
-  Widget _buildSliderCard(
-      {required String title,
-      required String subtitle,
-      required String image}) {
+  // ===== Helper: Slider =====
+  Widget _buildSlider() {
+    return SizedBox(
+      height: 220,
+      child: PageView(
+        controller: PageController(viewportFraction: 0.85),
+        children: [
+          _buildSliderCard(
+            title: 'Bookify Special Offers',
+            subtitle: 'Get your favorites today!',
+            image: 'assets/images/banner1.webp',
+          ),
+          _buildSliderCard(
+            title: 'Top Reads of the Month',
+            subtitle: 'Trending now on Bookify',
+            image: 'assets/images/banner1.webp',
+          ),
+          _buildSliderCard(
+            title: 'Discover New Authors',
+            subtitle: 'Fresh stories every week',
+            image: 'assets/images/banner1.webp',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSliderCard({
+    required String title,
+    required String subtitle,
+    required String image,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Material(
@@ -315,17 +241,13 @@ Future<void> fetchCategories() async {
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.6),
-                    Colors.transparent,
-                  ],
+                  colors: [Colors.black.withOpacity(0.6), Colors.transparent],
                 ),
               ),
             ),
             Positioned(
               bottom: 16,
               left: 16,
-              right: 16,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -358,29 +280,26 @@ Future<void> fetchCategories() async {
   }
 
   // ===== Helper: Section Header =====
-  Widget _buildSectionHeader(BuildContext context, String title,
-      {required VoidCallback onSeeAll}) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: MyTextTheme.lightTextTheme.headlineSmall,
-        ),
-        InkWell(
-          onTap: onSeeAll,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                "See All",
-                style: TextStyle(
-                  color: MyColors.primary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
+        Text(title, style: MyTextTheme.lightTextTheme.headlineSmall),
+        TextButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => CategoryDetailPage(category: title),
               ),
-            ],
+            );
+          },
+          child: const Text(
+            "See All",
+            style: TextStyle(
+              color: MyColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
@@ -395,28 +314,26 @@ Future<void> fetchCategories() async {
         future: future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}'),
-            );
+            return Center(child: Text('Error: ${snapshot.error}'));
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(
-              child: Text('No Products available.'),
+              child: Text(
+                'No products found.',
+                style: TextStyle(color: Color(0xFF0059a7)),
+              ),
             );
           }
 
-          List<QueryDocumentSnapshot> books = snapshot.data!.docs;
-
+          final books = snapshot.data!.docs;
           return ListView(
             scrollDirection: Axis.horizontal,
             children: books.take(6).map((doc) {
-              var data = doc.data() as Map<String, dynamic>;
-              String bookId = doc.id;
+              final data = doc.data() as Map<String, dynamic>;
+              final bookId = doc.id;
 
               return GestureDetector(
                 onTap: () {
@@ -424,25 +341,22 @@ Future<void> fetchCategories() async {
                     context,
                     PageRouteBuilder(
                       opaque: false,
-                      pageBuilder: (
-                        context,
-                        animation,
-                        secondaryAnimation,
-                      ) =>
+                      pageBuilder: (context, animation, secondaryAnimation) =>
                           BookDetailPage(bookId: bookId),
                       transitionsBuilder:
                           (context, animation, secondaryAnimation, child) {
-                        const begin = Offset(0.0, 1.0);
-                        const end = Offset.zero;
-                        const curve = Curves.easeInOut;
-                        var tween = Tween(begin: begin, end: end)
-                            .chain(CurveTween(curve: curve));
-                        var offsetAnimation = animation.drive(tween);
-                        return SlideTransition(
-                          position: offsetAnimation,
-                          child: child,
-                        );
-                      },
+                            const begin = Offset(0.0, 1.0);
+                            const end = Offset.zero;
+                            const curve = Curves.easeInOut;
+                            final tween = Tween(
+                              begin: begin,
+                              end: end,
+                            ).chain(CurveTween(curve: curve));
+                            return SlideTransition(
+                              position: animation.drive(tween),
+                              child: child,
+                            );
+                          },
                     ),
                   );
                 },
@@ -452,10 +366,12 @@ Future<void> fetchCategories() async {
                     color: const Color(0xFFeeeeee),
                     child: BookCard(
                       bookId: bookId,
-                      title: data['title'],
-                      author: data['author'],
-                      imagePath: data['cover_image_url'],
-                      category: data['genre'],
+                      title: data['title'] ?? 'Untitled',
+                      author: data['description'] ?? 'Unknown Author',
+                      imagePath:
+                          data['cover_image_url'] ??
+                          'assets/images/placeholder.jpg',
+                      category: data['category'] ?? 'Uncategorized',
                       price: (data['price'] ?? 0).toDouble(),
                       rating: (data['rating'] ?? 0).toDouble(),
                     ),
@@ -463,6 +379,64 @@ Future<void> fetchCategories() async {
                 ),
               );
             }).toList(),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ===== Separate Page for "See All" per Category =====
+class CategoryDetailPage extends StatelessWidget {
+  final String category;
+  const CategoryDetailPage({super.key, required this.category});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(category), backgroundColor: MyColors.primary),
+      body: FutureBuilder<QuerySnapshot>(
+        future: FirebaseFirestore.instance
+            .collection('books')
+            .where('category', isEqualTo: category)
+            .get(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(
+              child: Text(
+                'No products available.',
+                style: TextStyle(color: Color(0xFF0059a7)),
+              ),
+            );
+          }
+
+          final books = snapshot.data!.docs;
+          return GridView.builder(
+            padding: const EdgeInsets.all(12),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.65,
+            ),
+            itemCount: books.length,
+            itemBuilder: (context, index) {
+              final data = books[index].data() as Map<String, dynamic>;
+              final bookId = books[index].id;
+
+              return BookCard(
+                bookId: bookId,
+                title: data['title'],
+                author: data['author'],
+                imagePath: data['cover_image_url'],
+                category: data['category'],
+                price: (data['price'] ?? 0).toDouble(),
+                rating: (data['rating'] ?? 0).toDouble(),
+              );
+            },
           );
         },
       ),

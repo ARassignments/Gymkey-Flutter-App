@@ -92,7 +92,7 @@ class _AddBooksState extends State<AddBooks> {
       'title': titleController.text,
       'price': double.tryParse(priceController.text) ?? 0.0,
       'description': descriptionController.text,
-      'genre': selectedCategory ?? '',
+      'category': selectedCategory ?? '',
       'cover_image_url': imageUrl,
       'quantity': int.tryParse(quantityController.text) ?? 0,
       'is_featured': selectedCategory == "Featured",
