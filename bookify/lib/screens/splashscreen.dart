@@ -1,0 +1,53 @@
+import 'package:bookify/screens/home.dart';
+import 'package:bookify/screens/onboarding.dart';
+import 'package:bookify/utils/constants/colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
+
+class SplashScreen extends StatefulWidget {
+  @override
+  _SplashScreenState createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    final auth = FirebaseAuth.instance;
+    final user = auth.currentUser;
+
+    if (user != null) {
+      Future.delayed(Duration(seconds: 7), () {
+        if (!mounted) return; // ✅ check before navigation
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      });
+    } else {
+      Future.delayed(Duration(seconds: 7), () {
+        if (!mounted) return; // ✅ check before navigation
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const OnBoarding()),
+        );
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: MyColors.primary,
+      body: Center(
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height,
+          child: Lottie.asset(
+            'assets/animations/Splash_Screen.json'),
+        ),
+      ),
+    );
+  }
+}
