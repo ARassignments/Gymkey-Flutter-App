@@ -41,12 +41,8 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: MyColors.primary,
       body: Center(
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height,
-          child: Lottie.asset(
-            'assets/animations/Splash_Screen.json'),
-        ),
+        child: Lottie.asset(
+          'assets/animations/Splash_Screen.json'),
       ),
     );
   }
