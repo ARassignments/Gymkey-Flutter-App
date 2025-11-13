@@ -10,7 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeController {
-  static final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
+  static final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(
+    ThemeMode.system,
+  );
   static const String _key = "theme_mode";
 
   static Future<void> loadTheme() async {
@@ -89,6 +91,12 @@ class AppTheme {
         : AppColor.neutral_5;
   }
 
+  static String notFoundImage(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? 'assets/images/not_found_frame_dark.svg'
+        : 'assets/images/not_found_frame.svg';
+  }
+
   static Color checkBox(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
       ? AppColor.white
@@ -123,7 +131,7 @@ class AppTheme {
       Theme.of(context).brightness == Brightness.dark
       ? AppColor.neutral_100
       : AppColor.white;
-  
+
   static Color sliderHighlightBg(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
       ? AppColor.neutral_80
@@ -145,7 +153,7 @@ class AppTheme {
       : AppColor.neutral_30;
 
   static TextStyle textLink(BuildContext context) => TextStyle(
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w500,
     fontSize: 14,
     color: Theme.of(context).brightness == Brightness.dark
         ? AppColor.white
@@ -230,7 +238,6 @@ class AppTheme {
     );
   }
 }
-
 
 class MyTheme {
   MyTheme._();

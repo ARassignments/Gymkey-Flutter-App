@@ -1,7 +1,7 @@
-import 'package:bookify/screens/auth/users/sign_in.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/elevated_button_theme.dart';
-import 'package:bookify/utils/themes/custom_themes/text_theme.dart';
+import '/utils/themes/themes.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
+
+import '/screens/auth/users/sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -35,7 +35,6 @@ class _SignUpState extends State<SignUp> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: MyColors.white,
       body: Stack(
         children: [
           Positioned(
@@ -54,12 +53,12 @@ class _SignUpState extends State<SignUp> {
             right: 0,
             bottom: 0,
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: MyColors.bg,
+                color: AppTheme.cardBg(context),
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(34),
-                  topRight: Radius.circular(34),
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
                 ),
               ),
               child: SingleChildScrollView(
@@ -75,11 +74,10 @@ class _SignUpState extends State<SignUp> {
                         controller: nameController,
                         keyboardType: TextInputType.text,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
-                        style: const TextStyle(color: Colors.black),
                         decoration: _inputDecoration(
                           'Name',
                           'Enter your name',
-                          Icons.person,
+                          HugeIconsSolid.user03,
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty)
@@ -97,11 +95,10 @@ class _SignUpState extends State<SignUp> {
                         controller: emailController,
                         keyboardType: TextInputType.emailAddress,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
-                        style: const TextStyle(color: Colors.black),
                         decoration: _inputDecoration(
                           'Email',
                           'Enter your email',
-                          Icons.email,
+                          HugeIconsSolid.mail01,
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty)
@@ -126,14 +123,13 @@ class _SignUpState extends State<SignUp> {
                             _inputDecoration(
                               'Password',
                               'Enter your password',
-                              Icons.lock,
+                              HugeIconsSolid.lockPassword,
                             ).copyWith(
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                  color: Colors.grey,
+                                      ? HugeIconsSolid.viewOff
+                                      : HugeIconsSolid.eye,
                                 ),
                                 onPressed: () {
                                   setState(() {
@@ -161,11 +157,10 @@ class _SignUpState extends State<SignUp> {
                         controller: phoneController,
                         keyboardType: TextInputType.number,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
-                        style: const TextStyle(color: Colors.black),
                         decoration: _inputDecoration(
                           'Phone',
                           'Enter your phone no',
-                          Icons.call,
+                          HugeIconsSolid.smartPhone01,
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty)
@@ -185,11 +180,10 @@ class _SignUpState extends State<SignUp> {
                         controller: addressController,
                         keyboardType: TextInputType.text,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
-                        style: const TextStyle(color: Colors.black),
                         decoration: _inputDecoration(
                           'Address',
                           'Enter your address',
-                          Icons.home,
+                          HugeIconsSolid.mapsLocation01,
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty)
@@ -208,9 +202,6 @@ class _SignUpState extends State<SignUp> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          style: MyElevatedButtonTheme
-                              .lightElevatedButtonTheme
-                              .style,
                           onPressed: () async {
                             try {
                               final userCredential = await _auth
@@ -279,7 +270,7 @@ class _SignUpState extends State<SignUp> {
                         children: [
                           Text(
                             "Already have an account? ",
-                            style: MyTextTheme.lightTextTheme.bodySmall,
+                            style: AppTheme.textLabel(context),
                           ),
                           InkWell(
                             onTap: () {
@@ -292,10 +283,7 @@ class _SignUpState extends State<SignUp> {
                             },
                             child: Text(
                               "Sign In",
-                              style: TextStyle(
-                                color: MyColors.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: AppTheme.textSearchInfoLabeled(context).copyWith(fontSize: 14),
                             ),
                           ),
                         ],
@@ -316,19 +304,7 @@ class _SignUpState extends State<SignUp> {
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      labelStyle: const TextStyle(color: Colors.black),
-      hintStyle: const TextStyle(color: Colors.grey),
-      prefixIcon: Icon(icon, color: Colors.grey),
-      filled: true,
-      fillColor: Colors.white,
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: MyColors.primary, width: 1),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: MyColors.primary, width: 2),
-      ),
+      prefixIcon: Icon(icon),
     );
   }
 }

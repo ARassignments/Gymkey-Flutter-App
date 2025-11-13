@@ -1,17 +1,20 @@
-import 'package:bookify/screens/profile.dart';
-import 'package:bookify/utils/constants/colors.dart';
+import 'package:bookify/utils/themes/themes.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
+
+import '/screens/profile.dart';
+import '/utils/constants/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import 'package:bookify/screens/home.dart';
-import 'package:bookify/screens/catalog.dart';
-import 'package:bookify/screens/cart.dart';
-import 'package:bookify/screens/wishlist.dart';
+import '/screens/home.dart';
+import '/screens/catalog.dart';
+import '/screens/cart.dart';
+import '/screens/wishlist.dart';
 
 /// Smooth fade transition navigation
 void navigateWithFade(BuildContext context, Widget targetPage) {
   Navigator.of(context).pushReplacement(
     PageRouteBuilder(
-      transitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 100),
       pageBuilder: (context, animation, secondaryAnimation) => targetPage,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         return FadeTransition(opacity: animation, child: child);
@@ -24,18 +27,18 @@ void navigateWithFade(BuildContext context, Widget targetPage) {
 Widget buildCurvedNavBar(BuildContext context, int currentIndex) {
   return CurvedNavigationBar(
     index: currentIndex,
-    height: 60,
-    backgroundColor: const Color(0xFFeeeeee),
+    height: 50,
+    backgroundColor: AppTheme.screenBg(context),
     color: MyColors.primary,
-    buttonBackgroundColor: Color.fromARGB(255, 10, 129, 234),
-    animationDuration: const Duration(milliseconds: 600),
+    buttonBackgroundColor: MyColors.primary,
+    animationDuration: const Duration(milliseconds: 300),
     animationCurve: Curves.easeInOut,
     items: const [
-      Icon(Icons.home, size: 30, color: Colors.white),
-      Icon(Icons.menu_book, size: 30, color: Colors.white),
-      Icon(Icons.shopping_cart, size: 30, color: Colors.white),
-      Icon(Icons.favorite_border, size: 30, color: Colors.white),
-      Icon(Icons.person, size: 30, color: Colors.white),
+      Icon(HugeIconsSolid.home09, size: 30, color: Colors.white),
+      Icon(HugeIconsSolid.catalogue, size: 30, color: Colors.white),
+      Icon(HugeIconsSolid.shoppingCart01, size: 30, color: Colors.white),
+      Icon(HugeIconsSolid.favourite, size: 30, color: Colors.white),
+      Icon(HugeIconsSolid.user03, size: 30, color: Colors.white),
     ],
     onTap: (index) async {
       if (index == currentIndex) return;

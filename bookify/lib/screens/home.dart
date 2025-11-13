@@ -1,11 +1,13 @@
 import 'dart:io' show Platform;
+import '/components/not_found.dart';
+import '/utils/themes/themes.dart';
 import 'package:flutter/services.dart';
-import 'package:bookify/screens/book_detail_page.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/app_navbar.dart';
-import 'package:bookify/utils/themes/custom_themes/bookcard.dart';
-import 'package:bookify/utils/themes/custom_themes/bottomnavbar.dart';
-import 'package:bookify/utils/themes/custom_themes/text_theme.dart';
+import '/screens/book_detail_page.dart';
+import '/utils/constants/colors.dart';
+import '/utils/themes/custom_themes/app_navbar.dart';
+import '/utils/themes/custom_themes/bookcard.dart';
+import '/utils/themes/custom_themes/bottomnavbar.dart';
+import '/utils/themes/custom_themes/text_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -82,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        backgroundColor: const Color(0xFFeeeeee),
+        // backgroundColor: const Color(0xFFeeeeee),
         bottomNavigationBar: buildCurvedNavBar(context, 0),
         body: SafeArea(
           child: Column(
@@ -108,13 +110,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             : Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     "Categories",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 20,
-                                      color: Color(0xFF0059a7),
-                                    ),
+                                    style: AppTheme.textTitle(context).copyWith(fontSize: 16),
                                   ),
                                   const SizedBox(height: 10),
                                   SizedBox(
@@ -129,23 +127,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                             right: 10,
                                           ),
                                           child: Container(
+                                            height: 8,
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 16,
-                                              vertical: 10,
+                                              vertical: 5,
                                             ),
                                             decoration: BoxDecoration(
-                                              color: Colors.white,
+                                              color: AppTheme.customListBg(context),
                                               borderRadius:
-                                                  BorderRadius.circular(25),
+                                                  BorderRadius.circular(30),
                                               border: Border.all(
-                                                color: MyColors.primary,
+                                                color: AppTheme.sliderHighlightBg(context),
                                               ),
                                             ),
-                                            child: Text(
-                                              category,
-                                              style: const TextStyle(
-                                                color: MyColors.primary,
-                                                fontWeight: FontWeight.w500,
+                                            child: Center(
+                                              child: Text(
+                                                category,
+                                                style: AppTheme.textLabel(context).copyWith(fontSize: 12),
                                               ),
                                             ),
                                           ),
@@ -284,7 +282,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: MyTextTheme.lightTextTheme.headlineSmall),
+        Text(title, style: AppTheme.textTitle(context).copyWith(fontSize: 16)),
         TextButton(
           onPressed: () {
             Navigator.push(
@@ -294,12 +292,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             );
           },
-          child: const Text(
+          child: Text(
             "See All",
-            style: TextStyle(
-              color: MyColors.primary,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTheme.textLink(context).copyWith(fontSize: 12,fontWeight: FontWeight.w400),
           ),
         ),
       ],
@@ -314,17 +309,14 @@ class _HomeScreenState extends State<HomeScreen> {
         future: future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator(color: AppTheme.inputProgress(context),strokeCap: StrokeCap.round,));
           }
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(
-              child: Text(
-                'No products found.',
-                style: TextStyle(color: Color(0xFF0059a7)),
-              ),
+              child: NotFoundWidget(title: "Not Found Products", message: ""),
             );
           }
 
@@ -335,7 +327,7 @@ class _HomeScreenState extends State<HomeScreen> {
               final data = doc.data() as Map<String, dynamic>;
               final bookId = doc.id;
 
-              return GestureDetector(
+              return InkWell(
                 onTap: () {
                   Navigator.push(
                     context,
@@ -363,7 +355,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Hero(
                   tag: bookId,
                   child: Material(
-                    color: const Color(0xFFeeeeee),
                     child: BookCard(
                       bookId: bookId,
                       title: data['title'] ?? 'Untitled',

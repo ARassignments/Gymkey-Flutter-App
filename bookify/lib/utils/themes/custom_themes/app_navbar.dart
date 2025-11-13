@@ -145,17 +145,20 @@
 //     );
 //   }
 // }
+import '/utils/themes/themes.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:bookify/screens/auth/users/sign_in.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/text_theme.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
+import '/screens/auth/users/sign_in.dart';
 
 class CustomNavBar extends StatefulWidget {
-  final TextEditingController searchController;  // Accepting search controller
+  final TextEditingController searchController; // Accepting search controller
 
-  const CustomNavBar({super.key, required this.searchController}); // Pass the controller
+  const CustomNavBar({
+    super.key,
+    required this.searchController,
+  }); // Pass the controller
 
   @override
   State<CustomNavBar> createState() => _CustomNavBarState();
@@ -176,35 +179,34 @@ class _CustomNavBarState extends State<CustomNavBar> {
     fetchUserData();
   }
 
- Future<void> fetchUserData() async {
-  final uid = user?.uid;
-  if (uid != null) {
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-      final data = doc.data();
+  Future<void> fetchUserData() async {
+    final uid = user?.uid;
+    if (uid != null) {
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
+        final data = doc.data();
 
-      if (!mounted) return; // ✅ check before setState
+        if (!mounted) return; // ✅ check before setState
 
-      if (data != null) {
-        setState(() {
-          name = data['name'] ?? '';
-          profileImage = data['profile_image_url'] ?? '';
-        });
+        if (data != null) {
+          setState(() {
+            name = data['name'] ?? '';
+            profileImage = data['profile_image_url'] ?? '';
+          });
+        }
+      } catch (e) {
+        print("Error fetching profile: $e");
       }
-    } catch (e) {
-      print("Error fetching profile: $e");
     }
+
+    if (!mounted) return; // ✅ check again before last update
+    setState(() {
+      isLoading = false;
+    });
   }
-
-  if (!mounted) return; // ✅ check again before last update
-  setState(() {
-    isLoading = false;
-  });
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -223,13 +225,21 @@ class _CustomNavBarState extends State<CustomNavBar> {
                         fit: BoxFit.cover,
                       )
                     : (user?.photoURL != null)
-                        ? Image.network(
-                            user!.photoURL!,
-                            width: 40,
-                            height: 40,
-                            fit: BoxFit.cover,
-                          )
-                        : const Icon(Icons.person, size: 40, color: Colors.grey),
+                    ? Image.network(
+                        user!.photoURL!,
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.cover,
+                      )
+                    : SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: Icon(
+                          HugeIconsSolid.user03,
+                          size: 30,
+                          color: AppTheme.iconColorThree(context),
+                        ),
+                      ),
               ),
               const SizedBox(width: 10),
               Column(
@@ -237,7 +247,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
                 children: [
                   Text(
                     "Hi, ${user?.displayName ?? name}",
-                    style: MyTextTheme.lightTextTheme.titleLarge,
+                    style: AppTheme.textTitle(context),
                   ),
                   // const Text(
                   //   "Have a nice day",
@@ -257,12 +267,12 @@ class _CustomNavBarState extends State<CustomNavBar> {
                   });
                 },
                 child: Icon(
-                  Icons.search_rounded,
-                  color: MyColors.primary,
-                  size: 30,
+                  HugeIconsSolid.search01,
+                  color: AppTheme.iconColorThree(context),
+                  size: 24,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 16),
               InkWell(
                 onTap: () {
                   auth.signOut().then((_) {
@@ -272,7 +282,11 @@ class _CustomNavBarState extends State<CustomNavBar> {
                     );
                   });
                 },
-                child: Icon(Icons.logout, color: MyColors.primary, size: 30),
+                child: Icon(
+                  HugeIconsSolid.logout02,
+                  color: AppTheme.iconColorThree(context),
+                  size: 24,
+                ),
               ),
             ],
           ),
@@ -281,17 +295,11 @@ class _CustomNavBarState extends State<CustomNavBar> {
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
             child: TextField(
-              controller: widget.searchController,  // Using the passed controller
-              style: const TextStyle(color: Colors.black),
+              controller: widget.searchController,
               decoration: InputDecoration(
-                hintText: "Search...",
-                hintStyle: const TextStyle(color: Colors.grey),
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Colors.white,
+                prefixIcon: Icon(HugeIconsSolid.search01),
+                labelText: "Search",
+                hintText: "Search Here...",
               ),
             ),
           ),

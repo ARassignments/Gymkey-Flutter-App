@@ -1,6 +1,6 @@
-import 'package:bookify/screens/home.dart';
-import 'package:bookify/screens/onboarding.dart';
-import 'package:bookify/utils/constants/colors.dart';
+import '/screens/home.dart';
+import '/screens/onboarding.dart';
+import '/utils/constants/colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';

@@ -1,9 +1,12 @@
-import 'package:bookify/screens/auth/users/sign_in.dart';
-import 'package:bookify/utils/themes/custom_themes/elevated_button_theme.dart';
+import 'package:bookify/utils/themes/themes.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
+
+import '/screens/auth/users/sign_in.dart';
+import '/utils/themes/custom_themes/elevated_button_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/text_theme.dart';
+import '/utils/constants/colors.dart';
+import '/utils/themes/custom_themes/text_theme.dart';
 
 class ForgetPass extends StatefulWidget {
   const ForgetPass({super.key});
@@ -20,12 +23,12 @@ class _ForgetPassState extends State<ForgetPass> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: MyColors.bg,
+      // backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               
               Padding(
@@ -33,14 +36,14 @@ class _ForgetPassState extends State<ForgetPass> {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.black),
+                      icon: const Icon(HugeIconsSolid.arrowLeft01,),
                       onPressed: () => Navigator.pop(context),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         "Forgot Password",
-                        style: MyTextTheme.lightTextTheme.headlineMedium,
+                        style: AppTheme.textTitle(context),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -53,17 +56,17 @@ class _ForgetPassState extends State<ForgetPass> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: AppTheme.customListBg(context),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline, color: Colors.grey),
+                    Icon(Icons.info_outline, color: AppTheme.iconColorTwo(context)),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         "We will send the OTP code to your email for security in forgetting your password",
-                        style: TextStyle(color: Colors.grey.shade800),
+                        style: AppTheme.textSearchInfo(context).copyWith(fontSize: 14),
                       ),
                     ),
                   ],
@@ -72,13 +75,9 @@ class _ForgetPassState extends State<ForgetPass> {
               const SizedBox(height: 30),
 
               /// Label
-              const Text(
+              Text(
                 "E-mail",
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16,
-                ),
+                style: AppTheme.textLabel(context).copyWith(fontSize: 16),
               ),
               const SizedBox(height: 8),
 
@@ -90,28 +89,10 @@ class _ForgetPassState extends State<ForgetPass> {
                   keyboardType: TextInputType.emailAddress,
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                   decoration: InputDecoration(
+                    prefixIcon: Icon(HugeIconsSolid.mail01),
+                    labelText: "Email Address*",
                     hintText: "Shariq@gmail.com",
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(28),
-                      borderSide: const BorderSide(color: Colors.teal),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(28),
-                      borderSide: const BorderSide(color: Colors.teal),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(28),
-                      borderSide: const BorderSide(
-                        color: Colors.teal,
-                        width: 2,
-                      ),
-                    ),
                   ),
-                  style: const TextStyle(color: Colors.black),
                   validator: (value) {
                     if (value == null || value.isEmpty)
                       return "Email is required";
@@ -128,31 +109,24 @@ class _ForgetPassState extends State<ForgetPass> {
               const Spacer(),
 
               /// Submit Button
-              SizedBox(
-                width: double.infinity,
-                height: 60,
-                child: ElevatedButtonTheme(
-                  data: MyElevatedButtonTheme.lightElevatedButtonTheme,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        await _auth.sendPasswordResetEmail(
-                          email: emailController.text,
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Email Send Successfully")),
-                        );
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => SignIn()),
-                        );
-                      }
-                    },
-                    child: const Text(
-                      "Submit",
-                      style: TextStyle(fontSize: 18, letterSpacing: 2),
-                    ),
-                  ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    await _auth.sendPasswordResetEmail(
+                      email: emailController.text,
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Email Send Successfully")),
+                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SignIn()),
+                    );
+                  }
+                },
+                child: const Text(
+                  "Submit",
+                  style: TextStyle(fontSize: 18, letterSpacing: 2),
                 ),
               ),
             ],

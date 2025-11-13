@@ -1,12 +1,13 @@
 
-import 'package:bookify/screens/admin/screens/dashboard.dart';
-import 'package:bookify/screens/auth/users/forgetpass.dart';
-import 'package:bookify/screens/auth/users/sign_up.dart';
-import 'package:bookify/screens/home.dart';
-import 'package:bookify/utils/themes/custom_themes/text_theme.dart';
+import '/utils/themes/themes.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
+
+import '/screens/admin/screens/dashboard.dart';
+import '/screens/auth/users/forgetpass.dart';
+import '/screens/auth/users/sign_up.dart';
+import '/screens/home.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:bookify/utils/constants/colors.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -189,7 +190,6 @@ class _SignInState extends State<SignIn> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: MyColors.white,
       body: Stack(
         children: [
           Positioned(
@@ -208,12 +208,12 @@ class _SignInState extends State<SignIn> {
             right: 0,
             bottom: 0,
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: MyColors.bg,
+                color: AppTheme.cardBg(context),
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(34),
-                  topRight: Radius.circular(34),
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
                 ),
               ),
               child: SingleChildScrollView(
@@ -226,11 +226,10 @@ class _SignInState extends State<SignIn> {
                         controller: emailController,
                         keyboardType: TextInputType.emailAddress,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
-                        style: const TextStyle(color: Colors.black),
                         decoration: _inputDecoration(
-                          label: 'Email',
+                          label: 'Email*',
                           hint: 'Enter your email',
-                          icon: Icons.email,
+                          icon: HugeIconsSolid.mail01,
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty)
@@ -248,19 +247,17 @@ class _SignInState extends State<SignIn> {
                         controller: passController,
                         obscureText: _obscurePassword,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
-                        style: const TextStyle(color: Colors.black),
                         decoration:
                             _inputDecoration(
-                              label: 'Password',
+                              label: 'Password*',
                               hint: 'Enter your password',
-                              icon: Icons.lock,
+                              icon: HugeIconsSolid.lockPassword,
                             ).copyWith(
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                  color: Colors.grey,
+                                      ? HugeIconsSolid.viewOff
+                                      : HugeIconsSolid.eye,
                                 ),
                                 onPressed: () {
                                   setState(
@@ -295,12 +292,8 @@ class _SignInState extends State<SignIn> {
                                     ),
                                   ),
                             child: Text(
-                              "Forget Password",
-                              style: TextStyle(
-                                color: _isLoading
-                                    ? Colors.grey
-                                    : MyColors.primary,
-                              ),
+                              "Forget Password?",
+                              style: AppTheme.textSearchInfoLabeled(context).copyWith(fontSize: 14),
                             ),
                           ),
                         ],
@@ -318,6 +311,7 @@ class _SignInState extends State<SignIn> {
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
+                                    strokeCap: StrokeCap.round,
                                     valueColor: AlwaysStoppedAnimation<Color>(
                                       Colors.white,
                                     ),
@@ -357,7 +351,7 @@ class _SignInState extends State<SignIn> {
                         children: [
                           Text(
                             "Don't have an account? ",
-                            style: MyTextTheme.lightTextTheme.bodySmall,
+                            style: AppTheme.textLabel(context),
                           ),
                           InkWell(
                             onTap: _isLoading
@@ -368,12 +362,7 @@ class _SignInState extends State<SignIn> {
                                   ),
                             child: Text(
                               "Sign Up",
-                              style: TextStyle(
-                                color: _isLoading
-                                    ? Colors.grey
-                                    : MyColors.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: AppTheme.textSearchInfoLabeled(context).copyWith(fontSize: 14),
                             ),
                           ),
                         ],
@@ -398,19 +387,7 @@ class _SignInState extends State<SignIn> {
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      labelStyle: const TextStyle(color: Colors.black),
-      hintStyle: const TextStyle(color: Colors.grey),
-      prefixIcon: Icon(icon, color: Colors.grey),
-      filled: true,
-      fillColor: Colors.white,
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: MyColors.primary, width: 1),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: MyColors.primary, width: 2),
-      ),
+      prefixIcon: Icon(icon),
     );
   }
 }
