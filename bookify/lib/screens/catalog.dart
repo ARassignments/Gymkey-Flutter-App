@@ -1,18 +1,18 @@
-import 'package:bookify/screens/all_books.dart';
-import 'package:bookify/screens/auth/users/sign_in.dart';
-import 'package:bookify/screens/categories/action_page.dart';
-import 'package:bookify/screens/categories/fantasy_page.dart';
-import 'package:bookify/screens/categories/history_page.dart';
-import 'package:bookify/screens/categories/novels_page.dart';
-import 'package:bookify/screens/categories/poetry_page.dart';
-import 'package:bookify/screens/categories/romance_page.dart';
-import 'package:bookify/screens/categories/science_page.dart';
-import 'package:bookify/screens/categories/self_love_page.dart';
-import 'package:bookify/screens/home.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/app_navbar.dart';
-import 'package:bookify/utils/themes/custom_themes/bottomnavbar.dart';
-import 'package:bookify/utils/themes/custom_themes/text_theme.dart';
+import '/screens/all_books.dart';
+import '/screens/auth/users/sign_in.dart';
+import '/screens/categories/action_page.dart';
+import '/screens/categories/fantasy_page.dart';
+import '/screens/categories/history_page.dart';
+import '/screens/categories/novels_page.dart';
+import '/screens/categories/poetry_page.dart';
+import '/screens/categories/romance_page.dart';
+import '/screens/categories/science_page.dart';
+import '/screens/categories/self_love_page.dart';
+import '/screens/home.dart';
+import '/utils/constants/colors.dart';
+import '/utils/themes/custom_themes/app_navbar.dart';
+import '/utils/themes/custom_themes/bottomnavbar.dart';
+import '/utils/themes/custom_themes/text_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -71,12 +71,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFeeeeee),
-        bottomNavigationBar: buildCurvedNavBar(context, 1),
         body: SafeArea(
           child: Column(
             children: [
-              const SizedBox(height: 30),
-              CustomNavBar(searchController: searchController),
               const SizedBox(height: 30),
               Expanded(
                 child: SingleChildScrollView(

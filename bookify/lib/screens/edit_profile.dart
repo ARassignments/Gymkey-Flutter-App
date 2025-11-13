@@ -1,10 +1,10 @@
 import 'dart:typed_data';
-import 'package:bookify/screens/profile.dart';
-import 'package:bookify/utils/themes/custom_themes/app_navbar.dart';
+import '/screens/profile.dart';
+import '/utils/themes/custom_themes/app_navbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/text_theme.dart';
+import '/utils/constants/colors.dart';
+import '/utils/themes/custom_themes/text_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -117,8 +117,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             key: _formKey,
             child: Column(
               children: [
-                const SizedBox(height: 20),
-                CustomNavBar(searchController: searchController),
                 const SizedBox(height: 20),
 
                 Text(

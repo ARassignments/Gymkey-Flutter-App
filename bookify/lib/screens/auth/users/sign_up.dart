@@ -1,3 +1,5 @@
+import 'package:flutter/gestures.dart';
+
 import '/utils/themes/themes.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
@@ -42,7 +44,7 @@ class _SignUpState extends State<SignUp> {
             left: 0,
             right: 0,
             child: Image.asset(
-              'assets/images/logo222.png',
+              AppTheme.appLogo(context),
               height: 100,
               fit: BoxFit.contain,
             ),
@@ -198,6 +200,49 @@ class _SignUpState extends State<SignUp> {
                       ),
                       const SizedBox(height: 20),
 
+                      RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          style: AppTheme.textLabel(
+                            context,
+                          ).copyWith(fontSize: 12),
+                          children: [
+                            TextSpan(text: 'By register, you agree to our '),
+                            TextSpan(
+                              text: 'Terms & Condition, ',
+                              style: AppTheme.textLink(
+                                context,
+                              ).copyWith(fontSize: 12),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  debugPrint("Terms & Condition clicked");
+                                },
+                            ),
+                            TextSpan(
+                              text: 'Data Policy ',
+                              style: AppTheme.textLink(
+                                context,
+                              ).copyWith(fontSize: 12),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  debugPrint("Data Policy clicked");
+                                },
+                            ),
+                            TextSpan(text: 'and '),
+                            TextSpan(
+                              text: 'Cookies Policy.',
+                              style: AppTheme.textLink(
+                                context,
+                              ).copyWith(fontSize: 12),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  debugPrint("Cookies Policy clicked");
+                                },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                       // Sign Up Button
                       SizedBox(
                         width: double.infinity,
@@ -283,7 +328,9 @@ class _SignUpState extends State<SignUp> {
                             },
                             child: Text(
                               "Sign In",
-                              style: AppTheme.textSearchInfoLabeled(context).copyWith(fontSize: 14),
+                              style: AppTheme.textSearchInfoLabeled(
+                                context,
+                              ).copyWith(fontSize: 14),
                             ),
                           ),
                         ],

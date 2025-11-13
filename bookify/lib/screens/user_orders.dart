@@ -2,8 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/app_navbar.dart';
+import '/utils/constants/colors.dart';
 
 class UserOrders extends StatefulWidget {
   const UserOrders({super.key});
@@ -46,8 +45,6 @@ class _UserOrdersState extends State<UserOrders> {
         child: Column(
           children: [
             const SizedBox(height: 30),
-            CustomNavBar(searchController: searchController),
-            const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(

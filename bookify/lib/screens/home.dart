@@ -1,4 +1,11 @@
 import 'dart:io' show Platform;
+import 'package:hugeicons_pro/hugeicons.dart';
+
+import '/components/dashboard_slider.dart';
+import '/components/loading_screen.dart';
+import '/components/menu_drawer.dart';
+import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
+
 import '/components/not_found.dart';
 import '/utils/themes/themes.dart';
 import 'package:flutter/services.dart';
@@ -7,7 +14,6 @@ import '/utils/constants/colors.dart';
 import '/utils/themes/custom_themes/app_navbar.dart';
 import '/utils/themes/custom_themes/bookcard.dart';
 import '/utils/themes/custom_themes/bottomnavbar.dart';
-import '/utils/themes/custom_themes/text_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +28,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController searchController = TextEditingController();
   final user = FirebaseAuth.instance.currentUser;
+  int _currentIndex = 0;
+  final ZoomDrawerController _drawerController = ZoomDrawerController();
 
   DateTime? _lastBack;
 
@@ -81,131 +89,213 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _onWillPop,
-      child: Scaffold(
-        // backgroundColor: const Color(0xFFeeeeee),
-        bottomNavigationBar: buildCurvedNavBar(context, 0),
-        body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 30),
-              CustomNavBar(searchController: searchController),
-              const SizedBox(height: 10),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 20),
-                        _buildSlider(),
-                        const SizedBox(height: 30),
+    return Scaffold(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DashboardSlider(
+                      slidesData: [
+                        _buildSliderCard(
+                          title: 'Bookify Special Offers',
+                          subtitle: 'Get your favorites today!',
+                          image: 'assets/images/banner1.webp',
+                        ),
+                        _buildSliderCard(
+                          title: 'Top Reads of the Month',
+                          subtitle: 'Trending now on Bookify',
+                          image: 'assets/images/banner1.webp',
+                        ),
+                        _buildSliderCard(
+                          title: 'Discover New Authors',
+                          subtitle: 'Fresh stories every week',
+                          image: 'assets/images/banner1.webp',
+                        ),
+                      ],
+                    ),
 
-                        // ===== Dynamic Categories Section =====
-                        categories.isEmpty
-                            ? const Center(child: CircularProgressIndicator())
-                            : Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                    // ===== Dynamic Categories Section =====
+                    categories.isEmpty
+                        ? Center(
+                            child:LoadingLogo(),
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Categories",
+                                style: AppTheme.textLabel(context).copyWith(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                height: 45,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: categories.length,
+                                  itemBuilder: (context, index) {
+                                    final category = categories[index];
+                                    return Padding(
+                                      padding: const EdgeInsets.only(right: 10),
+                                      child: Container(
+                                        height: 8,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.customListBg(context),
+                                          borderRadius: BorderRadius.circular(
+                                            30,
+                                          ),
+                                          border: Border.all(
+                                            color: AppTheme.sliderHighlightBg(
+                                              context,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            category,
+                                            style: AppTheme.textLabel(
+                                              context,
+                                            ).copyWith(fontSize: 12),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+
+                    const SizedBox(height: 30),
+
+                    // ===== Dynamic Product Sections per Category =====
+                    ...categories.map((category) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionHeader(context, category),
+                          const SizedBox(height: 10),
+                          _buildHorizontalBookList(
+                            FirebaseFirestore.instance
+                                .collection('books')
+                                .where('category', isEqualTo: category)
+                                .get(),
+                            category,
+                          ),
+                          const SizedBox(height: 30),
+                        ],
+                      );
+                    }).toList(),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Text(
+                        "Need Help?",
+                        style: AppTheme.textLabel(
+                          context,
+                        ).copyWith(fontSize: 14, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    Row(
+                      spacing: 16,
+                      children: [
+                        Expanded(
+                          child: Opacity(
+                            opacity: 0.5,
+                            child: InkWell(
+                              child: Stack(
                                 children: [
-                                  Text(
-                                    "Categories",
-                                    style: AppTheme.textTitle(context).copyWith(fontSize: 16),
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 16),
+                                    height: 100,
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.customListBg(context),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Text(
+                                        "FAQs",
+                                        style: AppTheme.textLink(context)
+                                            .copyWith(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                      ),
+                                    ),
                                   ),
-                                  const SizedBox(height: 10),
-                                  SizedBox(
-                                    height: 45,
-                                    child: ListView.builder(
-                                      scrollDirection: Axis.horizontal,
-                                      itemCount: categories.length,
-                                      itemBuilder: (context, index) {
-                                        final category = categories[index];
-                                        return Padding(
-                                          padding: const EdgeInsets.only(
-                                            right: 10,
-                                          ),
-                                          child: Container(
-                                            height: 8,
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 16,
-                                              vertical: 5,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppTheme.customListBg(context),
-                                              borderRadius:
-                                                  BorderRadius.circular(30),
-                                              border: Border.all(
-                                                color: AppTheme.sliderHighlightBg(context),
-                                              ),
-                                            ),
-                                            child: Center(
-                                              child: Text(
-                                                category,
-                                                style: AppTheme.textLabel(context).copyWith(fontSize: 12),
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
+                                  Positioned(
+                                    right: -40,
+                                    bottom: -35,
+                                    child: Image.asset(
+                                      "assets/images/faqs_image.png",
+                                      height: 180,
                                     ),
                                   ),
                                 ],
                               ),
-
-                        const SizedBox(height: 30),
-
-                        // ===== Dynamic Product Sections per Category =====
-                        ...categories.map((category) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildSectionHeader(context, category),
-                              const SizedBox(height: 10),
-                              _buildHorizontalBookList(
-                                FirebaseFirestore.instance
-                                    .collection('books')
-                                    .where('category', isEqualTo: category)
-                                    .get(),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Opacity(
+                            opacity: 0.5,
+                            child: InkWell(
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 16),
+                                    height: 100,
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.customListBg(context),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Text(
+                                        "Chat Now",
+                                        style: AppTheme.textLink(context)
+                                            .copyWith(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    right: -40,
+                                    bottom: -28,
+                                    child: Image.asset(
+                                      "assets/images/chat_image.png",
+                                      height: 180,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 30),
-                            ],
-                          );
-                        }).toList(),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                  ),
+                    SizedBox(height: 20),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ===== Helper: Slider =====
-  Widget _buildSlider() {
-    return SizedBox(
-      height: 220,
-      child: PageView(
-        controller: PageController(viewportFraction: 0.85),
-        children: [
-          _buildSliderCard(
-            title: 'Bookify Special Offers',
-            subtitle: 'Get your favorites today!',
-            image: 'assets/images/banner1.webp',
-          ),
-          _buildSliderCard(
-            title: 'Top Reads of the Month',
-            subtitle: 'Trending now on Bookify',
-            image: 'assets/images/banner1.webp',
-          ),
-          _buildSliderCard(
-            title: 'Discover New Authors',
-            subtitle: 'Fresh stories every week',
-            image: 'assets/images/banner1.webp',
+            ),
           ),
         ],
       ),
@@ -217,62 +307,46 @@ class _HomeScreenState extends State<HomeScreen> {
     required String subtitle,
     required String image,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Material(
-        elevation: 4,
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Image.asset(
-                image,
-                width: double.infinity,
-                height: double.infinity,
-                fit: BoxFit.cover,
-              ),
+    return Material(
+      elevation: 0,
+      borderRadius: BorderRadius.circular(20),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.asset(
+              image,
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+              alignment: AlignmentGeometry.topCenter,
             ),
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Colors.black.withOpacity(0.6), Colors.transparent],
+          ),
+          Positioned(
+            bottom: 16,
+            left: 16,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  subtitle,
+                  style: AppTheme.textLabel(
+                    context,
+                  ).copyWith(color: Colors.white, fontSize: 12),
                 ),
-              ),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTheme.textTitle(
+                    context,
+                  ).copyWith(color: Colors.white, fontSize: 16),
+                ),
+              ],
             ),
-            Positioned(
-              bottom: 16,
-              left: 16,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -282,7 +356,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: AppTheme.textTitle(context).copyWith(fontSize: 16)),
+        Text(
+          title,
+          style: AppTheme.textLabel(
+            context,
+          ).copyWith(fontSize: 14, fontWeight: FontWeight.w700),
+        ),
         TextButton(
           onPressed: () {
             Navigator.push(
@@ -294,7 +373,9 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           child: Text(
             "See All",
-            style: AppTheme.textLink(context).copyWith(fontSize: 12,fontWeight: FontWeight.w400),
+            style: AppTheme.textLink(
+              context,
+            ).copyWith(fontSize: 12, fontWeight: FontWeight.w400),
           ),
         ),
       ],
@@ -302,14 +383,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ===== Helper: Horizontal Book List =====
-  Widget _buildHorizontalBookList(Future<QuerySnapshot> future) {
+  Widget _buildHorizontalBookList(
+    Future<QuerySnapshot> future,
+    String category,
+  ) {
     return SizedBox(
-      height: 260,
+      height: 220,
       child: FutureBuilder<QuerySnapshot>(
         future: future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator(color: AppTheme.inputProgress(context),strokeCap: StrokeCap.round,));
+            return Center(
+              child: LoadingLogo(),
+            );
           }
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
@@ -321,40 +407,45 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           final books = snapshot.data!.docs;
+          final displayBooks = books
+              .take(6)
+              .toList(); // Show only 6 items initially
+
           return ListView(
             scrollDirection: Axis.horizontal,
-            children: books.take(6).map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              final bookId = doc.id;
+            padding: const EdgeInsets.only(right: 16),
+            children: [
+              ...displayBooks.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final bookId = doc.id;
 
-              return InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      opaque: false,
-                      pageBuilder: (context, animation, secondaryAnimation) =>
-                          BookDetailPage(bookId: bookId),
-                      transitionsBuilder:
-                          (context, animation, secondaryAnimation, child) {
-                            const begin = Offset(0.0, 1.0);
-                            const end = Offset.zero;
-                            const curve = Curves.easeInOut;
-                            final tween = Tween(
-                              begin: begin,
-                              end: end,
-                            ).chain(CurveTween(curve: curve));
-                            return SlideTransition(
-                              position: animation.drive(tween),
-                              child: child,
-                            );
-                          },
-                    ),
-                  );
-                },
-                child: Hero(
-                  tag: bookId,
-                  child: Material(
+                return InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        opaque: false,
+                        pageBuilder: (context, animation, secondaryAnimation) =>
+                            BookDetailPage(bookId: bookId),
+                        transitionsBuilder:
+                            (context, animation, secondaryAnimation, child) {
+                              const begin = Offset(0.0, 1.0);
+                              const end = Offset.zero;
+                              const curve = Curves.easeInOut;
+                              final tween = Tween(
+                                begin: begin,
+                                end: end,
+                              ).chain(CurveTween(curve: curve));
+                              return SlideTransition(
+                                position: animation.drive(tween),
+                                child: child,
+                              );
+                            },
+                      ),
+                    );
+                  },
+                  child: Hero(
+                    tag: bookId,
                     child: BookCard(
                       bookId: bookId,
                       title: data['title'] ?? 'Untitled',
@@ -367,9 +458,39 @@ class _HomeScreenState extends State<HomeScreen> {
                       rating: (data['rating'] ?? 0).toDouble(),
                     ),
                   ),
+                );
+              }),
+
+              // 👇 Add Load More button at the end
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CategoryDetailPage(category: category),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 180,
+                  margin: EdgeInsets.only(left: 16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.customListBg(context),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      spacing: 6,
+                      children: [
+                        Text('Load More', style: AppTheme.textTitle(context)),
+                        Icon(HugeIconsSolid.arrowRight01, size: 16),
+                      ],
+                    ),
+                  ),
                 ),
-              );
-            }).toList(),
+              ),
+            ],
           );
         },
       ),

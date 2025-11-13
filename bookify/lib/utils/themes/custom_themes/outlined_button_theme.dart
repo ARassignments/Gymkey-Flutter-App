@@ -1,4 +1,4 @@
-import 'package:bookify/utils/constants/colors.dart';
+import '/utils/constants/colors.dart';
 import 'package:flutter/material.dart';
 
 class MyOutlinedButtonTheme {
@@ -8,14 +8,15 @@ class MyOutlinedButtonTheme {
     style: OutlinedButton.styleFrom(
       elevation: 0,
       foregroundColor: Colors.black,
+      backgroundColor: Colors.transparent,
       side: const BorderSide(color: MyColors.primary),
       textStyle: const TextStyle(
         fontSize: 16,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w500,
         color: Colors.black,
       ),
-      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
   );
 
@@ -23,14 +24,15 @@ class MyOutlinedButtonTheme {
     style: OutlinedButton.styleFrom(
       elevation: 0,
       foregroundColor: Colors.white,
-      side: const BorderSide(color: Colors.blueAccent),
+      backgroundColor: Colors.transparent,
+      side: const BorderSide(color: Colors.white),
       textStyle: const TextStyle(
         fontSize: 16,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w500,
         color: Colors.white,
       ),
-      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
   );
 }

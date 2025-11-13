@@ -1,3 +1,4 @@
+import '/dashboard_screen.dart';
 import '/screens/home.dart';
 import '/screens/onboarding.dart';
 import '/utils/constants/colors.dart';
@@ -22,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen> {
         if (!mounted) return; // ✅ check before navigation
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
         );
       });
     } else {
@@ -39,10 +40,9 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: MyColors.primary,
       body: Center(
         child: Lottie.asset(
-          'assets/animations/Splash_Screen.json'),
+          'assets/animations/Splash_Screen.json', fit: BoxFit.cover, width: double.infinity, alignment: Alignment.bottomCenter),
       ),
     );
   }

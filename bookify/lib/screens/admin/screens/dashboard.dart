@@ -1,13 +1,13 @@
 import 'dart:io' show Platform;
-import 'package:bookify/screens/admin/screens/manage_categories/manage_categories.dart';
+import '/screens/admin/screens/manage_categories/manage_categories.dart';
 import 'package:flutter/services.dart'; // SystemNavigator.pop()
-import 'package:bookify/screens/admin/screens/manage_books/manage_books.dart';
-import 'package:bookify/screens/admin/screens/manage_orders/manage_orders.dart';
-import 'package:bookify/screens/admin/screens/manage_users/manage_users.dart';
-import 'package:bookify/screens/auth/users/sign_in.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/adminbottomnavbar.dart';
-import 'package:bookify/utils/themes/custom_themes/text_theme.dart';
+import '/screens/admin/screens/manage_books/manage_books.dart';
+import '/screens/admin/screens/manage_orders/manage_orders.dart';
+import '/screens/admin/screens/manage_users/manage_users.dart';
+import '/screens/auth/users/sign_in.dart';
+import '/utils/constants/colors.dart';
+import '/utils/themes/custom_themes/adminbottomnavbar.dart';
+import '/utils/themes/custom_themes/text_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';

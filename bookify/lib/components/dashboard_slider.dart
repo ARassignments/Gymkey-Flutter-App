@@ -5,7 +5,8 @@ import 'package:shimmer/shimmer.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class DashboardSlider extends StatefulWidget {
-  const DashboardSlider({super.key});
+  final List<Widget> slidesData;
+  const DashboardSlider({super.key, required this.slidesData});
 
   @override
   State<DashboardSlider> createState() => _DashboardSliderState();
@@ -75,29 +76,9 @@ class _DashboardSliderState extends State<DashboardSlider> {
   Widget _buildImageCarousel(BuildContext context) {
     return CarouselSlider.builder(
       carouselController: _carouselController,
-      itemCount: sliderImages.length,
+      itemCount: widget.slidesData.length,
       itemBuilder: (context, index, realIndex) {
-        return Container(
-          width: double.infinity,
-          margin: const EdgeInsets.symmetric(horizontal: 5),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            image: DecorationImage(
-              image: NetworkImage(sliderImages[index]),
-              fit: BoxFit.cover,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Image.asset("assets/images/logo_dark.png", width: 80),
-              ),
-            ],
-          ),
-        );
+        return widget.slidesData[index];
       },
       options: CarouselOptions(
         height: 200,
@@ -121,7 +102,7 @@ class _DashboardSliderState extends State<DashboardSlider> {
   Widget _buildSmoothIndicator(BuildContext context) {
     return AnimatedSmoothIndicator(
       activeIndex: _currentIndex,
-      count: sliderImages.length,
+      count: widget.slidesData.length,
       effect: CustomizableEffect(
         spacing: 8,
         activeDotDecoration: DotDecoration(

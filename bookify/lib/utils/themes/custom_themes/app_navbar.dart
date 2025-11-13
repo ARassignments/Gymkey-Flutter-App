@@ -145,6 +145,9 @@
 //     );
 //   }
 // }
+import '/components/dialog_logout.dart';
+import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
+
 import '/utils/themes/themes.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -154,10 +157,12 @@ import '/screens/auth/users/sign_in.dart';
 
 class CustomNavBar extends StatefulWidget {
   final TextEditingController searchController; // Accepting search controller
+  final ZoomDrawerController drawerController;
 
   const CustomNavBar({
     super.key,
     required this.searchController,
+    required this.drawerController,
   }); // Pass the controller
 
   @override
@@ -208,6 +213,21 @@ class _CustomNavBarState extends State<CustomNavBar> {
     });
   }
 
+  void _logout() {
+    if (mounted) {
+      auth.signOut().then((_) {
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => SignIn(),
+            transitionsBuilder: (_, a, __, c) =>
+                FadeTransition(opacity: a, child: c),
+          ),
+        );
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -216,6 +236,11 @@ class _CustomNavBarState extends State<CustomNavBar> {
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Row(
             children: [
+              InkWell(
+                child: Image.asset(AppTheme.appLogo(context), width: 60),
+                onTap: () => {widget.drawerController.toggle!()},
+              ),
+              SizedBox(width: 10),
               ClipOval(
                 child: (profileImage.isNotEmpty)
                     ? Image.network(
@@ -275,12 +300,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
               const SizedBox(width: 16),
               InkWell(
                 onTap: () {
-                  auth.signOut().then((_) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SignIn()),
-                    );
-                  });
+                  DialogLogout().showDialog(context, _logout);
                 },
                 child: Icon(
                   HugeIconsSolid.logout02,

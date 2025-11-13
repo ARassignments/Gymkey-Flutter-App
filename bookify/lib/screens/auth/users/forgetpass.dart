@@ -1,12 +1,9 @@
-import 'package:bookify/utils/themes/themes.dart';
+import '/utils/themes/themes.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
 import '/screens/auth/users/sign_in.dart';
-import '/utils/themes/custom_themes/elevated_button_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '/utils/constants/colors.dart';
-import '/utils/themes/custom_themes/text_theme.dart';
 
 class ForgetPass extends StatefulWidget {
   const ForgetPass({super.key});

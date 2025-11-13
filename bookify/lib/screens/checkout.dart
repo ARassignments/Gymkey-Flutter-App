@@ -1,8 +1,8 @@
-import 'package:bookify/models/cart_item.dart';
-import 'package:bookify/managers/cart_manager.dart';
-import 'package:bookify/screens/home.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/app_navbar.dart';
+import '/models/cart_item.dart';
+import '/managers/cart_manager.dart';
+import '/screens/home.dart';
+import '/utils/constants/colors.dart';
+import '/utils/themes/custom_themes/app_navbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -109,8 +109,6 @@ class _CheckoutState extends State<Checkout> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            CustomNavBar(searchController: searchController),
-            const SizedBox(height: 15),
 
             Expanded(
               child: SingleChildScrollView(

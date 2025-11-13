@@ -91,6 +91,12 @@ class AppTheme {
         : AppColor.neutral_5;
   }
 
+  static String appLogo(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? 'assets/images/logo_dark.png'
+        : 'assets/images/logo222.png';
+  }
+
   static String notFoundImage(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
         ? 'assets/images/not_found_frame_dark.svg'

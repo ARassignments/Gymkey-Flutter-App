@@ -1,11 +1,11 @@
-import 'package:bookify/models/cart_item.dart';
-import 'package:bookify/managers/cart_manager.dart';
-import 'package:bookify/screens/checkout.dart';
-import 'package:bookify/screens/home.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/app_navbar.dart';
-import 'package:bookify/utils/themes/custom_themes/bottomnavbar.dart';
-import 'package:bookify/utils/themes/custom_themes/elevated_button_theme.dart';
+import '/models/cart_item.dart';
+import '/managers/cart_manager.dart';
+import '/screens/checkout.dart';
+import '/screens/home.dart';
+import '/utils/constants/colors.dart';
+import '/utils/themes/custom_themes/app_navbar.dart';
+import '/utils/themes/custom_themes/bottomnavbar.dart';
+import '/utils/themes/custom_themes/elevated_button_theme.dart';
 import 'package:flutter/material.dart';
 
 class CartScreen extends StatefulWidget {
@@ -26,13 +26,10 @@ class _CartScreenState extends State<CartScreen> {
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFeeeeee),
-        bottomNavigationBar: buildCurvedNavBar(context, 2),
         body: SafeArea(
           child: Column(
             children: [
               const SizedBox(height: 30),
-              CustomNavBar(searchController: searchController),
-              const SizedBox(height: 10),
 
               /// Cart Stream from Firestore
               Expanded(

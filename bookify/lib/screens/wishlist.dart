@@ -1,10 +1,10 @@
-import 'package:bookify/models/cart_item.dart';
-import 'package:bookify/managers/cart_manager.dart';
-import 'package:bookify/managers/wishlist_manager.dart';
-import 'package:bookify/screens/home.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/app_navbar.dart';
-import 'package:bookify/utils/themes/custom_themes/bottomnavbar.dart';
+import '/models/cart_item.dart';
+import '/managers/cart_manager.dart';
+import '/managers/wishlist_manager.dart';
+import '/screens/home.dart';
+import '/utils/constants/colors.dart';
+import '/utils/themes/custom_themes/app_navbar.dart';
+import '/utils/themes/custom_themes/bottomnavbar.dart';
 import 'package:flutter/material.dart';
 
 class WishListScreen extends StatefulWidget {
@@ -25,13 +25,10 @@ class _WishListScreenState extends State<WishListScreen> {
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFeeeeee),
-        bottomNavigationBar: buildCurvedNavBar(context, 3),
         body: SafeArea(
           child: Column(
             children: [
               const SizedBox(height: 30),
-              CustomNavBar(searchController: searchController),
-              const SizedBox(height: 10),
               Expanded(
                 child: StreamBuilder<List<CartItem>>(
                   stream: WishlistManager.getWishlistStream(),

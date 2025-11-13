@@ -1,9 +1,9 @@
-import 'package:bookify/models/cart_item.dart';
-import 'package:bookify/managers/cart_manager.dart';
-import 'package:bookify/screens/cart.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/app_navbar.dart';
-import 'package:bookify/utils/themes/custom_themes/text_theme.dart';
+import '/models/cart_item.dart';
+import '/managers/cart_manager.dart';
+import '/screens/cart.dart';
+import '/utils/constants/colors.dart';
+import '/utils/themes/custom_themes/app_navbar.dart';
+import '/utils/themes/custom_themes/text_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -245,8 +245,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
         child: Column(
           children: [
             const SizedBox(height: 30),
-            CustomNavBar(searchController: searchController),
-            const SizedBox(height: 10),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),

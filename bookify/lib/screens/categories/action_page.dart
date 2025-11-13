@@ -1,8 +1,8 @@
-import 'package:bookify/screens/book_detail_page.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/app_navbar.dart';
-import 'package:bookify/utils/themes/custom_themes/bookcard.dart';
-import 'package:bookify/utils/themes/custom_themes/text_theme.dart';
+import '/screens/book_detail_page.dart';
+import '/utils/constants/colors.dart';
+import '/utils/themes/custom_themes/app_navbar.dart';
+import '/utils/themes/custom_themes/bookcard.dart';
+import '/utils/themes/custom_themes/text_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -207,8 +207,6 @@ class _ActionPageState extends State<ActionPage> {
         child: Column(
           children: [
             const SizedBox(height: 30),
-            CustomNavBar(searchController: searchController),
-            const SizedBox(height: 10),
 
             // ✅ Categories List (selected pehle + active highlight)
             Padding(

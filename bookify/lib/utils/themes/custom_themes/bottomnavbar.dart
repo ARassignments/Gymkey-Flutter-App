@@ -1,14 +1,8 @@
-import 'package:bookify/utils/themes/themes.dart';
+import '/utils/themes/themes.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-
-import '/screens/profile.dart';
 import '/utils/constants/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import '/screens/home.dart';
-import '/screens/catalog.dart';
-import '/screens/cart.dart';
-import '/screens/wishlist.dart';
 
 /// Smooth fade transition navigation
 void navigateWithFade(BuildContext context, Widget targetPage) {
@@ -24,7 +18,7 @@ void navigateWithFade(BuildContext context, Widget targetPage) {
 }
 
 /// Curved Navigation Bar builder
-Widget buildCurvedNavBar(BuildContext context, int currentIndex) {
+Widget buildCurvedNavBar(BuildContext context, int currentIndex, Function(int) onItemSelected) {
   return CurvedNavigationBar(
     index: currentIndex,
     height: 50,
@@ -34,36 +28,20 @@ Widget buildCurvedNavBar(BuildContext context, int currentIndex) {
     animationDuration: const Duration(milliseconds: 300),
     animationCurve: Curves.easeInOut,
     items: const [
-      Icon(HugeIconsSolid.home09, size: 30, color: Colors.white),
+      Icon(HugeIconsSolid.home11, size: 30, color: Colors.white),
       Icon(HugeIconsSolid.catalogue, size: 30, color: Colors.white),
       Icon(HugeIconsSolid.shoppingCart01, size: 30, color: Colors.white),
       Icon(HugeIconsSolid.favourite, size: 30, color: Colors.white),
       Icon(HugeIconsSolid.user03, size: 30, color: Colors.white),
     ],
-    onTap: (index) async {
+    onTap: (index) {
       if (index == currentIndex) return;
 
-      await Future.delayed(
-        const Duration(milliseconds: 300),
-      ); // slight delay for nav bar animation
+      // await Future.delayed(
+      //   const Duration(milliseconds: 200),
+      // ); // slight delay for nav bar animation
 
-      switch (index) {
-        case 0:
-          navigateWithFade(context, const HomeScreen());
-          break;
-        case 1:
-          navigateWithFade(context, const CatalogScreen());
-          break;
-        case 2:
-          navigateWithFade(context, const CartScreen());
-          break;
-        case 3:
-          navigateWithFade(context, const WishListScreen());
-          break;
-        case 4:
-          navigateWithFade(context, const ProfileScreen());
-          break;
-      }
+      onItemSelected(index);
     },
   );
 }

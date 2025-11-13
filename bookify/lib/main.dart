@@ -1,3 +1,4 @@
+import '/dashboard_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter/services.dart';
 import '/screens/cart.dart';
@@ -57,7 +58,7 @@ class MyApp extends StatelessWidget {
           darkTheme: MyTheme.darkTheme,
           initialRoute: '/',
           routes: {
-            '/home': (context) => const HomeScreen(),
+            '/home': (context) => const DashboardScreen(),
             '/catalog': (context) => const CatalogScreen(),
             '/cart': (context) => const CartScreen(),
             '/wishlist': (context) => const WishListScreen(),
@@ -122,7 +123,7 @@ class MyApp extends StatelessWidget {
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const HomeScreen(),
+                        builder: (context) => const DashboardScreen(),
                       ),
                       (Route<dynamic> route) =>
                           false, // Remove all previous routes

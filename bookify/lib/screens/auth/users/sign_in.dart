@@ -1,4 +1,6 @@
 
+import 'package:bookify/dashboard_screen.dart';
+
 import '/utils/themes/themes.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
@@ -65,7 +67,7 @@ class _SignInState extends State<SignIn> {
           if (role == "User") {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const HomeScreen()),
+              MaterialPageRoute(builder: (_) => const DashboardScreen()),
             );
           } else if (role == "Admin") {
             Navigator.pushReplacement(
@@ -150,7 +152,7 @@ class _SignInState extends State<SignIn> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
       );
     } catch (e) {
       _showError("Error setting up user account");
@@ -197,7 +199,7 @@ class _SignInState extends State<SignIn> {
             left: 0,
             right: 0,
             child: Image.asset(
-              'assets/images/logo222.png',
+              AppTheme.appLogo(context),
               height: 100,
               fit: BoxFit.contain,
             ),
@@ -322,21 +324,21 @@ class _SignInState extends State<SignIn> {
                       ),
                       const SizedBox(height: 20),
                       Row(
-                        children: const [
+                        children: [
                           Expanded(
                             child: Divider(
-                              color: Colors.grey,
+                              color: AppTheme.dividerBg(context),
                               thickness: 1,
                               endIndent: 10,
                             ),
                           ),
                           Text(
                             'Or continue with',
-                            style: TextStyle(color: Colors.grey),
+                            style: AppTheme.textSearchInfo(context).copyWith(fontSize: 14),
                           ),
                           Expanded(
                             child: Divider(
-                              color: Colors.grey,
+                              color: AppTheme.dividerBg(context),
                               thickness: 1,
                               indent: 10,
                             ),

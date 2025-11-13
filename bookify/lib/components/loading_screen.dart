@@ -1,4 +1,5 @@
 import 'dart:math';
+import '/utils/themes/themes.dart';
 import 'package:flutter/material.dart';
 
 class LoadingLogo extends StatefulWidget {
@@ -52,7 +53,7 @@ class _LoadingLogoState extends State<LoadingLogo>
             );
           },
           child: Image.asset(
-            'assets/images/logo222.png',
+            AppTheme.appLogo(context),
             width: widget.size,
             height: widget.size,
           ),

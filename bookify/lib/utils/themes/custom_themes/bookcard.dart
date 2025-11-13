@@ -1,9 +1,12 @@
+import 'package:bookify/components/appsnackbar.dart';
 import 'package:bookify/managers/wishlist_manager.dart';
 import 'package:bookify/managers/cart_manager.dart';
 import 'package:bookify/models/cart_item.dart';
 import 'package:bookify/utils/constants/colors.dart';
+import 'package:bookify/utils/themes/themes.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
 
 class BookCard extends StatefulWidget {
   final String bookId;
@@ -116,139 +119,146 @@ class _BookCardState extends State<BookCard> {
     }
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          newFavorited
-              ? '${widget.title} added to wishlist'
-              : '${widget.title} removed from wishlist',
-        ),
-      ),
+    AppSnackBar.show(
+      context,
+      message: newFavorited
+          ? '${widget.title} added to wishlist'
+          : '${widget.title} removed from wishlist',
+      type: AppSnackBarType.success,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 150,
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.all(8),
+      width: 180,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
-        ],
+        color: AppTheme.customListBg(context),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 📕 Image + Favorite Button
           Stack(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(20),
                 child: Image.network(
                   widget.imagePath,
-                  height: 160,
+                  height: 120,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, _, __) => const Icon(Icons.broken_image),
+                  errorBuilder: (context, _, __) =>
+                      const Icon(Icons.broken_image),
                 ),
               ),
               Positioned(
                 top: 6,
                 right: 6,
-                child: GestureDetector(
+                child: InkWell(
                   onTap: _toggleWishlist,
                   child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.customListBg(context),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      isFavorited ? Icons.favorite : Icons.favorite_border,
+                      isFavorited
+                          ? HugeIconsSolid.favourite
+                          : HugeIconsStroke.favourite,
                       size: 18,
-                      color: isFavorited ? Colors.red : Colors.grey,
+                      color: isFavorited
+                          ? Colors.red
+                          : AppTheme.iconColorThree(context),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 38,
+                right: 6,
+                child: InkWell(
+                  onTap: () {
+                    CartManager.addToCart(
+                      CartItem(
+                        bookId: widget.bookId,
+                        title: widget.title,
+                        author: widget.author,
+                        imageUrl: widget.imagePath,
+                        price: widget.price,
+                      ),
+                    );
+                    AppSnackBar.show(
+                      context,
+                      message: '${widget.title} added to cart',
+                      type: AppSnackBarType.success,
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.customListBg(context),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      HugeIconsSolid.shoppingBag03,
+                      size: 18,
+                      color: AppTheme.iconColorThree(context),
                     ),
                   ),
                 ),
               ),
             ],
           ),
-
-          const SizedBox(height: 8),
 
           // 📝 Title
-          Text(
-            widget.title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-              color: Colors.deepOrange,
-            ),
-          ),
-
-          // 🏷️ Category
-          Text(
-            widget.category,
-            style: const TextStyle(fontSize: 12, color: Colors.black),
-          ),
-
-          const SizedBox(height: 6),
-
-          // 💵 Price | ⭐ Rating | 🛒 Cart
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '\$${widget.price.toStringAsFixed(0)}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      widget.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.textTitle(context).copyWith(fontSize: 18),
+                    ),
+                    Row(
+                      children: [
+                        const Icon(
+                          HugeIconsSolid.star,
+                          size: 12,
+                          color: Colors.amber,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          averageRating.toStringAsFixed(1),
+                          style: AppTheme.textSearchInfoLabeled(context),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ),
-              Row(
-                children: [
-                  const Icon(Icons.star, size: 14, color: Colors.amber),
-                  const SizedBox(width: 2),
-                  Text(
-                    averageRating.toStringAsFixed(1),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.deepOrangeAccent,
+                Text(
+                  widget.category,
+                  style: AppTheme.textSearchInfoLabeled(context),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '\$${widget.price.toStringAsFixed(0)}',
+                      style: AppTheme.textLink(context).copyWith(fontSize: 17),
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  GestureDetector(
-                    onTap: () {
-                      CartManager.addToCart(
-                        CartItem(
-                          bookId: widget.bookId,
-                          title: widget.title,
-                          author: widget.author,
-                          imageUrl: widget.imagePath,
-                          price: widget.price,
-                        ),
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${widget.title} added to cart'),
-                        ),
-                      );
-                    },
-                    child: const Icon(
-                      Icons.add_shopping_cart,
-                      size: 18,
-                      color: MyColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
