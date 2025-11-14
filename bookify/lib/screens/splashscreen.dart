@@ -21,17 +21,19 @@ class _SplashScreenState extends State<SplashScreen> {
     if (user != null) {
       Future.delayed(Duration(seconds: 7), () {
         if (!mounted) return; // ✅ check before navigation
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          (route) => false,
         );
       });
     } else {
       Future.delayed(Duration(seconds: 7), () {
         if (!mounted) return; // ✅ check before navigation
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const OnBoarding()),
+          (route) => false,
         );
       });
     }

@@ -1,9 +1,6 @@
-
-import 'package:bookify/dashboard_screen.dart';
-
+import '/dashboard_screen.dart';
 import '/utils/themes/themes.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-
 import '/screens/admin/screens/dashboard.dart';
 import '/screens/auth/users/forgetpass.dart';
 import '/screens/auth/users/sign_up.dart';
@@ -67,12 +64,20 @@ class _SignInState extends State<SignIn> {
           if (role == "User") {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const DashboardScreen()),
+              PageRouteBuilder(
+                pageBuilder: (_, __, ___) => DashboardScreen(),
+                transitionsBuilder: (_, a, __, c) =>
+                    FadeTransition(opacity: a, child: c),
+              ),
             );
           } else if (role == "Admin") {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const Dashboard()),
+              PageRouteBuilder(
+                pageBuilder: (_, __, ___) => Dashboard(),
+                transitionsBuilder: (_, a, __, c) =>
+                    FadeTransition(opacity: a, child: c),
+              ),
             );
           }
         }
@@ -152,7 +157,11 @@ class _SignInState extends State<SignIn> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => DashboardScreen(),
+          transitionsBuilder: (_, a, __, c) =>
+              FadeTransition(opacity: a, child: c),
+        ),
       );
     } catch (e) {
       _showError("Error setting up user account");
@@ -295,7 +304,9 @@ class _SignInState extends State<SignIn> {
                                   ),
                             child: Text(
                               "Forget Password?",
-                              style: AppTheme.textSearchInfoLabeled(context).copyWith(fontSize: 14),
+                              style: AppTheme.textSearchInfoLabeled(
+                                context,
+                              ).copyWith(fontSize: 14),
                             ),
                           ),
                         ],
@@ -334,7 +345,9 @@ class _SignInState extends State<SignIn> {
                           ),
                           Text(
                             'Or continue with',
-                            style: AppTheme.textSearchInfo(context).copyWith(fontSize: 14),
+                            style: AppTheme.textSearchInfo(
+                              context,
+                            ).copyWith(fontSize: 14),
                           ),
                           Expanded(
                             child: Divider(
@@ -346,7 +359,7 @@ class _SignInState extends State<SignIn> {
                         ],
                       ),
                       const SizedBox(height: 25),
-                     
+
                       const SizedBox(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -364,7 +377,9 @@ class _SignInState extends State<SignIn> {
                                   ),
                             child: Text(
                               "Sign Up",
-                              style: AppTheme.textSearchInfoLabeled(context).copyWith(fontSize: 14),
+                              style: AppTheme.textSearchInfoLabeled(
+                                context,
+                              ).copyWith(fontSize: 14),
                             ),
                           ),
                         ],

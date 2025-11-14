@@ -109,11 +109,12 @@ class MyApp extends StatelessWidget {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const Dashboard(),
+                      PageRouteBuilder(
+                        pageBuilder: (_, __, ___) => Dashboard(),
+                        transitionsBuilder: (_, a, __, c) =>
+                            FadeTransition(opacity: a, child: c),
                       ),
-                      (Route<dynamic> route) =>
-                          false, // Remove all previous routes
+                      (route) => false,
                     );
                   });
                   return const SizedBox(); // Return empty widget until navigation happens
@@ -122,13 +123,15 @@ class MyApp extends StatelessWidget {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const DashboardScreen(),
+                      PageRouteBuilder(
+                        pageBuilder: (_, __, ___) => DashboardScreen(),
+                        transitionsBuilder: (_, a, __, c) =>
+                            FadeTransition(opacity: a, child: c),
                       ),
-                      (Route<dynamic> route) =>
-                          false, // Remove all previous routes
+                      (route) => false,
                     );
                   });
+
                   return const SizedBox(); // Return empty widget until navigation happens
                 } else {
                   // Fallback if no role found

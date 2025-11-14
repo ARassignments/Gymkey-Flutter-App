@@ -46,7 +46,6 @@ static Future<void> removeFromCart(String bookId, BuildContext context, {State? 
   }
 }
 
-
   static Future<void> updateQuantity(
     String bookId,
     int quantity,

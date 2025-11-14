@@ -1,3 +1,10 @@
+import 'package:bookify/components/appsnackbar.dart';
+import 'package:shimmer/shimmer.dart';
+
+import '/components/not_found.dart';
+import '/utils/themes/themes.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
+import '/components/loading_screen.dart';
 import '/models/cart_item.dart';
 import '/managers/cart_manager.dart';
 import '/screens/checkout.dart';
@@ -25,29 +32,22 @@ class _CartScreenState extends State<CartScreen> {
         return false;
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFeeeeee),
         body: SafeArea(
           child: Column(
             children: [
-              const SizedBox(height: 30),
-
-              /// Cart Stream from Firestore
               Expanded(
                 child: StreamBuilder<List<CartItem>>(
                   stream: CartManager.getCartStream(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return Center(child: LoadingLogo());
                     }
 
                     if (snapshot.hasError) {
                       return Center(
-                        child: Text(
-                          "Error loading cart: ${snapshot.error}",
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: Colors.red,
-                          ),
+                        child: NotFoundWidget(
+                          title: "No item in cart",
+                          message: "",
                         ),
                       );
                     }
@@ -56,13 +56,9 @@ class _CartScreenState extends State<CartScreen> {
 
                     if (cartItems.isEmpty) {
                       return const Center(
-                        child: Text(
-                          "Your cart is empty",
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        child: NotFoundWidget(
+                          title: "Your Cart is empty",
+                          message: "",
                         ),
                       );
                     }
@@ -84,12 +80,50 @@ class _CartScreenState extends State<CartScreen> {
                                 direction: DismissDirection.endToStart,
                                 background: Container(
                                   alignment: Alignment.centerRight,
-                                  padding: const EdgeInsets.only(right: 20),
-                                  color: Colors.red,
-                                  child: const Icon(
-                                    Icons.delete,
-                                    color: Colors.white,
-                                    size: 30,
+                                  padding: const EdgeInsets.only(right: 16),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.cardBg(context),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Shimmer(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            AppTheme.sliderHighlightBg(context),
+                                            AppTheme.iconColorThree(context),
+                                            AppTheme.sliderHighlightBg(context),
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        direction: ShimmerDirection.rtl,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          spacing: 12,
+                                          children: [
+                                            const Icon(
+                                              HugeIconsStroke.swipeLeft01,
+                                            ),
+                                            Text(
+                                              "Swipe left to remove",
+                                              style: AppTheme.textLink(context)
+                                                  .copyWith(
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 14,
+                                                  ),
+                                            ),
+                                            Icon(
+                                              HugeIconsSolid.delete01,
+                                              color: AppColor.accent_50,
+                                              size: 24,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 onDismissed: (direction) {
@@ -99,158 +133,200 @@ class _CartScreenState extends State<CartScreen> {
                                   );
                                 },
                                 child: Container(
-                                  margin: const EdgeInsets.only(bottom: 20),
-                                  padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color: MyColors.primary,
-                                        blurRadius: 4,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ],
+                                    color: AppTheme.customListBg(context),
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Row(
                                     children: [
                                       // Book Image
-                                      Container(
-                                        width: 80,
-                                        height: 100,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
+                                      Stack(
+                                        children: [
+                                          Container(
+                                            width: 120,
+                                            height: 100,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              image: DecorationImage(
+                                                image: NetworkImage(
+                                                  item.imageUrl,
+                                                ),
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
                                           ),
-                                          image: DecorationImage(
-                                            image: NetworkImage(item.imageUrl),
-                                            fit: BoxFit.cover,
+                                          Positioned(
+                                            top: 6,
+                                            left: 6,
+                                            child: Container(
+                                              width: 25,
+                                              height: 88,
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                                color: AppTheme.customListBg(
+                                                  context,
+                                                ),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  (index + 1)
+                                                      .toString()
+                                                      .padLeft(2, '0'),
+                                                  style:
+                                                      AppTheme.textSearchInfoLabeled(
+                                                        context,
+                                                      ),
+                                                ),
+                                              ),
+                                            ),
                                           ),
-                                        ),
+                                        ],
                                       ),
-                                      const SizedBox(width: 20),
 
                                       // Book Info
                                       Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              item.title,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 16,
-                                                color: MyColors.primary,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(16),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                item.title,
+                                                style: AppTheme.textTitle(
+                                                  context,
+                                                ),
                                               ),
-                                            ),
-                                           
-                                            const SizedBox(height: 8),
-                                            Row(
-                                              children: [
-                                                InkWell(
-                                                  onTap: () {
-                                                    CartManager.updateQuantity(
-                                                      item.bookId,
-                                                      item.quantity - 1,
-                                                      context,
-                                                    );
-                                                  },
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.all(4),
-                                                    decoration: BoxDecoration(
-                                                      shape: BoxShape.circle,
-                                                      color: MyColors.primary,
-                                                    ),
-                                                    child: const Icon(
-                                                      Icons.remove,
-                                                      size: 18,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 12,
-                                                      ),
-                                                  child: Text(
-                                                    item.quantity.toString(),
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.black54,
-                                                    ),
-                                                  ),
-                                                ),
-                                                InkWell(
-                                                  onTap: () {
-                                                    if (item.quantity <
-                                                        item.stock) {
+                                          
+                                              const SizedBox(height: 20),
+                                              Row(
+                                                children: [
+                                                  InkWell(
+                                                    onTap: () {
                                                       CartManager.updateQuantity(
                                                         item.bookId,
-                                                        item.quantity + 1,
+                                                        item.quantity - 1,
                                                         context,
                                                       );
-                                                    } else {
-                                                      ScaffoldMessenger.of(
-                                                        context,
-                                                      ).showSnackBar(
-                                                        const SnackBar(
-                                                          content: Text(
-                                                            "Maximum stock reached!",
-                                                          ),
-                                                          duration: Duration(
-                                                            seconds: 1,
-                                                          ),
-                                                        ),
-                                                      );
-                                                    }
-                                                  },
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.all(4),
-                                                    decoration: BoxDecoration(
-                                                      shape: BoxShape.circle,
-                                                      color: MyColors.primary,
-                                                    ),
-                                                    child: const Icon(
-                                                      Icons.add,
-                                                      size: 18,
+                                                    },
+                                                    child: Container(
+                                                      padding:
+                                                          const EdgeInsets.all(4),
+                                                      decoration: BoxDecoration(
+                                                        shape: BoxShape.circle,
+                                                        color:
+                                                            AppTheme.sliderHighlightBg(
+                                                              context,
+                                                            ),
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons.remove,
+                                                        size: 18,
+                                                      ),
                                                     ),
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 12,
+                                                        ),
+                                                    child: Text(
+                                                      "QTY: ${item.quantity.toString().padLeft(2, '0')}",
+                                                      style:
+                                                          AppTheme.textSearchInfoLabeled(
+                                                            context,
+                                                          ).copyWith(
+                                                            fontSize: 12,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  InkWell(
+                                                    onTap: () {
+                                                      if (item.quantity <
+                                                          item.stock) {
+                                                        CartManager.updateQuantity(
+                                                          item.bookId,
+                                                          item.quantity + 1,
+                                                          context,
+                                                        );
+                                                      } else {
+                                                        AppSnackBar.show(
+                                                          context,
+                                                          message:
+                                                              "Maximum stock reached!",
+                                                          type: AppSnackBarType
+                                                              .warning,
+                                                        );
+                                                      }
+                                                    },
+                                                    child: Container(
+                                                      padding:
+                                                          const EdgeInsets.all(4),
+                                                      decoration: BoxDecoration(
+                                                        shape: BoxShape.circle,
+                                                        color:
+                                                            AppTheme.sliderHighlightBg(
+                                                              context,
+                                                            ),
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons.add,
+                                                        size: 18,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
 
                                       // Price + Delete
-                                      Column(
-                                        children: [
-                                          Text(
-                                            "\$${(item.price * item.quantity).toStringAsFixed(2)}",
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: MyColors.primary,
+                                      Padding(
+                                        padding: const EdgeInsets.only(right: 16),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              spacing: 6,
+                                              children: [
+                                                Icon(
+                                                  HugeIconsSolid.money02,
+                                                  color: AppTheme.iconColor(
+                                                    context,
+                                                  ),
+                                                  size: 16,
+                                                ),
+                                                Text(
+                                                  "\$${(item.price * item.quantity).toStringAsFixed(2)}",
+                                                  style: AppTheme.textLabel(
+                                                    context,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          InkWell(
-                                            onTap: () {
-                                              CartManager.removeFromCart(
-                                                item.bookId,
-                                                context,
-                                              );
-                                            },
-                                            child: const Icon(
-                                              Icons.delete,
-                                              color: Colors.red,
-                                              size: 22,
+                                            const SizedBox(height: 20),
+                                            InkWell(
+                                              onTap: () {
+                                                CartManager.removeFromCart(
+                                                  item.bookId,
+                                                  context,
+                                                );
+                                              },
+                                              child: const Icon(
+                                                HugeIconsSolid.delete01,
+                                                color: AppColor.accent_50,
+                                                size: 18,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -265,20 +341,16 @@ class _CartScreenState extends State<CartScreen> {
                           padding: const EdgeInsets.all(12.0),
                           child: SizedBox(
                             width: double.infinity,
-                            child: ElevatedButtonTheme(
-                              data: MyElevatedButtonTheme
-                                  .lightElevatedButtonTheme,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const Checkout(),
-                                    ),
-                                  );
-                                },
-                                child: const Text("Check Out"),
-                              ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const Checkout(),
+                                  ),
+                                );
+                              },
+                              child: const Text("Check Out"),
                             ),
                           ),
                         ),

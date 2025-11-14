@@ -1,3 +1,4 @@
+import 'package:bookify/utils/constants/colors.dart';
 import 'package:bookify/utils/themes/custom_themes/appbar_theme.dart';
 import 'package:bookify/utils/themes/custom_themes/bottom_sheet_theme.dart';
 import 'package:bookify/utils/themes/custom_themes/checkbox_theme.dart';
@@ -89,6 +90,12 @@ class AppTheme {
     return Theme.of(context).brightness == Brightness.dark
         ? AppColor.neutral_90
         : AppColor.neutral_5;
+  }
+  
+  static Color navbarBg(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? AppColor.neutral_90
+        : MyColors.primary;
   }
 
   static String appLogo(BuildContext context) {

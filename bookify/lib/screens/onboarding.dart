@@ -8,7 +8,6 @@ class OnBoarding extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       body: Column(
         spacing: 30,
@@ -31,24 +30,31 @@ class OnBoarding extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: AppTheme.textTitle(context).copyWith(fontSize: 20),
                 ),
-      
+
                 SizedBox(height: 16),
-      
+
                 /// Centered Subtitle
                 Text(
                   'From protein powders to dumbbells, find everything to reach your goals',
                   textAlign: TextAlign.center,
-                  style: AppTheme.textSearchInfoLabeled(context).copyWith(fontSize: 13),
+                  style: AppTheme.textSearchInfoLabeled(
+                    context,
+                  ).copyWith(fontSize: 13),
                 ),
-      
+
                 SizedBox(height: 24),
-      
+
                 /// Centered Button
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
+                    Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => SignIn()),
+                      PageRouteBuilder(
+                        pageBuilder: (_, __, ___) => SignIn(),
+                        transitionsBuilder: (_, a, __, c) =>
+                            FadeTransition(opacity: a, child: c),
+                      ),
+                      (route) => false,
                     );
                   },
                   child: Text('Continue'),

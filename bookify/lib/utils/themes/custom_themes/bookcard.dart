@@ -1,4 +1,5 @@
 import 'package:bookify/components/appsnackbar.dart';
+import 'package:bookify/components/loading_screen.dart';
 import 'package:bookify/managers/wishlist_manager.dart';
 import 'package:bookify/managers/cart_manager.dart';
 import 'package:bookify/models/cart_item.dart';
@@ -7,6 +8,7 @@ import 'package:bookify/utils/themes/themes.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:shimmer/shimmer.dart';
 
 class BookCard extends StatefulWidget {
   final String bookId;
@@ -148,8 +150,36 @@ class _BookCardState extends State<BookCard> {
                   height: 120,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, _, __) =>
-                      const Icon(Icons.broken_image),
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+
+                    return Shimmer.fromColors(
+                      baseColor: AppTheme.customListBg(context),
+                      highlightColor: AppTheme.sliderHighlightBg(context),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.customListBg(context),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        height: 120,
+                        width: double.infinity,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppTheme.iconColor(context),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, _, __) => Container(
+                    height: 120,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppTheme.customListBg(context),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                  ),
                 ),
               ),
               Positioned(

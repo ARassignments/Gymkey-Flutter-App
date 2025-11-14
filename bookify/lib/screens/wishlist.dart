@@ -1,3 +1,8 @@
+import '/components/appsnackbar.dart';
+import '/components/loading_screen.dart';
+import '/components/not_found.dart';
+import '/utils/themes/themes.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
 import '/models/cart_item.dart';
 import '/managers/cart_manager.dart';
 import '/managers/wishlist_manager.dart';
@@ -24,56 +29,39 @@ class _WishListScreenState extends State<WishListScreen> {
         return false;
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFeeeeee),
         body: SafeArea(
           child: Column(
             children: [
-              const SizedBox(height: 30),
               Expanded(
                 child: StreamBuilder<List<CartItem>>(
                   stream: WishlistManager.getWishlistStream(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return Center(child: LoadingLogo());
                     }
 
                     final wishlistItems = snapshot.data ?? [];
 
                     if (wishlistItems.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'No item in wishlist',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey,
-                            fontWeight: FontWeight.w500,
-                          ),
+                      return Center(
+                        child: NotFoundWidget(
+                          title: "No item in wishlist",
+                          message: "",
                         ),
                       );
                     }
 
                     return ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 16,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                       itemCount: wishlistItems.length,
                       itemBuilder: (context, index) {
                         final item = wishlistItems[index];
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 16),
-                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: MyColors.primary,
-                                blurRadius: 6,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
+                            color: AppTheme.customListBg(context),
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
                             children: [
@@ -81,10 +69,11 @@ class _WishListScreenState extends State<WishListScreen> {
                               Stack(
                                 children: [
                                   Container(
-                                    width: 80,
+                                    width: 120,
                                     height: 100,
                                     decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
+                                      borderRadius: BorderRadius.circular(20),
+                                      color: AppTheme.cardDarkBg(context),
                                       image: DecorationImage(
                                         image: NetworkImage(item.imageUrl),
                                         fit: BoxFit.cover,
@@ -92,121 +81,150 @@ class _WishListScreenState extends State<WishListScreen> {
                                     ),
                                   ),
                                   Positioned(
-                                    top: 4,
-                                    right: 4,
-                                    child: GestureDetector(
+                                    top: 6,
+                                    right: 6,
+                                    child: InkWell(
                                       onTap: () {
                                         WishlistManager.removeFromWishlist(
                                           item,
                                         );
-                                        ScaffoldMessenger.of(
+                                        AppSnackBar.show(
                                           context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              '${item.title} removed from wishlist',
-                                            ),
-                                          ),
+                                          message:
+                                              "${item.title} removed from wishlist",
+                                          type: AppSnackBarType.success,
                                         );
                                       },
                                       child: Container(
-                                        padding: const EdgeInsets.all(4),
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
+                                        padding: const EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.customListBg(context),
                                           shape: BoxShape.circle,
                                         ),
                                         child: const Icon(
-                                          Icons.favorite,
-                                          size: 18,
+                                          HugeIconsSolid.favourite,
+                                          size: 14,
                                           color: Colors.red,
                                         ),
                                       ),
                                     ),
                                   ),
+                                  Positioned(
+                                    top: 6,
+                                    left: 6,
+                                    child: Container(
+                                      width: 25,
+                                      height: 88,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(20),
+                                        color: AppTheme.customListBg(context),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          (index+1).toString().padLeft(2, '0'),
+                                          style: AppTheme.textSearchInfoLabeled(
+                                            context,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
-                              const SizedBox(width: 16),
 
                               // Book Info
                               Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.title,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                        color: MyColors.primary,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.title,
+                                        style: AppTheme.textTitle(context),
                                       ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      item.author,
-                                      style: const TextStyle(
-                                        color: Colors.deepOrange,
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "Available Stock: ${item.stock.toString().padLeft(2, '0')} Left",
+                                        style: AppTheme.textSearchInfoLabeled(
+                                          context,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      '\$${item.price.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: MyColors.primary,
+                                      const SizedBox(height: 10),
+                                      Row(
+                                        spacing: 6,
+                                        children: [
+                                          Icon(
+                                            HugeIconsSolid.money02,
+                                            color: AppTheme.iconColor(context),
+                                            size: 16,
+                                          ),
+                                          Text(
+                                            '\$${item.price.toStringAsFixed(2)}',
+                                            style: AppTheme.textLabel(context),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
 
                               // Actions
-                              Column(
-                                children: [
-                                  InkWell(
-                                    onTap: () {
-                                      CartManager.addToCart(item);
-                                      WishlistManager.removeFromWishlist(item);
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            '${item.title} added to cart',
+                              Padding(
+                                padding: const EdgeInsets.only(right: 16),
+                                child: Column(
+                                  children: [
+                                    InkWell(
+                                      onTap: () {
+                                        CartManager.addToCart(item);
+                                        WishlistManager.removeFromWishlist(
+                                          item,
+                                        );
+                                        AppSnackBar.show(
+                                          context,
+                                          message:
+                                              "${item.title} added to cart",
+                                          type: AppSnackBarType.success,
+                                        );
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.cardBg(context),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          HugeIconsSolid.shoppingBag01,
+                                          size: 18,
+                                          color: AppTheme.iconColorThree(
+                                            context,
                                           ),
                                         ),
-                                      );
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                        color: MyColors.primary,
-                                        shape: BoxShape.circle,
                                       ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    InkWell(
+                                      onTap: () {
+                                        WishlistManager.removeFromWishlist(
+                                          item,
+                                        );
+                                        AppSnackBar.show(
+                                          context,
+                                          message:
+                                              '${item.title} removed from wishlist',
+                                          type: AppSnackBarType.success,
+                                        );
+                                      },
                                       child: const Icon(
-                                        Icons.shopping_cart_outlined,
+                                        HugeIconsSolid.delete01,
+                                        color: AppColor.accent_50,
+                                        size: 18,
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  InkWell(
-                                    onTap: () {
-                                      WishlistManager.removeFromWishlist(item);
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            '${item.title} removed from wishlist',
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: const Icon(
-                                      Icons.delete_outline,
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),

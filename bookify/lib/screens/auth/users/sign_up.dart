@@ -1,8 +1,7 @@
+import 'package:bookify/components/appsnackbar.dart';
 import 'package:flutter/gestures.dart';
-
 import '/utils/themes/themes.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-
 import '/screens/auth/users/sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -279,10 +278,7 @@ class _SignUpState extends State<SignUp> {
                                 phoneController.clear();
                                 addressController.clear();
 
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("SignUp Successful")),
-                                );
-
+                                AppSnackBar.show(context, message: "SignUp Successfully");
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(

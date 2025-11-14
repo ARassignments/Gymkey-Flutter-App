@@ -1,3 +1,5 @@
+import 'package:bookify/utils/themes/themes.dart';
+
 import '/screens/all_books.dart';
 import '/screens/auth/users/sign_in.dart';
 import '/screens/categories/action_page.dart';
@@ -70,7 +72,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
         return false;
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFeeeeee),
+        // backgroundColor: const Color(0xFFeeeeee),
         body: SafeArea(
           child: Column(
             children: [
@@ -81,45 +83,37 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Categories title and See All
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             "Categories",
-                            style: MyTextTheme.lightTextTheme.headlineSmall,
+                            style: AppTheme.textLabel(context).copyWith(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                          InkWell(
-                            onTap: () {
+                          TextButton(
+                            onPressed: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const AllBooksPage(),
+                                  builder: (_) =>
+                                      AllBooksPage(),
                                 ),
                               );
                             },
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  "See All Books",
-                                  style: TextStyle(
-                                    color: MyColors.primary,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                Container(
-                                  width: 97,
-                                  height: 1.0,
-                                  color: MyColors.primary,
-                                ),
-                              ],
+                            child: Text(
+                              "See All",
+                              style: AppTheme.textLink(context).copyWith(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 16),
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -133,20 +127,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
                             ),
                         itemBuilder: (context, index) {
                           final category = categories[index];
-                          return GestureDetector(
+                          return InkWell(
                             onTap: () => navigateToCategory(category['title']),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: MyColors.primary),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: MyColors.primary,
-                                    blurRadius: 4,
-                                    offset: Offset(0, 2),
-                                  ),
-                                ],
+                                color: AppTheme.customListBg(context),
+                                borderRadius: BorderRadius.circular(20),
                               ),
                               padding: const EdgeInsets.all(16),
                               child: Column(
@@ -155,15 +141,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
                                   Icon(
                                     category['icon'],
                                     size: 30,
-                                    color: MyColors.primary,
+                                    color: AppTheme.iconColor(context),
                                   ),
                                   const SizedBox(height: 10),
                                   Text(
                                     category['title'],
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
+                                    style: AppTheme.textLabel(context),
                                   ),
                                 ],
                               ),
