@@ -245,8 +245,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               trailing: Switch(
                                 value:
-                                    ThemeController.themeNotifier.value ==
-                                    ThemeMode.dark,
+                                    Theme.of(context).brightness ==
+                                    Brightness.dark,
                                 onChanged: (value) {
                                   ThemeController.setTheme(
                                     value ? ThemeMode.dark : ThemeMode.light,

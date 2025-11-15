@@ -1,10 +1,8 @@
-import 'package:bookify/managers/cart_manager.dart';
-import 'package:bookify/managers/wishlist_manager.dart';
-import 'package:bookify/models/cart_item.dart';
-
+import '/managers/cart_manager.dart';
+import '/managers/wishlist_manager.dart';
+import '/models/cart_item.dart';
 import '/utils/themes/themes.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-import '/utils/constants/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 

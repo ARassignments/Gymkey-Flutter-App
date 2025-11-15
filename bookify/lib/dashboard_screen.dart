@@ -403,8 +403,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 Text(
                                   "Hi, ",
                                   style: AppTheme.textTitle(context).copyWith(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'Poppins',
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                                 Text(
@@ -414,15 +415,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: AppTheme.textTitle(context).copyWith(
-                                    fontSize: 16,
+                                    fontFamily: 'Poppins',
+                                    fontSize: 18,
                                     fontWeight: FontWeight.w300,
                                   ),
                                 ),
                                 Text(
                                   ".",
-                                  style: AppTheme.textTitleActive(
-                                    context,
-                                  ).copyWith(fontSize: 16),
+                                  style: AppTheme.textTitleActive(context)
+                                      .copyWith(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 19,
+                                      ),
                                 ),
                               ],
                             ),
@@ -431,6 +435,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Text(
                               "My",
                               style: AppTheme.textTitle(context).copyWith(
+                                fontFamily: 'Poppins',
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -440,6 +445,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppTheme.textTitle(context).copyWith(
+                                fontFamily: 'Poppins',
                                 fontSize: 20,
                                 fontWeight: FontWeight.w300,
                               ),
@@ -448,7 +454,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ".",
                               style: AppTheme.textTitleActive(
                                 context,
-                              ).copyWith(fontSize: 18),
+                              ).copyWith(fontFamily: 'Poppins', fontSize: 18),
                             ),
                           ],
                           const Spacer(),

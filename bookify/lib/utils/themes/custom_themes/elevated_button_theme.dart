@@ -11,7 +11,7 @@ class MyElevatedButtonTheme {
       backgroundColor: MyColors.primary,
       disabledForegroundColor: Colors.grey,
       disabledBackgroundColor: Colors.grey,
-      side: const BorderSide(color: MyColors.primary),
+      side: const BorderSide(color: Colors.transparent),
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
       textStyle: const TextStyle(
         fontSize: 16,
@@ -28,7 +28,7 @@ class MyElevatedButtonTheme {
       backgroundColor: Colors.white,
       disabledForegroundColor: Colors.grey,
       disabledBackgroundColor: Colors.grey,
-      side: const BorderSide(color: Colors.white),
+      side: const BorderSide(color: Colors.transparent),
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
       textStyle: const TextStyle(
         fontSize: 16,

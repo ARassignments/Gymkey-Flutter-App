@@ -1,8 +1,7 @@
 import 'dart:ui';
-import 'package:bookify/managers/cart_manager.dart';
-import 'package:bookify/managers/wishlist_manager.dart';
-import 'package:bookify/models/cart_item.dart';
-
+import '/managers/cart_manager.dart';
+import '/managers/wishlist_manager.dart';
+import '/models/cart_item.dart';
 import '/screens/auth/users/sign_in.dart';
 import '/utils/themes/themes.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -84,7 +83,6 @@ class _MenuDrawerState extends State<MenuDrawer>
 
   void _logout() {
     final auth = FirebaseAuth.instance;
-    final user = FirebaseAuth.instance.currentUser;
     if (mounted) {
       auth.signOut().then((_) {
         Navigator.pushReplacement(

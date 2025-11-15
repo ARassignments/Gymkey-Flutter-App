@@ -138,7 +138,7 @@ class AppTheme {
   static Color cardBg(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
       ? AppColor.neutral_90.withOpacity(0.4)
-      : AppColor.neutral_5;
+      : AppColor.neutral_5.withOpacity(0.4);
 
   static Color cardDarkBg(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
@@ -291,6 +291,6 @@ class MyTheme {
     checkboxTheme: MyCheckboxTheme.darkCheckboxTheme,
     chipTheme: MyChipTheme.darkkChipTheme,
     outlinedButtonTheme: MyOutlinedButtonTheme.darkOutlinedButtonTheme,
-    inputDecorationTheme: MyTextFormFieldTheme.lightInputDecorationTheme,
+    inputDecorationTheme: MyTextFormFieldTheme.darkInputDecorationTheme,
   );
 }

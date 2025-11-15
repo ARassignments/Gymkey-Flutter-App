@@ -99,19 +99,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     DashboardSlider(
                       slidesData: [
                         _buildSliderCard(
-                          title: 'Bookify Special Offers',
-                          subtitle: 'Get your favorites today!',
-                          image: 'assets/images/banner1.webp',
+                          title: '',
+                          subtitle: '',
+                          image: 'assets/images/banner1.png',
                         ),
                         _buildSliderCard(
-                          title: 'Top Reads of the Month',
-                          subtitle: 'Trending now on Bookify',
-                          image: 'assets/images/banner1.webp',
+                          title: '',
+                          subtitle: '',
+                          image: 'assets/images/banner2.png',
                         ),
                         _buildSliderCard(
-                          title: 'Discover New Authors',
-                          subtitle: 'Fresh stories every week',
-                          image: 'assets/images/banner1.webp',
+                          title: '',
+                          subtitle: '',
+                          image: 'assets/images/banner3.png',
                         ),
                       ],
                     ),

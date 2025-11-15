@@ -5,7 +5,7 @@ import '/utils/constants/colors.dart';
 class MyTextFormFieldTheme {
   MyTextFormFieldTheme._();
 
-  static final lightInputDecorationTheme = InputDecorationTheme(
+  static final darkInputDecorationTheme = InputDecorationTheme(
     filled: true,
     fillColor: AppColor.neutral_90,
     hoverColor: AppColor.transparent,
@@ -51,7 +51,7 @@ class MyTextFormFieldTheme {
 
   // darkInputDecorationTheme remains same as before
 
-  static final darkInputDecorationTheme = InputDecorationTheme(
+  static final lightInputDecorationTheme = InputDecorationTheme(
     filled: true,
     fillColor: AppColor.neutral_5,
     hoverColor: AppColor.transparent,
