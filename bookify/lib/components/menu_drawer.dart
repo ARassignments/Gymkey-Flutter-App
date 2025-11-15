@@ -108,7 +108,7 @@ class _MenuDrawerState extends State<MenuDrawer>
         shape: BoxShape.circle,
       ),
       child: Text(
-        count.toString().padLeft(2,'0'),
+        count.toString().padLeft(2, '0'),
         style: AppTheme.textSearchInfoLabeled(context).copyWith(fontSize: 10),
       ),
     );
@@ -267,7 +267,14 @@ class _MenuDrawerState extends State<MenuDrawer>
                       const Spacer(),
                       // Divider(color: AppTheme.dividerBg(context)),
                       OutlinedButton(
-                        child: Text('Log Out'),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: AppColor.accent_50),
+                          overlayColor: AppColor.accent_50.withOpacity(0.1),
+                        ),
+                        child: Text(
+                          'Log Out',
+                          style: TextStyle(color: AppColor.accent_50),
+                        ),
                         onPressed: () {
                           DialogLogout().showDialog(context, _logout);
                         },

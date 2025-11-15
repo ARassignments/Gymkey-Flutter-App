@@ -24,11 +24,11 @@ class MyElevatedButtonTheme {
   static final darkElevatedButtonTheme = ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
       elevation: 0,
-      foregroundColor: Colors.white,
-      backgroundColor: MyColors.primary,
+      foregroundColor: Colors.black,
+      backgroundColor: Colors.white,
       disabledForegroundColor: Colors.grey,
       disabledBackgroundColor: Colors.grey,
-      side: const BorderSide(color: MyColors.primary),
+      side: const BorderSide(color: Colors.white),
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
       textStyle: const TextStyle(
         fontSize: 16,

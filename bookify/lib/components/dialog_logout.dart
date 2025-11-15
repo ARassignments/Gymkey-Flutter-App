@@ -23,10 +23,9 @@ class DialogLogout {
                   Text(
                     "Logout",
                     textAlign: TextAlign.center,
-                    style: AppTheme.textLabel(context).copyWith(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600
-                    ),
+                    style: AppTheme.textLabel(
+                      context,
+                    ).copyWith(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   const Divider(),
                   Text(
@@ -35,7 +34,14 @@ class DialogLogout {
                     style: AppTheme.textLabel(context),
                   ),
                   OutlinedButton(
-                    child: Text("Yes, Logout"),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: AppColor.accent_50),
+                      overlayColor: AppColor.accent_50.withOpacity(0.1),
+                    ),
+                    child: Text(
+                      'Yes, Logout',
+                      style: TextStyle(color: AppColor.accent_50),
+                    ),
                     onPressed: () {
                       Navigator.pop(context);
                       onLogout();

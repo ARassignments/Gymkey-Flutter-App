@@ -1,14 +1,12 @@
+import 'package:bookify/components/dialog_logout.dart';
+
 import '/components/loading_screen.dart';
 import '/utils/themes/themes.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import '/screens/auth/users/sign_in.dart';
 import '/screens/edit_profile.dart';
-import '/screens/home.dart';
 import '/screens/user_orders.dart';
 import '/utils/constants/colors.dart';
-import '/utils/themes/custom_themes/app_navbar.dart';
-import '/utils/themes/custom_themes/bottomnavbar.dart';
-import '/utils/themes/custom_themes/text_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -41,7 +39,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
       try {
-        final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
         final data = doc.data();
 
         if (data != null) {
@@ -73,46 +74,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 20),
-    
-                    // View Orders Button
-                    Padding(
-                      padding: const EdgeInsets.only(right: 24),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => UserOrders()),
-                            );
-                          },
-                          icon: const Icon(Icons.shopping_bag_outlined, color: MyColors.primary),
-                          label: Text(
-                            "View Orders",
-                            style: TextStyle(
-                              color: MyColors.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-    
-                    const SizedBox(height: 10),
-    
                     // Profile Picture with Shadow
                     Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: MyColors.primary.withOpacity(0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
+                      decoration: BoxDecoration(shape: BoxShape.circle),
                       child: CircleAvatar(
                         radius: 60,
                         backgroundColor: AppTheme.cardBg(context),
@@ -120,84 +84,214 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ? NetworkImage(profileImage)
                             : null,
                         child: profileImage.isEmpty
-                            ? const Icon(HugeIconsSolid.user03, size: 60, color: Colors.grey)
+                            ? Icon(
+                                HugeIconsSolid.user03,
+                                size: 60,
+                                color: AppTheme.iconColorThree(context),
+                              )
                             : null,
                       ),
                     ),
-    
-                    const SizedBox(height: 20),
-    
+
+                    const SizedBox(height: 16),
                     Text(
                       "Profile Details",
                       style: AppTheme.textTitle(context).copyWith(fontSize: 20),
                     ),
-    
+
                     const SizedBox(height: 20),
-    
+
                     // Card with details
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Container(
-                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: AppTheme.cardBg(context),
                           borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
                         ),
                         child: Column(
                           children: [
-                            _buildInfoTile(HugeIconsStroke.user03, "Name", name),
-                            Divider(height: 20, thickness: 1, color: AppTheme.dividerBg(context)),
-                            _buildInfoTile(HugeIconsStroke.mail01, "Email", email),
-                            Divider(height: 20, thickness: 1, color: AppTheme.dividerBg(context)),
-                            _buildInfoTile(HugeIconsStroke.call02, "Contact", contact),
-                            Divider(height: 20, thickness: 1, color: AppTheme.dividerBg(context)),
-                            _buildInfoTile(HugeIconsStroke.mapsLocation01, "Address", address),
+                            _buildInfoTile(
+                              HugeIconsStroke.user03,
+                              "Name",
+                              name,
+                            ),
+                            Divider(
+                              height: 1,
+                              color: AppTheme.dividerBg(context),
+                            ),
+                            _buildInfoTile(
+                              HugeIconsStroke.mail01,
+                              "Email",
+                              email,
+                            ),
+                            Divider(
+                              height: 1,
+                              color: AppTheme.dividerBg(context),
+                            ),
+                            _buildInfoTile(
+                              HugeIconsStroke.call02,
+                              "Contact",
+                              contact,
+                            ),
+                            Divider(
+                              height: 1,
+                              color: AppTheme.dividerBg(context),
+                            ),
+                            _buildInfoTile(
+                              HugeIconsStroke.mapsLocation01,
+                              "Address",
+                              address,
+                            ),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 55,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const EditProfileScreen(),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(HugeIconsSolid.edit01),
+                                style: ElevatedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.only(
+                                      bottomLeft: Radius.circular(20),
+                                      bottomRight: Radius.circular(20),
+                                    ),
+                                  ),
+                                ),
+                                label: Text("Edit Profile"),
+                              ),
+                            ),
                           ],
                         ),
                       ),
                     ),
-    
+
+                    const SizedBox(height: 20),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 0),
+                        decoration: BoxDecoration(
+                          color: AppTheme.cardBg(context),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Column(
+                          children: [
+                            ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              leading: Icon(
+                                HugeIconsStroke.shoppingBag01,
+                                size: 24,
+                              ),
+                              title: Text(
+                                "View Orders",
+                                style: AppTheme.textLabel(context),
+                              ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => UserOrders(),
+                                  ),
+                                );
+                              },
+                            ),
+                            Divider(
+                              height: 1,
+                              color: AppTheme.dividerBg(context),
+                            ),
+                            ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              leading: Icon(
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? HugeIconsStroke.moon02
+                                    : HugeIconsStroke.sun02,
+                                size: 24,
+                              ),
+                              title: Text(
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? "Dark Mode"
+                                    : "Light Mode",
+                                style: AppTheme.textLabel(context),
+                              ),
+                              trailing: Switch(
+                                value:
+                                    ThemeController.themeNotifier.value ==
+                                    ThemeMode.dark,
+                                onChanged: (value) {
+                                  ThemeController.setTheme(
+                                    value ? ThemeMode.dark : ThemeMode.light,
+                                  );
+                                },
+                              ),
+                              onTap: () {
+                                final isDark =
+                                    ThemeController.themeNotifier.value ==
+                                    ThemeMode.dark;
+                                ThemeController.setTheme(
+                                  isDark ? ThemeMode.light : ThemeMode.dark,
+                                );
+                              },
+                            ),
+                            Divider(
+                              height: 1,
+                              color: AppTheme.dividerBg(context),
+                            ),
+                            ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              leading: Icon(
+                                HugeIconsStroke.chartBreakoutCircle,
+                                size: 24,
+                              ),
+                              title: Text(
+                                "About GymKey",
+                                style: AppTheme.textLabel(context),
+                              ),
+                              onTap: () {},
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 30),
-    
+
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: SizedBox(
                         width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: MyColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 3,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: AppColor.accent_50),
+                            overlayColor: AppColor.accent_50.withOpacity(0.1),
                           ),
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const EditProfileScreen(),
-                              ),
-                            );
+                            DialogLogout().showDialog(context, _logout);
                           },
-                          child: const Text(
-                            "Edit Profile",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
+                          child: Text(
+                            'Log Out',
+                            style: TextStyle(color: AppColor.accent_50),
                           ),
                         ),
                       ),
                     ),
-    
+
                     const SizedBox(height: 30),
                   ],
                 ),
@@ -207,28 +301,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildInfoTile(IconData icon, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: MyColors.primary, size: 26),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: AppTheme.textSearchInfoLabeled(context).copyWith(fontSize: 16),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value.isNotEmpty ? value : "Not provided",
-                style: AppTheme.textSearchInfoLabeled(context).copyWith(fontSize: 13, fontWeight: FontWeight.w400),
-              ),
-            ],
-          ),
-        ),
-      ],
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      leading: Icon(icon, size: 24),
+      title: Text(label, style: AppTheme.textLabel(context)),
+      subtitle: Text(
+        value.isNotEmpty ? value : "Not provided",
+        style: AppTheme.textSearchInfoLabeled(context).copyWith(fontSize: 12),
+      ),
     );
+  }
+
+  void _logout() {
+    if (mounted) {
+      auth.signOut().then((_) {
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => SignIn(),
+            transitionsBuilder: (_, a, __, c) =>
+                FadeTransition(opacity: a, child: c),
+          ),
+        );
+      });
+    }
   }
 }

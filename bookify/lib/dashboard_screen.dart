@@ -1,9 +1,7 @@
 import 'package:flutter/services.dart';
-
 import '/utils/themes/custom_themes/bottomnavbar.dart';
 import '/screens/home.dart';
 import '/screens/auth/users/sign_in.dart';
-import '/utils/themes/custom_themes/app_navbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '/screens/cart.dart';
 import '/screens/profile.dart';
@@ -14,11 +12,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-import 'package:intl/intl.dart';
 import '/components/menu_drawer.dart';
-import '/components/dashboard_slider.dart';
-import '/components/appsnackbar.dart';
-import '/components/not_found.dart';
 import '/components/dialog_logout.dart';
 import '/components/loading_screen.dart';
 
@@ -377,58 +371,86 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             onTap: () => _drawerController.toggle!(),
                           ),
                           SizedBox(width: 10),
-                          ClipOval(
-                            child: (profileImage.isNotEmpty)
-                                ? Image.network(
-                                    profileImage,
-                                    width: 40,
-                                    height: 40,
-                                    fit: BoxFit.cover,
-                                  )
-                                : (user?.photoURL != null)
-                                ? Image.network(
-                                    user!.photoURL!,
-                                    width: 40,
-                                    height: 40,
-                                    fit: BoxFit.cover,
-                                  )
-                                : SizedBox(
-                                    width: 40,
-                                    height: 40,
-                                    child: Icon(
-                                      HugeIconsSolid.user03,
-                                      size: 30,
-                                      color: AppTheme.iconColorThree(context),
+                          if (_currentIndex < 1) ...[
+                            ClipOval(
+                              child: (profileImage.isNotEmpty)
+                                  ? Image.network(
+                                      profileImage,
+                                      width: 40,
+                                      height: 40,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : (user?.photoURL != null)
+                                  ? Image.network(
+                                      user!.photoURL!,
+                                      width: 40,
+                                      height: 40,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : SizedBox(
+                                      width: 40,
+                                      height: 40,
+                                      child: Icon(
+                                        HugeIconsSolid.user03,
+                                        size: 30,
+                                        color: AppTheme.iconColorThree(context),
+                                      ),
                                     ),
+                            ),
+                            const SizedBox(width: 10),
+                            Row(
+                              children: [
+                                Text(
+                                  "Hi, ",
+                                  style: AppTheme.textTitle(context).copyWith(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                          ),
-                          const SizedBox(width: 10),
-                          Row(
-                            children: [
-                              Text(
-                                "Hi, ",
-                                style: AppTheme.textTitle(context).copyWith(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
                                 ),
-                              ),
-                              Text(
-                                user?.displayName ?? name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTheme.textTitle(context).copyWith(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w300,
+                                Text(
+                                  _currentIndex > 0
+                                      ? menus[_currentIndex]
+                                      : user?.displayName ?? name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTheme.textTitle(context).copyWith(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w300,
+                                  ),
                                 ),
+                                Text(
+                                  ".",
+                                  style: AppTheme.textTitleActive(
+                                    context,
+                                  ).copyWith(fontSize: 16),
+                                ),
+                              ],
+                            ),
+                          ],
+                          if (_currentIndex > 0) ...[
+                            Text(
+                              "My",
+                              style: AppTheme.textTitle(context).copyWith(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
                               ),
-                              Text(
-                                ".",
-                                style: AppTheme.textTitleActive(
-                                  context,
-                                ).copyWith(fontSize: 16),
+                            ),
+                            Text(
+                              menus[_currentIndex],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTheme.textTitle(context).copyWith(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w300,
                               ),
-                            ],
-                          ),
+                            ),
+                            Text(
+                              ".",
+                              style: AppTheme.textTitleActive(
+                                context,
+                              ).copyWith(fontSize: 18),
+                            ),
+                          ],
                           const Spacer(),
                         ],
                         if (_showSearchBar) ...[

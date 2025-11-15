@@ -11,6 +11,7 @@ class MyOutlinedButtonTheme {
       backgroundColor: Colors.transparent,
       side: const BorderSide(color: MyColors.primary),
       textStyle: const TextStyle(
+        fontFamily: 'Poppins',
         fontSize: 16,
         fontWeight: FontWeight.w500,
         color: Colors.black,
@@ -27,6 +28,7 @@ class MyOutlinedButtonTheme {
       backgroundColor: Colors.transparent,
       side: const BorderSide(color: Colors.white),
       textStyle: const TextStyle(
+        fontFamily: 'Poppins',
         fontSize: 16,
         fontWeight: FontWeight.w500,
         color: Colors.white,
