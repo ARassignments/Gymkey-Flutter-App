@@ -70,8 +70,10 @@ class _ManageCategoriesState extends State<ManageCategories> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("Hi, Admin",
-                              style: MyTextTheme.lightTextTheme.titleLarge),
+                          Text(
+                            "Hi, Admin",
+                            style: MyTextTheme.lightTextTheme.titleLarge,
+                          ),
                           const Text(
                             "Administrator",
                             style: TextStyle(
@@ -86,8 +88,11 @@ class _ManageCategoriesState extends State<ManageCategories> {
                       InkWell(
                         onTap: () =>
                             setState(() => _showSearchBar = !_showSearchBar),
-                        child: const Icon(Icons.search_rounded,
-                            color: MyColors.primary, size: 30),
+                        child: const Icon(
+                          Icons.search_rounded,
+                          color: MyColors.primary,
+                          size: 30,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       InkWell(
@@ -96,12 +101,16 @@ class _ManageCategoriesState extends State<ManageCategories> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => const SignIn()),
+                                builder: (context) => const SignIn(),
+                              ),
                             );
                           });
                         },
-                        child: const Icon(Icons.logout,
-                            color: MyColors.primary, size: 30),
+                        child: const Icon(
+                          Icons.logout,
+                          color: MyColors.primary,
+                          size: 30,
+                        ),
                       ),
                     ],
                   ),
@@ -114,12 +123,15 @@ class _ManageCategoriesState extends State<ManageCategories> {
                       controller: _searchController,
                       decoration: InputDecoration(
                         hintText: "Search categories...",
-                        prefixIcon:
-                            const Icon(Icons.search, color: Colors.grey),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Colors.grey,
+                        ),
                         filled: true,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
@@ -192,8 +204,7 @@ class _ManageCategoriesState extends State<ManageCategories> {
                         .snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(
-                            child: CircularProgressIndicator());
+                        return const Center(child: CircularProgressIndicator());
                       }
                       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                         return const Center(child: Text("No categories found"));
@@ -253,8 +264,9 @@ class _ManageCategoriesState extends State<ManageCategories> {
 
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content:
-                                        Text('Category deleted successfully!'),
+                                    content: Text(
+                                      'Category deleted successfully!',
+                                    ),
                                   ),
                                 );
                                 return true;
@@ -264,9 +276,47 @@ class _ManageCategoriesState extends State<ManageCategories> {
                             child: Card(
                               color: Colors.white,
                               margin: const EdgeInsets.symmetric(
-                                  vertical: 8, horizontal: 12),
+                                vertical: 8,
+                                horizontal: 12,
+                              ),
                               child: ListTile(
-                                leading: Icon(Icons.list),
+                                leading:
+                                    data['image_url'] != null &&
+                                        data['image_url'].isNotEmpty
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          data['image_url'],
+                                          width: 50,
+                                          height: 50,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  Container(
+                                                    width: 50,
+                                                    height: 50,
+                                                    color: Colors.grey[300],
+                                                    child: const Icon(
+                                                      Icons.image_not_supported,
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                        ),
+                                      )
+                                    : Container(
+                                        width: 50,
+                                        height: 50,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[300],
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.image,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
                                 title: Text(
                                   (data['name'] ?? '').toString(),
                                   style: const TextStyle(

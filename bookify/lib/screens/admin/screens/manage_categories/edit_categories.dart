@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:bookify/screens/auth/users/sign_in.dart';
 import 'package:bookify/utils/constants/colors.dart';
 import 'package:bookify/utils/themes/custom_themes/elevated_button_theme.dart';
@@ -5,6 +7,8 @@ import 'package:bookify/utils/themes/custom_themes/text_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EditCategory extends StatefulWidget {
   final String categoryId;
@@ -23,11 +27,15 @@ class EditCategory extends StatefulWidget {
 class _EditCategoryState extends State<EditCategory> {
   final _formKey = GlobalKey<FormState>();
   final _auth = FirebaseAuth.instance;
-  final TextEditingController _searchController = TextEditingController();
-  bool _showSearchBar = false;
-
+  final _storageSupabase = Supabase.instance.client.storage.from("images");
   late TextEditingController nameController;
   late TextEditingController descriptionController;
+  Uint8List? _imageBytes;
+  String? _imageName;
+  String? currentImageUrl;
+  final picker = ImagePicker();
+  final supabase = Supabase.instance.client;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -36,17 +44,77 @@ class _EditCategoryState extends State<EditCategory> {
     descriptionController = TextEditingController(
       text: widget.categoryData['description'] ?? '',
     );
+    currentImageUrl = widget.categoryData['image_url'] ?? '';
   }
 
-  // ---------- Update Firestore ----------
+  @override
+  void dispose() {
+    nameController.dispose();
+    descriptionController.dispose();
+    super.dispose();
+  }
+
+  Future<void> pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+    if (pickedFile != null) {
+      final bytes = await pickedFile.readAsBytes();
+      setState(() {
+        _imageBytes = bytes;
+        _imageName = pickedFile.name;
+      });
+    }
+  }
+
+  // ---------- Upload to Supabase ----------
+  Future<String?> uploadImageToSupabase(Uint8List bytes, String name) async {
+    try {
+      final fileName = 'prod_${DateTime.now().millisecondsSinceEpoch}_$name';
+      await _storageSupabase.uploadBinary(
+        fileName,
+        bytes,
+        fileOptions: const FileOptions(upsert: false),
+      );
+      return _storageSupabase.getPublicUrl(fileName);
+    } catch (e) {
+      print("Image upload error: $e");
+      return null;
+    }
+  }
+
+  // Update Firestore
   Future<void> updateCategory() async {
-    await FirebaseFirestore.instance
-        .collection('categories')
-        .doc(widget.categoryId)
-        .update({
-      'name': nameController.text.trim(),
-      'updated_at': FieldValue.serverTimestamp(),
-    });
+    setState(() => _isLoading = true);
+
+    try {
+      String? imageUrl = widget.categoryData['image_url'];
+      if (_imageBytes != null) {
+        imageUrl = await uploadImageToSupabase(_imageBytes!, _imageName!);
+      }
+
+      await FirebaseFirestore.instance
+          .collection('categories')
+          .doc(widget.categoryId)
+          .update({
+            'name': nameController.text.trim(),
+            'image_url': imageUrl ?? '',
+            'updated_at': FieldValue.serverTimestamp(),
+          });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Category updated successfully!")),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      print("Update error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to update category!")),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -54,153 +122,121 @@ class _EditCategoryState extends State<EditCategory> {
     return Scaffold(
       backgroundColor: const Color(0xFFeeeeee),
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 30),
-
-            // ---------- HEADER ----------
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Row(
-                children: [
-                  ClipOval(
-                    child: Image.asset(
-                      "assets/images/b.jpg",
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Hi, Admin",
-                        style: MyTextTheme.lightTextTheme.titleLarge,
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  InkWell(
-                    onTap: () =>
-                        setState(() => _showSearchBar = !_showSearchBar),
-                    child: const Icon(
-                      Icons.search_rounded,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                const SizedBox(height: 30),
+                Center(
+                  child: Text(
+                    "Edit Category",
+                    style: TextStyle(
                       color: MyColors.primary,
-                      size: 30,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  InkWell(
-                    onTap: () {
-                      _auth.signOut().then((value) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const SignIn(),
-                          ),
-                        );
-                      });
-                    },
-                    child: const Icon(
-                      Icons.logout,
-                      color: MyColors.primary,
-                      size: 30,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                ),
+                const SizedBox(height: 20),
 
-            if (_showSearchBar)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                child: TextField(
-                  controller: _searchController,
-                  style: const TextStyle(color: Colors.black),
-                  decoration: InputDecoration(
-                    hintText: "Search...",
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                    border: OutlineInputBorder(
+                // ---------- IMAGE PICKER ----------
+                GestureDetector(
+                  onTap: pickImage,
+                  child: Container(
+                    margin: EdgeInsets.symmetric(horizontal: 10),
+                    height: 150,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: MyColors.primary),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                ),
-              ),
-
-            const SizedBox(height: 10),
-
-            // ---------- FORM ----------
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 24),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 10),
-                      Center(
-                        child: Text(
-                          "Edit Category",
-                          style: TextStyle(
-                            color: MyColors.primary,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // ---------- Fields ----------
-                      _buildTextField(
-                        nameController,
-                        'Category Name',
-                        'Enter Category Name',
-                        Icons.category,
-                      ),
-
-                      // ---------- Update Button ----------
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: MyElevatedButtonTheme
-                                .lightElevatedButtonTheme
-                                .style,
-                            onPressed: () async {
-                              if (_formKey.currentState!.validate()) {
-                                await updateCategory();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Category updated successfully!",
+                    child: _imageBytes != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.memory(
+                              _imageBytes!,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : (currentImageUrl != null &&
+                              currentImageUrl!.isNotEmpty)
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              currentImageUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                    color: Colors.grey[300],
+                                    child: const Icon(
+                                      Icons.image_not_supported,
+                                      color: Colors.grey,
                                     ),
                                   ),
-                                );
-                                Navigator.pop(context);
-                              }
-                            },
-                            child: const Text("Update Category"),
+                            ),
+                          )
+                        : const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.image,
+                                  size: 40,
+                                  color: MyColors.primary,
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  "Tap to upload product image",
+                                  style: TextStyle(color: MyColors.primary),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
-              ),
+                const SizedBox(height: 20),
+
+                // ---------- NAME FIELD ----------
+                _buildTextField(
+                  nameController,
+                  'Category Name',
+                  'Enter Category Name',
+                  Icons.category,
+                ),
+
+                // ---------- UPDATE BUTTON ----------
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style:
+                          MyElevatedButtonTheme.lightElevatedButtonTheme.style,
+                      onPressed: _isLoading
+                          ? null
+                          : () async {
+                              if (_formKey.currentState!.validate()) {
+                                await updateCategory();
+                              }
+                            },
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text("Update Category"),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  // ---------- Reusable TextField ----------
+  // ---------- REUSABLE TEXT FIELD ----------
   Widget _buildTextField(
     TextEditingController controller,
     String label,
