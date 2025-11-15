@@ -1,10 +1,8 @@
-import 'package:bookify/components/appsnackbar.dart';
-import 'package:bookify/components/loading_screen.dart';
-import 'package:bookify/managers/wishlist_manager.dart';
-import 'package:bookify/managers/cart_manager.dart';
-import 'package:bookify/models/cart_item.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/themes.dart';
+import '/components/appsnackbar.dart';
+import '/managers/wishlist_manager.dart';
+import '/managers/cart_manager.dart';
+import '/models/cart_item.dart';
+import '/utils/themes/themes.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
@@ -133,7 +131,7 @@ class _BookCardState extends State<BookCard> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 180,
+      width: 160,
       decoration: BoxDecoration(
         color: AppTheme.customListBg(context),
         borderRadius: BorderRadius.circular(20),

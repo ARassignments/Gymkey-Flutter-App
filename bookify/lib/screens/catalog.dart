@@ -72,7 +72,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
         return false;
       },
       child: Scaffold(
-        // backgroundColor: const Color(0xFFeeeeee),
+        backgroundColor: AppTheme.screenBg(context),
         body: SafeArea(
           child: Column(
             children: [

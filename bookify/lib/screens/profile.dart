@@ -66,6 +66,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.screenBg(context),
       body: SafeArea(
         child: isLoading
             ? const Center(child: LoadingLogo())
@@ -197,6 +198,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               title: Text(
                                 "View Orders",
                                 style: AppTheme.textLabel(context),
+                              ),
+                              trailing: AnimatedContainer(
+                                duration: const Duration(milliseconds: 250),
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.cardDarkBg(context),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  "02",
+                                  style: AppTheme.textSearchInfoLabeled(
+                                    context,
+                                  ).copyWith(fontSize: 10),
+                                ),
                               ),
                               onTap: () {
                                 Navigator.push(

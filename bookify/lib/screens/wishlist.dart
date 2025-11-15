@@ -29,6 +29,7 @@ class _WishListScreenState extends State<WishListScreen> {
         return false;
       },
       child: Scaffold(
+        backgroundColor: AppTheme.screenBg(context),
         body: SafeArea(
           child: Column(
             children: [
@@ -45,8 +46,8 @@ class _WishListScreenState extends State<WishListScreen> {
                     if (wishlistItems.isEmpty) {
                       return Center(
                         child: NotFoundWidget(
-                          title: "No item in wishlist",
-                          message: "",
+                          title: "Your wishlist is empty",
+                          message: "You don't have any items added to wishlist yet.",
                         ),
                       );
                     }

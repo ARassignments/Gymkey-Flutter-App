@@ -1,19 +1,14 @@
 import 'dart:io' show Platform;
 import 'package:hugeicons_pro/hugeicons.dart';
-
 import '/components/dashboard_slider.dart';
 import '/components/loading_screen.dart';
-import '/components/menu_drawer.dart';
 import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
-
 import '/components/not_found.dart';
 import '/utils/themes/themes.dart';
 import 'package:flutter/services.dart';
 import '/screens/book_detail_page.dart';
 import '/utils/constants/colors.dart';
-import '/utils/themes/custom_themes/app_navbar.dart';
 import '/utils/themes/custom_themes/bookcard.dart';
-import '/utils/themes/custom_themes/bottomnavbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -90,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.screenBg(context),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -122,9 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     // ===== Dynamic Categories Section =====
                     categories.isEmpty
-                        ? Center(
-                            child:LoadingLogo(),
-                          )
+                        ? Center(child: LoadingLogo())
                         : Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -393,16 +387,18 @@ class _HomeScreenState extends State<HomeScreen> {
         future: future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: LoadingLogo(),
-            );
+            return Center(child: LoadingLogo());
           }
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(
-              child: NotFoundWidget(title: "Not Found Products", message: ""),
+              child: NotFoundWidget(
+                title: "Not Found Products",
+                message: "",
+                size: 140,
+              ),
             );
           }
 
@@ -461,7 +457,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               }),
 
-              // 👇 Add Load More button at the end
               InkWell(
                 onTap: () {
                   Navigator.push(
@@ -472,7 +467,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
                 child: Container(
-                  width: 180,
+                  width: 160,
                   margin: EdgeInsets.only(left: 16),
                   decoration: BoxDecoration(
                     color: AppTheme.customListBg(context),

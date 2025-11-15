@@ -32,6 +32,7 @@ class _CartScreenState extends State<CartScreen> {
         return false;
       },
       child: Scaffold(
+        backgroundColor: AppTheme.screenBg(context),
         body: SafeArea(
           child: Column(
             children: [
@@ -57,8 +58,8 @@ class _CartScreenState extends State<CartScreen> {
                     if (cartItems.isEmpty) {
                       return const Center(
                         child: NotFoundWidget(
-                          title: "Your Cart is empty",
-                          message: "",
+                          title: "Your cart is empty",
+                          message: "You don't have any items added to cart yet. You need to add items to cart before checkout.",
                         ),
                       );
                     }

@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import '/utils/themes/themes.dart';
 import '/screens/profile.dart';
 import '/utils/themes/custom_themes/app_navbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -109,7 +110,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
+      backgroundColor: AppTheme.screenBg(context),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
