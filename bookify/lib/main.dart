@@ -132,13 +132,12 @@ class MyApp extends StatelessWidget {
                     );
                   });
 
-                  return const SizedBox(); // Return empty widget until navigation happens
+                  return const SizedBox(); 
                 } else {
-                  // Fallback if no role found
                   return SplashScreen();
                 }
               } else {
-                return SplashScreen(); // Fallback if no data
+                return SplashScreen(); 
               }
             },
           ),
