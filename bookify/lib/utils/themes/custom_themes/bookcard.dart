@@ -16,6 +16,7 @@ class BookCard extends StatefulWidget {
   final String category;
   final double price;
   final double? rating;
+  final double? stock;
 
   const BookCard({
     super.key,
@@ -26,6 +27,7 @@ class BookCard extends StatefulWidget {
     required this.category,
     required this.price,
     this.rating,
+    this.stock,
   });
 
   @override
@@ -133,7 +135,7 @@ class _BookCardState extends State<BookCard> {
     return Container(
       width: 160,
       decoration: BoxDecoration(
-        color: AppTheme.customListBg(context),
+        color: AppTheme.cardBg(context),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -232,7 +234,7 @@ class _BookCardState extends State<BookCard> {
                     child: Icon(
                       HugeIconsSolid.shoppingBag03,
                       size: 18,
-                      color: AppTheme.iconColorThree(context),
+                      color: AppTheme.iconColor(context),
                     ),
                   ),
                 ),
@@ -246,42 +248,75 @@ class _BookCardState extends State<BookCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  widget.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTheme.textTitle(context).copyWith(fontSize: 20),
+                ),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      widget.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTheme.textTitle(context).copyWith(fontSize: 18),
-                    ),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         const Icon(
                           HugeIconsSolid.star,
-                          size: 12,
+                          size: 10,
                           color: Colors.amber,
                         ),
                         const SizedBox(width: 2),
                         Text(
                           averageRating.toStringAsFixed(1),
-                          style: AppTheme.textSearchInfoLabeled(context),
+                          style: AppTheme.textSearchInfoLabeled(
+                            context,
+                          ).copyWith(fontSize: 12),
                         ),
                       ],
                     ),
+                    Container(
+                      height: 12,
+                      width: 1.8,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      color: AppTheme.dividerBg(context),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.customListBg(context),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: AppTheme.sliderHighlightBg(context),
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          "10 Stocks Available",
+                          style: AppTheme.textLabel(
+                            context,
+                          ).copyWith(fontSize: 9),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-                Text(
-                  widget.category,
-                  style: AppTheme.textSearchInfoLabeled(context),
-                ),
-                const SizedBox(height: 10),
+                // Text(
+                //   widget.category,
+                //   style: AppTheme.textSearchInfoLabeled(context),
+                // ),
+                const SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       '\$${widget.price.toStringAsFixed(0)}',
-                      style: AppTheme.textLink(context).copyWith(fontSize: 17),
+                      style: AppTheme.textLink(context).copyWith(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.navbarBg(context),
+                      ),
                     ),
                   ],
                 ),

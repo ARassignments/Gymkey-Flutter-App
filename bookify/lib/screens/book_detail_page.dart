@@ -1,8 +1,11 @@
+import 'package:bookify/components/loading_screen.dart';
+import 'package:bookify/utils/themes/themes.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
+
 import '/models/cart_item.dart';
 import '/managers/cart_manager.dart';
 import '/screens/cart.dart';
 import '/utils/constants/colors.dart';
-import '/utils/themes/custom_themes/app_navbar.dart';
 import '/utils/themes/custom_themes/text_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -231,20 +234,39 @@ class _BookDetailPageState extends State<BookDetailPage> {
   @override
   Widget build(BuildContext context) {
     if (bookData == null) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFeeeeee),
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        backgroundColor: AppTheme.screenBg(context),
+        body: Center(child: LoadingLogo()),
       );
     }
 
     final book = bookData!.data() as Map<String, dynamic>;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFeeeeee),
+      backgroundColor: AppTheme.screenBg(context),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        titleSpacing: 0,
+        title: Text(
+          "Product Detail",
+          style: AppTheme.textTitle(context).copyWith(
+            fontFamily: 'Poppins',
+            fontSize: 20,
+            fontWeight: FontWeight.w300,
+          ),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(HugeIconsStroke.arrowLeft01, size: 20),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 30),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
@@ -257,7 +279,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                         child: book['cover_image_url'] != null
                             ? Image.network(
                                 book['cover_image_url'],
-                                width: 200,
+                                width: 300,
                                 height: 280,
                                 fit: BoxFit.cover,
                               )
@@ -274,7 +296,53 @@ class _BookDetailPageState extends State<BookDetailPage> {
                     const SizedBox(height: 24),
                     Text(
                       book['title'] ?? 'No Title',
-                      style: MyTextTheme.lightTextTheme.headlineMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.textTitle(context).copyWith(fontSize: 25),
+                    ),
+                    SizedBox(height: 6),
+                    Row(
+                      spacing: 12,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.customListBg(context),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: AppTheme.sliderHighlightBg(context),
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              "10 Stocks",
+                              style: AppTheme.textLabel(
+                                context,
+                              ).copyWith(fontSize: 12),
+                            ),
+                          ),
+                        ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              HugeIconsSolid.star,
+                              size: 16,
+                              color: Colors.amber,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              "${averageRating.toStringAsFixed(1)} (${reviews.length.toString().padLeft(2, '0')} reviews)",
+                              style: AppTheme.textSearchInfoLabeled(
+                                context,
+                              ).copyWith(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 6),
                     if (book.containsKey('author'))
@@ -305,16 +373,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const Spacer(),
-                        buildRatingStars(value: averageRating),
-                        const SizedBox(width: 4),
-                        Text(
-                          averageRating.toStringAsFixed(1),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w500,
-                            color: Colors.deepOrange,
-                          ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -341,7 +399,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                               price: (book['price'] is int)
                                   ? (book['price'] as int).toDouble()
                                   : (book['price'] ?? 0.0),
-                                   stock: (book['quantity'] ?? 10),
+                              stock: (book['quantity'] ?? 10),
                             );
                             CartManager.addToCart(item);
                             ScaffoldMessenger.of(context).showSnackBar(

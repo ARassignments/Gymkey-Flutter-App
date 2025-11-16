@@ -166,6 +166,7 @@ class AppTheme {
       : AppColor.neutral_30;
 
   static TextStyle textLink(BuildContext context) => TextStyle(
+    fontFamily: 'Poppins',
     fontWeight: FontWeight.w500,
     fontSize: 14,
     color: Theme.of(context).brightness == Brightness.dark
@@ -175,6 +176,7 @@ class AppTheme {
 
   static TextStyle textLabel(BuildContext context) {
     return TextStyle(
+      fontFamily: 'Poppins',
       fontWeight: FontWeight.w400,
       fontSize: 14,
       color: Theme.of(context).brightness == Brightness.dark
@@ -185,6 +187,7 @@ class AppTheme {
 
   static TextStyle textTitle(BuildContext context) {
     return TextStyle(
+      fontFamily: 'Poppins',
       fontWeight: FontWeight.w600,
       fontSize: 16,
       color: Theme.of(context).brightness == Brightness.dark
@@ -195,6 +198,7 @@ class AppTheme {
 
   static TextStyle textTitleActive(BuildContext context) {
     return TextStyle(
+      fontFamily: 'Poppins',
       fontWeight: FontWeight.w600,
       fontSize: 16,
       color: Theme.of(context).brightness == Brightness.dark
@@ -205,6 +209,7 @@ class AppTheme {
 
   static TextStyle textTitleActiveTwo(BuildContext context) {
     return TextStyle(
+      fontFamily: 'Poppins',
       fontWeight: FontWeight.w600,
       fontSize: 16,
       color: Theme.of(context).brightness == Brightness.dark
@@ -215,6 +220,7 @@ class AppTheme {
 
   static TextStyle textSearchInfo(BuildContext context) {
     return TextStyle(
+      fontFamily: 'Poppins',
       fontWeight: FontWeight.w600,
       fontSize: 10,
       color: Theme.of(context).brightness == Brightness.dark
@@ -225,6 +231,7 @@ class AppTheme {
 
   static TextStyle textSearchInfoLabeled(BuildContext context) {
     return TextStyle(
+      fontFamily: 'Poppins',
       fontWeight: FontWeight.w600,
       fontSize: 10,
       color: Theme.of(context).brightness == Brightness.dark

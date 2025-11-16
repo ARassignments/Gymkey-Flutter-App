@@ -1,3 +1,4 @@
+import 'package:bookify/components/appsnackbar.dart';
 import 'package:bookify/components/loading_screen.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shimmer/shimmer.dart';
@@ -52,15 +53,13 @@ class _CatalogScreenState extends State<CatalogScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              HugeIconsSolid.catalogue,
-              size: 30,
-              color: AppTheme.iconColor(context),
-            ),
+            Icon(HugeIconsSolid.catalogue, size: 30, color: Colors.white),
             const SizedBox(height: 10),
             Text(
               title,
-              style: AppTheme.textTitle(context).copyWith(fontSize: 20),
+              style: AppTheme.textTitle(
+                context,
+              ).copyWith(fontSize: 20, color: Colors.white),
             ),
           ],
         ),
@@ -71,9 +70,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
   Widget _buildComingMoreCard(BuildContext context) {
     return InkWell(
       onTap: () {
-        // TODO: you can navigate to an explore page or show dialog
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("More categories coming soon!")),
+        AppSnackBar.show(
+          context,
+          message: "More categories coming soon!",
+          type: AppSnackBarType.info,
         );
       },
       child: Container(

@@ -37,6 +37,7 @@ class DialogLogout {
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: AppColor.accent_50),
                       overlayColor: AppColor.accent_50.withOpacity(0.1),
+                      backgroundColor: AppTheme.screenBg(context)
                     ),
                     child: Text(
                       'Yes, Logout',

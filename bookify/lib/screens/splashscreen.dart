@@ -19,7 +19,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final user = auth.currentUser;
 
     if (user != null) {
-      Future.delayed(Duration(seconds: 7), () {
+      Future.delayed(Duration(seconds: 10), () {
         if (!mounted) return; // ✅ check before navigation
         Navigator.pushAndRemoveUntil(
           context,
@@ -28,7 +28,7 @@ class _SplashScreenState extends State<SplashScreen> {
         );
       });
     } else {
-      Future.delayed(Duration(seconds: 7), () {
+      Future.delayed(Duration(seconds: 10), () {
         if (!mounted) return; // ✅ check before navigation
         Navigator.pushAndRemoveUntil(
           context,
@@ -42,9 +42,15 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Center(
         child: Lottie.asset(
-          'assets/animations/Splash_Screen.json', fit: BoxFit.cover, width: double.infinity, alignment: Alignment.bottomCenter),
+          'assets/animations/Splash_Screen.json',
+          fit: BoxFit.contain,
+          repeat: false,
+          width: double.infinity,
+          alignment: Alignment.topCenter,
+        ),
       ),
     );
   }

@@ -7,7 +7,6 @@ import '/components/not_found.dart';
 import '/utils/themes/themes.dart';
 import 'package:flutter/services.dart';
 import '/screens/book_detail_page.dart';
-import '/utils/constants/colors.dart';
 import '/utils/themes/custom_themes/bookcard.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -137,31 +136,47 @@ class _HomeScreenState extends State<HomeScreen> {
                                   itemCount: categories.length,
                                   itemBuilder: (context, index) {
                                     final category = categories[index];
-                                    return Padding(
-                                      padding: const EdgeInsets.only(right: 10),
-                                      child: Container(
-                                        height: 8,
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 5,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.customListBg(context),
-                                          borderRadius: BorderRadius.circular(
-                                            30,
-                                          ),
-                                          border: Border.all(
-                                            color: AppTheme.sliderHighlightBg(
-                                              context,
+                                    return InkWell(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => CategoryDetailPage(
+                                              category: category,
                                             ),
                                           ),
+                                        );
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: 10,
                                         ),
-                                        child: Center(
-                                          child: Text(
-                                            category,
-                                            style: AppTheme.textLabel(
+                                        child: Container(
+                                          height: 8,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.customListBg(
                                               context,
-                                            ).copyWith(fontSize: 12),
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              30,
+                                            ),
+                                            border: Border.all(
+                                              color: AppTheme.sliderHighlightBg(
+                                                context,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              category,
+                                              style: AppTheme.textLabel(
+                                                context,
+                                              ).copyWith(fontSize: 12),
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -501,7 +516,26 @@ class CategoryDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(category), backgroundColor: MyColors.primary),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        titleSpacing: 0,
+        title: Text(
+          "${category} Category",
+          style: AppTheme.textTitle(context).copyWith(
+            fontFamily: 'Poppins',
+            fontSize: 20,
+            fontWeight: FontWeight.w300,
+          ),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(HugeIconsStroke.arrowLeft01, size: 20),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: FutureBuilder<QuerySnapshot>(
         future: FirebaseFirestore.instance
             .collection('books')
@@ -509,13 +543,13 @@ class CategoryDetailPage extends StatelessWidget {
             .get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: LoadingLogo());
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(
-              child: Text(
-                'No products available.',
-                style: TextStyle(color: Color(0xFF0059a7)),
+              child: NotFoundWidget(
+                title: "No products available.",
+                message: "",
               ),
             );
           }
@@ -527,21 +561,50 @@ class CategoryDetailPage extends StatelessWidget {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 0.65,
+              childAspectRatio: 0.85,
             ),
             itemCount: books.length,
             itemBuilder: (context, index) {
               final data = books[index].data() as Map<String, dynamic>;
               final bookId = books[index].id;
 
-              return BookCard(
-                bookId: bookId,
-                title: data['title'],
-                author: data['author'],
-                imagePath: data['cover_image_url'],
-                category: data['category'],
-                price: (data['price'] ?? 0).toDouble(),
-                rating: (data['rating'] ?? 0).toDouble(),
+              return InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      opaque: false,
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          BookDetailPage(bookId: bookId),
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                            const begin = Offset(0.0, 1.0);
+                            const end = Offset.zero;
+                            const curve = Curves.easeInOut;
+                            final tween = Tween(
+                              begin: begin,
+                              end: end,
+                            ).chain(CurveTween(curve: curve));
+                            return SlideTransition(
+                              position: animation.drive(tween),
+                              child: child,
+                            );
+                          },
+                    ),
+                  );
+                },
+                child: BookCard(
+                  bookId: bookId,
+                  title: data['title'] ?? 'Untitled',
+                  author: data['description'] ?? 'Unknown Author',
+                  imagePath:
+                      data['cover_image_url'] ??
+                      'assets/images/placeholder.jpg',
+                  category: data['category'] ?? 'Uncategorized',
+                  price: (data['price'] ?? 0).toDouble(),
+                  rating: (data['rating'] ?? 0).toDouble(),
+                  stock: (data['stock'] ?? 0).toDouble(),
+                ),
               );
             },
           );

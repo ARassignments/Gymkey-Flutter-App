@@ -37,7 +37,7 @@ Widget buildCurvedNavBar(
 
           return CurvedNavigationBar(
             index: currentIndex,
-            height: 55,
+            height: 65,
             backgroundColor: AppTheme.screenBg(context),
             color: AppTheme.navbarBg(context),
             buttonBackgroundColor: AppTheme.navbarBg(context),
