@@ -86,7 +86,7 @@ class _SignInState extends State<SignIn> {
         emailController.clear();
         passController.clear();
       } catch (e) {
-        _showError("Sign in failed. Please try again.");
+        _showError("Error: $e");
         emailController.clear();
         passController.clear();
       } finally {
