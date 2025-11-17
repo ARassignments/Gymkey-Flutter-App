@@ -142,23 +142,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => AllBooksPage(),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              "See All",
-                              style: AppTheme.textLink(context).copyWith(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ),
                         ],
                       ),
 
