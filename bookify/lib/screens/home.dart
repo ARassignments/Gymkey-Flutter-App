@@ -90,6 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Expanded(
             child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
@@ -457,16 +458,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                   child: Hero(
                     tag: bookId,
-                    child: BookCard(
-                      bookId: bookId,
-                      title: data['title'] ?? 'Untitled',
-                      author: data['description'] ?? 'Unknown Author',
-                      imagePath:
-                          data['cover_image_url'] ??
-                          'assets/images/placeholder.jpg',
-                      category: data['category'] ?? 'Uncategorized',
-                      price: (data['price'] ?? 0).toDouble(),
-                      rating: (data['rating'] ?? 0).toDouble(),
+                    child: Container(
+                      margin: EdgeInsets.only(right: 16),
+                      child: BookCard(
+                        bookId: bookId,
+                        title: data['title'] ?? 'Untitled',
+                        author: data['description'] ?? 'Unknown Author',
+                        imagePath:
+                            data['cover_image_url'] ??
+                            'assets/images/placeholder.jpg',
+                        category: data['category'] ?? 'Uncategorized',
+                        price: (data['price'] ?? 0).toDouble(),
+                        rating: (data['rating'] ?? 0).toDouble(),
+                        stock: (data['quantity'] ?? 0),
+                      ),
                     ),
                   ),
                 );
@@ -483,7 +488,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 child: Container(
                   width: 160,
-                  margin: EdgeInsets.only(left: 16),
                   decoration: BoxDecoration(
                     color: AppTheme.customListBg(context),
                     borderRadius: BorderRadius.circular(20),
@@ -603,7 +607,7 @@ class CategoryDetailPage extends StatelessWidget {
                   category: data['category'] ?? 'Uncategorized',
                   price: (data['price'] ?? 0).toDouble(),
                   rating: (data['rating'] ?? 0).toDouble(),
-                  stock: (data['stock'] ?? 0).toDouble(),
+                  stock: (data['quantity'] ?? 0),
                 ),
               );
             },

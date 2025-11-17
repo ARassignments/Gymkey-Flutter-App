@@ -97,6 +97,12 @@ class AppTheme {
         ? AppColor.neutral_90
         : MyColors.primary;
   }
+  
+  static Color primaryTextBg(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? AppColor.white
+        : MyColors.primary;
+  }
 
   static String appLogo(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark

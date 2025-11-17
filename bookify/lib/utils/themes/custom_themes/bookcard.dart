@@ -16,7 +16,7 @@ class BookCard extends StatefulWidget {
   final String category;
   final double price;
   final double? rating;
-  final double? stock;
+  final int? stock;
 
   const BookCard({
     super.key,
@@ -293,7 +293,7 @@ class _BookCardState extends State<BookCard> {
                       ),
                       child: Center(
                         child: Text(
-                          "10 Stocks Available",
+                          "${widget.stock.toString().padLeft(2,'0')} Stocks",
                           style: AppTheme.textLabel(
                             context,
                           ).copyWith(fontSize: 9),
@@ -315,7 +315,7 @@ class _BookCardState extends State<BookCard> {
                       style: AppTheme.textLink(context).copyWith(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.navbarBg(context),
+                        color: AppTheme.primaryTextBg(context),
                       ),
                     ),
                   ],

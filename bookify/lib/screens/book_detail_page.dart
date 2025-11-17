@@ -1,6 +1,10 @@
+import 'package:bookify/components/appsnackbar.dart';
 import 'package:bookify/components/loading_screen.dart';
+import 'package:bookify/managers/wishlist_manager.dart';
 import 'package:bookify/utils/themes/themes.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '/models/cart_item.dart';
 import '/managers/cart_manager.dart';
@@ -26,13 +30,16 @@ class _BookDetailPageState extends State<BookDetailPage> {
   double? selectedRating;
   final reviewController = TextEditingController();
   double averageRating = 0.0;
+  bool isFavorited = false;
   List<Map<String, dynamic>> reviews = [];
+  List<Map<String, dynamic>> topThreeReviews = [];
 
   bool hasUserReviewed = false; // ✅ Flag to disable review input
 
   @override
   void initState() {
     super.initState();
+    _loadWishlistStatus();
     fetchBookData();
     fetchAverageRating();
     fetchReviews();
@@ -96,6 +103,14 @@ class _BookDetailPageState extends State<BookDetailPage> {
       reviews = snapshot.docs
           .map((doc) => doc.data() as Map<String, dynamic>)
           .toList();
+
+      reviews.sort((a, b) {
+        final r1 = (a['rating'] as num?)?.toDouble() ?? 0;
+        final r2 = (b['rating'] as num?)?.toDouble() ?? 0;
+        return r2.compareTo(r1);
+      });
+
+      topThreeReviews = reviews.take(3).toList();
     });
   }
 
@@ -218,16 +233,281 @@ class _BookDetailPageState extends State<BookDetailPage> {
     void Function(double)? onTap,
   }) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(5, (index) {
         final starValue = index + 1.0;
         return GestureDetector(
           onTap: onTap != null ? () => onTap(starValue) : null,
           child: Icon(
-            value >= starValue ? Icons.star : Icons.star_border,
+            value >= starValue ? HugeIconsSolid.star : HugeIconsStroke.star,
             color: Colors.amber,
+            size: 45,
           ),
         );
       }),
+    );
+  }
+
+  Future<void> _loadWishlistStatus() async {
+    try {
+      final exists = await WishlistManager.isInWishlist(widget.bookId);
+      if (!mounted) return;
+      setState(() => isFavorited = exists);
+    } catch (e) {
+      print("Error loading wishlist status: $e");
+    }
+  }
+
+  Future<void> _toggleWishlist() async {
+    final book = bookData!.data() as Map<String, dynamic>;
+    final item = CartItem(
+      bookId: widget.bookId,
+      title: book['title'] ?? 'No Title',
+      author: book['auther'] ?? 'No Category',
+      imageUrl: book['cover_image_url'],
+      price: (book['price'] as int).toDouble(),
+    );
+
+    final newFavorited = !isFavorited;
+
+    if (!mounted) return;
+    setState(() => isFavorited = newFavorited);
+
+    try {
+      if (newFavorited) {
+        await WishlistManager.addToWishlist(item);
+      } else {
+        await WishlistManager.removeFromWishlist(item);
+      }
+    } catch (e) {
+      print("Error updating wishlist: $e");
+    }
+
+    if (!mounted) return;
+    AppSnackBar.show(
+      context,
+      message: newFavorited
+          ? '${book['title'] ?? 'No Title'} added to wishlist'
+          : '${book['title'] ?? 'No Title'} removed from wishlist',
+      type: AppSnackBarType.success,
+    );
+  }
+
+  void _reviewDialog() {
+    showModalBottomSheet(
+      showDragHandle: true,
+      isScrollControlled: true,
+      context: context,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                left: 20,
+                right: 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  spacing: 16,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      "Rate & Review this Book",
+                      textAlign: TextAlign.center,
+                      style: AppTheme.textLabel(
+                        context,
+                      ).copyWith(fontSize: 17, fontWeight: FontWeight.w600),
+                    ),
+
+                    Divider(height: 1, color: AppTheme.dividerBg(context)),
+                    buildRatingStars(
+                      value: selectedRating ?? 0.0,
+                      onTap: hasUserReviewed
+                          ? null
+                          : (value) {
+                              setModalState(() {
+                                selectedRating = value;
+                              });
+                              setState(() {});
+                            },
+                    ),
+
+                    TextFormField(
+                      controller: reviewController,
+                      enabled: !hasUserReviewed,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: hasUserReviewed
+                            ? "You already submitted a review."
+                            : "Write your review here...",
+                      ),
+                    ),
+
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: hasUserReviewed
+                            ? AppTheme.customListBg(context)
+                            : MyColors.primary,
+                      ),
+                      onPressed: hasUserReviewed ? null : submitReview,
+                      child: Text(
+                        hasUserReviewed ? "Review Submitted" : "Submit Review",
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+
+                    TextButton(
+                      child: const Text("Cancel"),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _allReviewDialog() {
+    showModalBottomSheet(
+      showDragHandle: true,
+      isScrollControlled: true,
+      context: context,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                left: 20,
+                right: 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  spacing: 16,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      "All Reviews",
+                      textAlign: TextAlign.center,
+                      style: AppTheme.textLabel(
+                        context,
+                      ).copyWith(fontSize: 17, fontWeight: FontWeight.w600),
+                    ),
+
+                    Divider(height: 1, color: AppTheme.dividerBg(context)),
+                    ...reviews.map(
+                      (review) => Card(
+                        color: AppTheme.customListBg(context),
+                        elevation: 0,
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: AppTheme.cardDarkBg(context),
+                            backgroundImage:
+                                (review['userImage'] ?? '')
+                                    .toString()
+                                    .isNotEmpty
+                                ? NetworkImage(review['userImage'])
+                                : null,
+                            child:
+                                (review['userImage'] ?? '').toString().isEmpty
+                                ? Icon(
+                                    HugeIconsSolid.user03,
+                                    color: AppTheme.iconColorThree(context),
+                                  )
+                                : null,
+                          ),
+                          title: Text(
+                            review['userName'] ?? 'Anonymous',
+                            style: AppTheme.textTitle(context),
+                          ),
+                          subtitle: Text(
+                            review['review'] ?? '',
+                            style: AppTheme.textLabel(context),
+                          ),
+                          trailing: Row(
+                            spacing: 6,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                HugeIconsSolid.star,
+                                color: Colors.amber,
+                                size: 16,
+                              ),
+                              Text(
+                                '${review['rating'] ?? ''}',
+                                style: AppTheme.textSearchInfoLabeled(
+                                  context,
+                                ).copyWith(fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (topThreeReviews.isEmpty) ...[
+                      InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                          _reviewDialog();
+                        },
+                        child: SizedBox(
+                          height: 80,
+                          child: Card(
+                            color: AppTheme.customListBg(context),
+                            elevation: 0,
+                            child: Shimmer(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppTheme.sliderHighlightBg(context),
+                                  AppTheme.iconColorThree(context),
+                                  AppTheme.sliderHighlightBg(context),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              direction: ShimmerDirection.rtl,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                spacing: 12,
+                                children: [
+                                  const Icon(HugeIconsStroke.tap01),
+                                  Text(
+                                    "Write your review here...",
+                                    style: AppTheme.textLink(context).copyWith(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text("Cancel"),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -264,42 +544,112 @@ class _BookDetailPageState extends State<BookDetailPage> {
           },
         ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: book['cover_image_url'] != null
-                            ? Image.network(
-                                book['cover_image_url'],
-                                width: 300,
-                                height: 280,
-                                fit: BoxFit.cover,
-                              )
-                            : const Image(
-                                image: AssetImage(
-                                  'assets/images/default_cover.jpg',
+      body: SingleChildScrollView(
+        child: Container(
+          color: AppTheme.cardBg(context),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: book['cover_image_url'] != null
+                        ? Image.network(
+                            book['cover_image_url'],
+                            width: double.infinity,
+                            height: 250,
+                            fit: BoxFit.cover,
+                            alignment: AlignmentGeometry.topCenter,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+
+                              return Shimmer.fromColors(
+                                baseColor: AppTheme.customListBg(context),
+                                highlightColor: AppTheme.sliderHighlightBg(
+                                  context,
                                 ),
-                                width: 200,
-                                height: 280,
-                                fit: BoxFit.cover,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.customListBg(context),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  height: 250,
+                                  width: double.infinity,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: AppTheme.iconColor(context),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, _, __) => Container(
+                              height: 250,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: AppTheme.customListBg(context),
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                      ),
+                              child: const Icon(
+                                Icons.broken_image,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          )
+                        : const Image(
+                            image: AssetImage(
+                              'assets/images/default_cover.jpg',
+                            ),
+                            width: double.infinity,
+                            height: 250,
+                            fit: BoxFit.cover,
+                          ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.screenBg(context),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(30),
+                    topRight: Radius.circular(30),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            book['title'] ?? 'No Title',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTheme.textTitle(
+                              context,
+                            ).copyWith(fontSize: 25),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: _toggleWishlist,
+                          child: Icon(
+                            isFavorited
+                                ? HugeIconsSolid.favourite
+                                : HugeIconsStroke.favourite,
+                            size: 22,
+                            color: isFavorited
+                                ? Colors.red
+                                : AppTheme.iconColorThree(context),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      book['title'] ?? 'No Title',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTheme.textTitle(context).copyWith(fontSize: 25),
-                    ),
+
                     SizedBox(height: 6),
                     Row(
                       spacing: 12,
@@ -318,7 +668,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                           ),
                           child: Center(
                             child: Text(
-                              "10 Stocks",
+                              "${book['quantity'].toString().padLeft(2, '0') ?? 'No'} Stocks",
                               style: AppTheme.textLabel(
                                 context,
                               ).copyWith(fontSize: 12),
@@ -335,7 +685,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              "${averageRating.toStringAsFixed(1)} (${reviews.length.toString().padLeft(2, '0')} reviews)",
+                              "${averageRating.toStringAsFixed(1)} (${reviews.length > 0 ? reviews.length.toString().padLeft(2, '0') : 'no'} reviews)",
                               style: AppTheme.textSearchInfoLabeled(
                                 context,
                               ).copyWith(fontSize: 14),
@@ -344,203 +694,304 @@ class _BookDetailPageState extends State<BookDetailPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    if (book.containsKey('author'))
-                      Text(
-                        "By ${book['author']}",
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontSize: 15,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
+                    const SizedBox(height: 12),
+                    Divider(height: 1, color: AppTheme.dividerBg(context)),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Description",
+                      style: AppTheme.textLink(
+                        context,
+                      ).copyWith(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
                     const SizedBox(height: 8),
                     Text(
-                      book['genre'] ?? 'Unknown',
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontSize: 16,
-                      ),
+                      book['description'] ??
+                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+                      textAlign: TextAlign.justify,
+                      style: AppTheme.textLabel(context).copyWith(fontSize: 14),
                     ),
                     const SizedBox(height: 16),
                     Row(
+                      spacing: 16,
                       children: [
                         Text(
-                          "\$${book['price'] ?? 0}",
-                          style: const TextStyle(
-                            color: MyColors.primary,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          "Quantity",
+                          style: AppTheme.textLink(
+                            context,
+                          ).copyWith(fontSize: 18, fontWeight: FontWeight.w600),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Description",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: MyColors.primary,
+                        Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.customListBg(context),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AppTheme.sliderHighlightBg(context),
+                            ),
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.add_shopping_cart),
-                          color: MyColors.primary,
-                          onPressed: () {
-                            final item = CartItem(
-                              bookId: widget.bookId,
-                              title: book['title'] ?? 'No Title',
-                              author: book['author'] ?? 'Unknown',
-                              imageUrl: book['cover_image_url'] ?? '',
-                              price: (book['price'] is int)
-                                  ? (book['price'] as int).toDouble()
-                                  : (book['price'] ?? 0.0),
-                              stock: (book['quantity'] ?? 10),
-                            );
-                            CartManager.addToCart(item);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('${item.title} added to cart'),
-                              ),
-                            );
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const CartScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      book['description'] ?? "No description available.",
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      "Rate & Review this Book",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: MyColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    // ✅ Disable stars if user already reviewed
-                    buildRatingStars(
-                      value: selectedRating ?? 0.0,
-                      onTap: hasUserReviewed
-                          ? null
-                          : (val) => setState(() => selectedRating = val),
-                    ),
-
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      controller: reviewController,
-                      maxLines: 3,
-                      enabled: !hasUserReviewed, // ✅ disable input
-                      style: const TextStyle(color: Colors.black87),
-                      decoration: InputDecoration(
-                        hintText: hasUserReviewed
-                            ? "You already submitted a review."
-                            : "Write your review here...",
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: hasUserReviewed
-                              ? Colors.grey
-                              : MyColors.primary,
-                        ),
-                        onPressed: hasUserReviewed ? null : submitReview,
-                        child: Text(
-                          hasUserReviewed
-                              ? "Review Submitted"
-                              : "Submit Review",
-                          style: TextStyle(
-                            color: Colors.white, // keep text visible
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      "User Reviews",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: MyColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    ...reviews.map(
-                      (review) => Card(
-                        color: Colors.white,
-                        elevation: 2,
-                        margin: const EdgeInsets.symmetric(vertical: 6),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.grey.shade200,
-                            backgroundImage:
-                                (review['userImage'] ?? '')
-                                    .toString()
-                                    .isNotEmpty
-                                ? NetworkImage(review['userImage'])
-                                : null,
-                            child:
-                                (review['userImage'] ?? '').toString().isEmpty
-                                ? const Icon(Icons.person, color: Colors.grey)
-                                : null,
-                          ),
-                          title: Text(
-                            review['userName'] ?? 'Anonymous',
-                            style: const TextStyle(color: MyColors.primary),
-                          ),
-                          subtitle: Text(
-                            review['review'] ?? '',
-                            style: const TextStyle(color: Colors.black87),
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
+                          child: Row(
                             children: [
-                              const Icon(
-                                Icons.star,
-                                color: Colors.amber,
-                                size: 20,
+                              InkWell(
+                                onTap: () {
+                                  CartManager.updateQuantity(
+                                    widget.bookId,
+                                    book['quantity'] - 1,
+                                    context,
+                                  );
+                                },
+                                child: Icon(HugeIconsSolid.remove01, size: 14),
                               ),
-                              Text(
-                                '${review['rating'] ?? ''}',
-                                style: const TextStyle(color: Colors.red),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                child: Text(
+                                  book['quantity'].toString().padLeft(2, '0'),
+                                  style: AppTheme.textSearchInfoLabeled(
+                                    context,
+                                  ).copyWith(fontSize: 14),
+                                ),
+                              ),
+                              InkWell(
+                                onTap: () {
+                                  CartManager.updateQuantity(
+                                    widget.bookId,
+                                    book['quantity'] + 1,
+                                    context,
+                                  );
+                                  // if (book['quantity'] < item.stock) {
+                                  //   CartManager.updateQuantity(
+                                  //     widget.bookId,
+                                  //     book['quantity'] + 1,
+                                  //     context,
+                                  //   );
+                                  // } else {
+                                  //   AppSnackBar.show(
+                                  //     context,
+                                  //     message: "Maximum stock reached!",
+                                  //     type: AppSnackBarType.warning,
+                                  //   );
+                                  // }
+                                },
+                                child: Icon(HugeIconsSolid.add01, size: 14),
                               ),
                             ],
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Top Reviews",
+                          style: AppTheme.textLink(
+                            context,
+                          ).copyWith(fontSize: 18, fontWeight: FontWeight.w600),
+                        ),
+                        Row(
+                          children: [
+                            TextButton(
+                              onPressed: _allReviewDialog,
+                              child: Text(
+                                "See All",
+                                style: AppTheme.textLink(context).copyWith(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                            if (!hasUserReviewed)
+                              InkWell(
+                                onTap: () {
+                                  _reviewDialog();
+                                },
+                                child: Icon(
+                                  HugeIconsSolid.commentAdd01,
+                                  size: 18,
+                                  color: AppTheme.iconColorTwo(context),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    if (topThreeReviews.isNotEmpty) ...[
+                      CarouselSlider(
+                        options: CarouselOptions(
+                          height: 80,
+                          autoPlay: true,
+                          clipBehavior: Clip.antiAlias,
+                          enlargeStrategy: CenterPageEnlargeStrategy.scale,
+                          enlargeCenterPage: true,
+                          enableInfiniteScroll: false,
+                          autoPlayInterval: const Duration(seconds: 3),
+                          viewportFraction: 1.00,
+                        ),
+                        items: topThreeReviews.map((review) {
+                          return Builder(
+                            builder: (context) {
+                              return Card(
+                                color: AppTheme.customListBg(context),
+                                elevation: 0,
+                                child: ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor: AppTheme.cardDarkBg(
+                                      context,
+                                    ),
+                                    backgroundImage:
+                                        (review['userImage'] ?? '')
+                                            .toString()
+                                            .isNotEmpty
+                                        ? NetworkImage(review['userImage'])
+                                        : null,
+                                    child:
+                                        (review['userImage'] ?? '')
+                                            .toString()
+                                            .isEmpty
+                                        ? Icon(
+                                            HugeIconsSolid.user03,
+                                            color: AppTheme.iconColorThree(
+                                              context,
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                  title: Text(
+                                    review['userName'] ?? 'Anonymous',
+                                    style: AppTheme.textTitle(context),
+                                  ),
+                                  subtitle: Text(
+                                    review['review'] ?? '',
+                                    style: AppTheme.textLabel(context),
+                                  ),
+                                  trailing: Row(
+                                    spacing: 6,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        HugeIconsSolid.star,
+                                        color: Colors.amber,
+                                        size: 16,
+                                      ),
+                                      Text(
+                                        '${review['rating'] ?? ''}',
+                                        style: AppTheme.textSearchInfoLabeled(
+                                          context,
+                                        ).copyWith(fontSize: 14),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                    if (topThreeReviews.isEmpty) ...[
+                      InkWell(
+                        onTap: () {
+                          _reviewDialog();
+                        },
+                        child: SizedBox(
+                          height: 80,
+                          child: Card(
+                            color: AppTheme.customListBg(context),
+                            elevation: 0,
+                            child: Shimmer(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppTheme.sliderHighlightBg(context),
+                                  AppTheme.iconColorThree(context),
+                                  AppTheme.sliderHighlightBg(context),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              direction: ShimmerDirection.rtl,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                spacing: 12,
+                                children: [
+                                  const Icon(HugeIconsStroke.tap01),
+                                  Text(
+                                    "Write your review here...",
+                                    style: AppTheme.textLink(context).copyWith(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    Divider(height: 1, color: AppTheme.dividerBg(context)),
+                    const SizedBox(height: 16),
+                    Row(
+                      spacing: 16,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Total Price",
+                              style: AppTheme.textSearchInfoLabeled(
+                                context,
+                              ).copyWith(fontSize: 12),
+                            ),
+                            Text(
+                              "\$${book['price'] ?? 0}",
+                              style: AppTheme.textTitle(context).copyWith(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              final item = CartItem(
+                                bookId: widget.bookId,
+                                title: book['title'] ?? 'No Title',
+                                author: book['author'] ?? 'Unknown',
+                                imageUrl: book['cover_image_url'] ?? '',
+                                price: (book['price'] is int)
+                                    ? (book['price'] as int).toDouble()
+                                    : (book['price'] ?? 0.0),
+                                stock: (book['quantity'] ?? 10),
+                              );
+                              CartManager.addToCart(item);
+                              AppSnackBar.show(
+                                context,
+                                message: '${item.title} added to cart',
+                                type: AppSnackBarType.success,
+                              );
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              spacing: 12,
+                              children: [
+                                Icon(HugeIconsSolid.shoppingBag01),
+                                Text("Add to Cart"),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
