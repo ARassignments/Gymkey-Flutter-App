@@ -1,16 +1,13 @@
-import 'package:bookify/components/appsnackbar.dart';
-import 'package:bookify/components/loading_screen.dart';
-import 'package:bookify/managers/wishlist_manager.dart';
-import 'package:bookify/utils/themes/themes.dart';
+import '/components/appsnackbar.dart';
+import '/components/loading_screen.dart';
+import '/managers/wishlist_manager.dart';
+import '/utils/themes/themes.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shimmer/shimmer.dart';
-
 import '/models/cart_item.dart';
 import '/managers/cart_manager.dart';
-import '/screens/cart.dart';
 import '/utils/constants/colors.dart';
-import '/utils/themes/custom_themes/text_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -31,10 +28,12 @@ class _BookDetailPageState extends State<BookDetailPage> {
   final reviewController = TextEditingController();
   double averageRating = 0.0;
   bool isFavorited = false;
+  bool itemExistsInCart = false;
   List<Map<String, dynamic>> reviews = [];
   List<Map<String, dynamic>> topThreeReviews = [];
+  int selectedQty = 1;
 
-  bool hasUserReviewed = false; // ✅ Flag to disable review input
+  bool hasUserReviewed = false;
 
   @override
   void initState() {
@@ -43,7 +42,15 @@ class _BookDetailPageState extends State<BookDetailPage> {
     fetchBookData();
     fetchAverageRating();
     fetchReviews();
-    checkIfUserReviewed(); // ✅ Check if user already reviewed
+    checkIfUserReviewed();
+    _loadCartQuantity();
+    CartManager.getCartStream().listen((items) {
+      bool exists = items.any((item) => item.bookId == widget.bookId);
+
+      setState(() {
+        itemExistsInCart = exists;
+      });
+    });
   }
 
   Future<void> fetchBookData() async {
@@ -148,8 +155,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
         .get();
 
     if (existingReviewSnapshot.docs.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("You have already reviewed this book.")),
+      AppSnackBar.show(
+        context,
+        message: "You have already reviewed this book.",
+        type: AppSnackBarType.warning,
       );
       return;
     }
@@ -290,6 +299,81 @@ class _BookDetailPageState extends State<BookDetailPage> {
           : '${book['title'] ?? 'No Title'} removed from wishlist',
       type: AppSnackBarType.success,
     );
+  }
+
+  Future<void> _loadCartQuantity() async {
+    try {
+      final user = auth.currentUser;
+      if (user == null) return;
+
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('cartItems')
+          .doc(widget.bookId)
+          .get();
+
+      if (!mounted) return;
+
+      if (doc.exists) {
+        final data = doc.data()!;
+        final q = (data['quantity'] is int)
+            ? data['quantity'] as int
+            : ((data['quantity'] as num?)?.toInt() ?? 1);
+        setState(() {
+          selectedQty = q >= 1 ? q : 1;
+        });
+      } else {
+        setState(() {
+          selectedQty = 1;
+        });
+      }
+    } catch (e) {
+      print("Error loading cart quantity: $e");
+    }
+  }
+
+  Future<void> _addToCartWithSelectedQty(Map<String, dynamic> book) async {
+    final price = (book['price'] is int)
+        ? (book['price'] as int).toDouble()
+        : (book['price'] is double ? book['price'] as double : 0.0);
+    final item = CartItem(
+      bookId: widget.bookId,
+      title: book['title'] ?? 'No Title',
+      author: book['author'] ?? 'Unknown',
+      imageUrl: book['cover_image_url'] ?? '',
+      price: price,
+      stock: (book['quantity'] ?? 0),
+      quantity: selectedQty,
+    );
+
+    try {
+      await CartManager.addToCart(item);
+      await CartManager.updateQuantity(
+        widget.bookId,
+        selectedQty,
+        context,
+        stock: book['quantity'] ?? 0,
+      );
+
+      setState(() {
+        itemExistsInCart = true;
+      });
+
+      AppSnackBar.show(
+        context,
+        message:
+            '${item.title} ${itemExistsInCart ? "update cart" : "Add to cart"} added to cart',
+        type: AppSnackBarType.success,
+      );
+    } catch (e) {
+      print("Error adding to cart: $e");
+      AppSnackBar.show(
+        context,
+        message: 'Failed to add to cart',
+        type: AppSnackBarType.error,
+      );
+    }
   }
 
   void _reviewDialog() {
@@ -520,6 +604,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
     }
 
     final book = bookData!.data() as Map<String, dynamic>;
+    final int stock = (book['quantity'] is int)
+        ? book['quantity'] as int
+        : ((book['quantity'] as num?)?.toInt() ?? 0);
 
     return Scaffold(
       backgroundColor: AppTheme.screenBg(context),
@@ -731,12 +818,22 @@ class _BookDetailPageState extends State<BookDetailPage> {
                           child: Row(
                             children: [
                               InkWell(
-                                onTap: () {
-                                  CartManager.updateQuantity(
-                                    widget.bookId,
-                                    book['quantity'] - 1,
-                                    context,
-                                  );
+                                onTap: () async {
+                                  if (selectedQty > 1) {
+                                    setState(() => selectedQty--);
+                                    await CartManager.updateQuantity(
+                                      widget.bookId,
+                                      selectedQty,
+                                      context,
+                                      stock: stock,
+                                    );
+                                  } else {
+                                    AppSnackBar.show(
+                                      context,
+                                      message: "Minimum quantity is 1",
+                                      type: AppSnackBarType.warning,
+                                    );
+                                  }
                                 },
                                 child: Icon(HugeIconsSolid.remove01, size: 14),
                               ),
@@ -745,32 +842,29 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                   horizontal: 12,
                                 ),
                                 child: Text(
-                                  book['quantity'].toString().padLeft(2, '0'),
+                                  selectedQty.toString().padLeft(2, '0'),
                                   style: AppTheme.textSearchInfoLabeled(
                                     context,
                                   ).copyWith(fontSize: 14),
                                 ),
                               ),
                               InkWell(
-                                onTap: () {
-                                  CartManager.updateQuantity(
-                                    widget.bookId,
-                                    book['quantity'] + 1,
-                                    context,
-                                  );
-                                  // if (book['quantity'] < item.stock) {
-                                  //   CartManager.updateQuantity(
-                                  //     widget.bookId,
-                                  //     book['quantity'] + 1,
-                                  //     context,
-                                  //   );
-                                  // } else {
-                                  //   AppSnackBar.show(
-                                  //     context,
-                                  //     message: "Maximum stock reached!",
-                                  //     type: AppSnackBarType.warning,
-                                  //   );
-                                  // }
+                                onTap: () async {
+                                  if (selectedQty < stock) {
+                                    setState(() => selectedQty++);
+                                    await CartManager.updateQuantity(
+                                      widget.bookId,
+                                      selectedQty,
+                                      context,
+                                      stock: stock,
+                                    );
+                                  } else {
+                                    AppSnackBar.show(
+                                      context,
+                                      message: "Maximum stock reached!",
+                                      type: AppSnackBarType.warning,
+                                    );
+                                  }
                                 },
                                 child: Icon(HugeIconsSolid.add01, size: 14),
                               ),
@@ -946,7 +1040,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                               ).copyWith(fontSize: 12),
                             ),
                             Text(
-                              "\$${book['price'] ?? 0}",
+                              "\$${((book['price'] ?? 0) * selectedQty).toString()}",
                               style: AppTheme.textTitle(context).copyWith(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w700,
@@ -956,30 +1050,19 @@ class _BookDetailPageState extends State<BookDetailPage> {
                         ),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () {
-                              final item = CartItem(
-                                bookId: widget.bookId,
-                                title: book['title'] ?? 'No Title',
-                                author: book['author'] ?? 'Unknown',
-                                imageUrl: book['cover_image_url'] ?? '',
-                                price: (book['price'] is int)
-                                    ? (book['price'] as int).toDouble()
-                                    : (book['price'] ?? 0.0),
-                                stock: (book['quantity'] ?? 10),
-                              );
-                              CartManager.addToCart(item);
-                              AppSnackBar.show(
-                                context,
-                                message: '${item.title} added to cart',
-                                type: AppSnackBarType.success,
-                              );
-                            },
+                            onPressed: stock > 0
+                                ? () => _addToCartWithSelectedQty(book)
+                                : null,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               spacing: 12,
                               children: [
                                 Icon(HugeIconsSolid.shoppingBag01),
-                                Text("Add to Cart"),
+                                Text(
+                                  itemExistsInCart
+                                      ? "Update Cart"
+                                      : "Add to Cart",
+                                ),
                               ],
                             ),
                           ),

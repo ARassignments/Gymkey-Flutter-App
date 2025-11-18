@@ -1,6 +1,5 @@
-import 'package:bookify/components/appsnackbar.dart';
+import '/components/appsnackbar.dart';
 import 'package:shimmer/shimmer.dart';
-
 import '/components/not_found.dart';
 import '/utils/themes/themes.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
@@ -9,10 +8,7 @@ import '/models/cart_item.dart';
 import '/managers/cart_manager.dart';
 import '/screens/checkout.dart';
 import '/screens/home.dart';
-import '/utils/constants/colors.dart';
-import '/utils/themes/custom_themes/app_navbar.dart';
 import '/utils/themes/custom_themes/bottomnavbar.dart';
-import '/utils/themes/custom_themes/elevated_button_theme.dart';
 import 'package:flutter/material.dart';
 
 class CartScreen extends StatefulWidget {
@@ -210,6 +206,7 @@ class _CartScreenState extends State<CartScreen> {
                                                         item.bookId,
                                                         item.quantity - 1,
                                                         context,
+                                                        stock: item.stock,
                                                       );
                                                     },
                                                     child: Container(
@@ -251,6 +248,7 @@ class _CartScreenState extends State<CartScreen> {
                                                           item.bookId,
                                                           item.quantity + 1,
                                                           context,
+                                                          stock: item.stock
                                                         );
                                                       } else {
                                                         AppSnackBar.show(

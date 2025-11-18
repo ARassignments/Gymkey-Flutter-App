@@ -27,48 +27,81 @@ class CartManager {
     }
   }
 
-static Future<void> removeFromCart(String bookId, BuildContext context, {State? state}) async {
-  try {
-    await _userCartRef().doc(bookId).delete();
-
-    // ✅ Only show Snackbar if widget is mounted
-    if (state != null && state.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Item removed from cart")),
-      );
-    }
-  } catch (e) {
-    if (state != null && state.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error removing item: ${e.toString()}")),
-      );
-    }
-  }
-}
-
-  static Future<void> updateQuantity(
+  static Future<void> removeFromCart(
     String bookId,
-    int quantity,
-    BuildContext context,
-  ) async {
+    BuildContext context, {
+    State? state,
+  }) async {
     try {
-      if (quantity < 1) {
-        await removeFromCart(bookId, context);
-      } else {
-        await _userCartRef().doc(bookId).update({'quantity': quantity});
+      await _userCartRef().doc(bookId).delete();
+
+      // ✅ Only show Snackbar if widget is mounted
+      if (state != null && state.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Item removed from cart")));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error updating quantity: ${e.toString()}")),
-      );
+      if (state != null && state.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error removing item: ${e.toString()}")),
+        );
+      }
     }
   }
+
+  // static Future<void> updateQuantity(
+  //   String bookId,
+  //   int quantity,
+  //   BuildContext context,
+  // ) async {
+  //   try {
+  //     if (quantity < 1) {
+  //       await removeFromCart(bookId, context);
+  //     } else {
+  //       await _userCartRef().doc(bookId).update({'quantity': quantity});
+  //     }
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text("Error updating quantity: ${e.toString()}")),
+  //     );
+  //   }
+  // }
 
   static Stream<List<CartItem>> getCartStream() {
     return _userCartRef().snapshots().map(
       (snapshot) =>
           snapshot.docs.map((doc) => CartItem.fromMap(doc.data())).toList(),
     );
+  }
+
+  static Future<void> updateQuantity(
+    String bookId,
+    int quantity,
+    BuildContext context, {
+    required int stock,
+  }) async {
+    try {
+      if (quantity < 1) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Minimum quantity is 1")));
+        return;
+      }
+
+      if (quantity > stock) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Maximum stock reached!")));
+        return;
+      }
+
+      await _userCartRef().doc(bookId).update({'quantity': quantity});
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error updating quantity: ${e.toString()}")),
+      );
+    }
   }
 
   static Future<void> batchRemoveCartItems(List<CartItem> cartItems) async {
@@ -81,6 +114,18 @@ static Future<void> removeFromCart(String bookId, BuildContext context, {State? 
       await batch.commit();
     } catch (e) {
       throw Exception('Failed to remove cart items: $e');
+    }
+  }
+
+  static Future<int> getQuantity(String bookId) async {
+    try {
+      final doc = await _userCartRef().doc(bookId).get();
+      if (doc.exists) {
+        return (doc.data()?['quantity'] ?? 1);
+      }
+      return 0;
+    } catch (e) {
+      return 0;
     }
   }
 }
