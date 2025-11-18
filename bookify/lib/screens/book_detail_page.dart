@@ -114,7 +114,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
     });
   }
 
-  // ✅ Check if the logged-in user already reviewed this book
   Future<void> checkIfUserReviewed() async {
     final user = auth.currentUser;
     if (user == null) return;
@@ -688,7 +687,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                               "${averageRating.toStringAsFixed(1)} (${reviews.length > 0 ? reviews.length.toString().padLeft(2, '0') : 'no'} reviews)",
                               style: AppTheme.textSearchInfoLabeled(
                                 context,
-                              ).copyWith(fontSize: 14),
+                              ).copyWith(fontSize: 13),
                             ),
                           ],
                         ),

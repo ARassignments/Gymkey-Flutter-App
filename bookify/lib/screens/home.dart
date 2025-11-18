@@ -398,7 +398,7 @@ class _HomeScreenState extends State<HomeScreen> {
     String category,
   ) {
     return SizedBox(
-      height: 220,
+      height: 235,
       child: FutureBuilder<QuerySnapshot>(
         future: future,
         builder: (context, snapshot) {
@@ -565,7 +565,7 @@ class CategoryDetailPage extends StatelessWidget {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 0.85,
+              childAspectRatio: 0.95,
             ),
             itemCount: books.length,
             itemBuilder: (context, index) {
