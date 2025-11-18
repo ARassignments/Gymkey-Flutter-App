@@ -100,26 +100,55 @@ class _BookDetailPageState extends State<BookDetailPage> {
   }
 
   Future<void> fetchReviews() async {
-    final snapshot = await FirebaseFirestore.instance
+  try {
+    final reviewSnapshot = await FirebaseFirestore.instance
         .collection('book_reviews')
         .where('bookId', isEqualTo: widget.bookId)
         .orderBy('created_at', descending: true)
         .get();
 
-    setState(() {
-      reviews = snapshot.docs
-          .map((doc) => doc.data() as Map<String, dynamic>)
-          .toList();
+    List<Map<String, dynamic>> enrichedReviews = [];
 
-      reviews.sort((a, b) {
-        final r1 = (a['rating'] as num?)?.toDouble() ?? 0;
-        final r2 = (b['rating'] as num?)?.toDouble() ?? 0;
-        return r2.compareTo(r1);
+    for (var doc in reviewSnapshot.docs) {
+      final reviewData = doc.data() as Map<String, dynamic>;
+      final userId = reviewData['userId'];
+
+      // Fetch user info from users collection
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      final userData = userDoc.exists ? userDoc.data() as Map<String, dynamic> : {};
+
+      enrichedReviews.add({
+        "reviewId": doc.id,
+        "rating": reviewData['rating'],
+        "review": reviewData['review'],
+        "created_at": reviewData['created_at'],
+        "userId": userId,
+        "userName": userData['name'] ?? userData['username'] ?? "Anonymous",
+        "userImage": userData['profile_image_url'] ?? "",
       });
+    }
 
-      topThreeReviews = reviews.take(3).toList();
+    // Sort reviews by rating (descending)
+    enrichedReviews.sort((a, b) {
+      final r1 = (a['rating'] as num?)?.toDouble() ?? 0;
+      final r2 = (b['rating'] as num?)?.toDouble() ?? 0;
+      return r2.compareTo(r1);
     });
+
+    setState(() {
+      reviews = enrichedReviews;
+      topThreeReviews = enrichedReviews.take(3).toList();
+    });
+  } catch (e) {
+    print("Error fetching reviews: $e");
   }
+}
+
+
 
   Future<void> checkIfUserReviewed() async {
     final user = auth.currentUser;

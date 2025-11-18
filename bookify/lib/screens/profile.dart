@@ -36,32 +36,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> fetchUserData() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
-      try {
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .get();
-        final data = doc.data();
+  final uid = FirebaseAuth.instance.currentUser?.uid;
+  if (uid != null) {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      final data = doc.data();
 
-        if (data != null) {
-          setState(() {
-            name = data['name'] ?? '';
-            email = data['email'] ?? '';
-            contact = data['phone'] ?? '';
-            address = data['address'] ?? '';
-            profileImage = data['profile_image_url'] ?? '';
-          });
-        }
-      } catch (e) {
-        print("Error fetching profile: $e");
+      if (data != null && mounted) { 
+        setState(() {
+          name = data['name'] ?? '';
+          email = data['email'] ?? '';
+          contact = data['phone'] ?? '';
+          address = data['address'] ?? '';
+          profileImage = data['profile_image_url'] ?? '';
+        });
       }
+    } catch (e) {
+      print("Error fetching profile: $e");
     }
+  }
+  if (mounted) { 
     setState(() {
       isLoading = false;
     });
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
