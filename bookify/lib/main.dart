@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '/dashboard_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter/services.dart';
@@ -11,7 +12,6 @@ import '/screens/categories/poetry_page.dart';
 import '/screens/categories/romance_page.dart';
 import '/screens/categories/science_page.dart';
 import '/screens/categories/self_love_page.dart';
-import '/screens/home.dart';
 import '/screens/profile.dart';
 import '/screens/splashscreen.dart';
 import '/screens/wishlist.dart';
@@ -39,7 +39,9 @@ void main() async {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdudXlzb2VsZmlxdXJxbGhjbXJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA3NjkzMzAsImV4cCI6MjA2NjM0NTMzMH0.PT_UHlxC_yXfHwiT6v5MXYZaf34EGvcZ3POC6vNlGxk',
   );
 
-  runApp(const MyApp());
+  runApp(
+    const ProviderScope(child: MyApp()),
+  );
 }
 
 class MyApp extends StatelessWidget {

@@ -1,6 +1,7 @@
+import '/providers/cart_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '/components/appsnackbar.dart';
 import '/managers/wishlist_manager.dart';
-import '/managers/cart_manager.dart';
 import '/models/cart_item.dart';
 import '/utils/themes/themes.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -8,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shimmer/shimmer.dart';
 
-class BookCard extends StatefulWidget {
+class BookCard extends ConsumerStatefulWidget {
   final String bookId;
   final String title;
   final String author;
@@ -31,10 +32,10 @@ class BookCard extends StatefulWidget {
   });
 
   @override
-  State<BookCard> createState() => _BookCardState();
+  ConsumerState<BookCard> createState() => _BookCardState();
 }
 
-class _BookCardState extends State<BookCard> {
+class _BookCardState extends ConsumerState<BookCard> {
   bool isFavorited = false;
   double averageRating = 0.0;
 
@@ -100,9 +101,10 @@ class _BookCardState extends State<BookCard> {
     final item = CartItem(
       bookId: widget.bookId,
       title: widget.title,
-      author: widget.author,
       imageUrl: widget.imagePath,
       price: widget.price,
+      stock: widget.stock ?? 1,
+      quantity: 1,
     );
 
     final newFavorited = !isFavorited;
@@ -130,8 +132,30 @@ class _BookCardState extends State<BookCard> {
     );
   }
 
+  void _addToCart() {
+    final cartItem = CartItem(
+      bookId: widget.bookId,
+      title: widget.title,
+      imageUrl: widget.imagePath,
+      price: widget.price,
+      stock: widget.stock ?? 1,
+      quantity: 1
+    );
+
+    // Add to cart via Riverpod
+    ref.read(cartProvider.notifier).addToCart(cartItem);
+
+    AppSnackBar.show(
+      context,
+      message: '${widget.title} added to cart',
+      type: AppSnackBarType.success,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final cartItems = ref.watch(cartProvider);
+    final inCart = cartItems.any((item) => item.bookId == widget.bookId);
     return Container(
       width: 160,
       decoration: BoxDecoration(
@@ -209,22 +233,7 @@ class _BookCardState extends State<BookCard> {
                 top: 38,
                 right: 6,
                 child: InkWell(
-                  onTap: () {
-                    CartManager.addToCart(
-                      CartItem(
-                        bookId: widget.bookId,
-                        title: widget.title,
-                        author: widget.author,
-                        imageUrl: widget.imagePath,
-                        price: widget.price,
-                      ),
-                    );
-                    AppSnackBar.show(
-                      context,
-                      message: '${widget.title} added to cart',
-                      type: AppSnackBarType.success,
-                    );
-                  },
+                  onTap: _addToCart,
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
@@ -232,7 +241,9 @@ class _BookCardState extends State<BookCard> {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      HugeIconsSolid.shoppingBag03,
+                      inCart
+                          ? HugeIconsSolid.shoppingBag03
+                          : HugeIconsStroke.shoppingBag03,
                       size: 18,
                       color: AppTheme.iconColor(context),
                     ),
@@ -293,7 +304,7 @@ class _BookCardState extends State<BookCard> {
                       ),
                       child: Center(
                         child: Text(
-                          "${widget.stock.toString().padLeft(2,'0')} Stocks",
+                          "${widget.stock.toString().padLeft(2, '0')} Stocks",
                           style: AppTheme.textLabel(
                             context,
                           ).copyWith(fontSize: 9),

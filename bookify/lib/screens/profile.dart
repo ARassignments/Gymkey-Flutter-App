@@ -1,24 +1,25 @@
-import 'package:bookify/components/dialog_logout.dart';
+import 'package:bookify/providers/user_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '/components/dialog_logout.dart';
 import '/components/loading_screen.dart';
 import '/utils/themes/themes.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import '/screens/auth/users/sign_in.dart';
 import '/screens/edit_profile.dart';
 import '/screens/user_orders.dart';
-import '/utils/constants/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final TextEditingController searchController = TextEditingController();
   final auth = FirebaseAuth.instance;
 
@@ -36,38 +37,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> fetchUserData() async {
-  final uid = FirebaseAuth.instance.currentUser?.uid;
-  if (uid != null) {
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-      final data = doc.data();
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
+        final data = doc.data();
 
-      if (data != null && mounted) { 
-        setState(() {
-          name = data['name'] ?? '';
-          email = data['email'] ?? '';
-          contact = data['phone'] ?? '';
-          address = data['address'] ?? '';
-          profileImage = data['profile_image_url'] ?? '';
-        });
+        if (data != null && mounted) {
+          setState(() {
+            name = data['name'] ?? '';
+            email = data['email'] ?? '';
+            contact = data['phone'] ?? '';
+            address = data['address'] ?? '';
+            profileImage = data['profile_image_url'] ?? '';
+          });
+        }
+      } catch (e) {
+        print("Error fetching profile: $e");
       }
-    } catch (e) {
-      print("Error fetching profile: $e");
+    }
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
-  if (mounted) { 
-    setState(() {
-      isLoading = false;
-    });
-  }
-}
-
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(userProvider);
     return Scaffold(
       backgroundColor: AppTheme.screenBg(context),
       body: SafeArea(
@@ -85,7 +86,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         radius: 60,
                         backgroundColor: AppTheme.cardBg(context),
                         backgroundImage: profileImage.isNotEmpty
-                            ? NetworkImage(profileImage)
+                            ? NetworkImage(user?.profileImage ?? profileImage)
                             : null,
                         child: profileImage.isEmpty
                             ? Icon(
@@ -118,7 +119,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             _buildInfoTile(
                               HugeIconsStroke.user03,
                               "Name",
-                              name,
+                              user?.name ?? name,
                             ),
                             Divider(
                               height: 1,
@@ -127,7 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             _buildInfoTile(
                               HugeIconsStroke.mail01,
                               "Email",
-                              email,
+                              user?.email ?? email,
                             ),
                             Divider(
                               height: 1,
@@ -136,7 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             _buildInfoTile(
                               HugeIconsStroke.call02,
                               "Contact",
-                              contact,
+                              user?.phone ?? contact,
                             ),
                             Divider(
                               height: 1,
@@ -145,7 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             _buildInfoTile(
                               HugeIconsStroke.mapsLocation01,
                               "Address",
-                              address,
+                              user?.address ?? address,
                             ),
                             SizedBox(
                               width: double.infinity,
@@ -154,9 +155,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 onPressed: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const EditProfileScreen(),
+                                    PageRouteBuilder(
+                                      opaque: false,
+                                      pageBuilder:
+                                          (
+                                            context,
+                                            animation,
+                                            secondaryAnimation,
+                                          ) => EditProfileScreen(),
+                                      transitionsBuilder:
+                                          (
+                                            context,
+                                            animation,
+                                            secondaryAnimation,
+                                            child,
+                                          ) {
+                                            const begin = Offset(0.0, 1.0);
+                                            const end = Offset.zero;
+                                            const curve = Curves.easeInOut;
+                                            final tween = Tween(
+                                              begin: begin,
+                                              end: end,
+                                            ).chain(CurveTween(curve: curve));
+                                            return SlideTransition(
+                                              position: animation.drive(tween),
+                                              child: child,
+                                            );
+                                          },
                                     ),
                                   );
                                 },

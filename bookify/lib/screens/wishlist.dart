@@ -1,3 +1,5 @@
+import 'package:bookify/screens/book_detail_page.dart';
+
 import '/components/appsnackbar.dart';
 import '/components/loading_screen.dart';
 import '/components/not_found.dart';
@@ -7,8 +9,6 @@ import '/models/cart_item.dart';
 import '/managers/cart_manager.dart';
 import '/managers/wishlist_manager.dart';
 import '/screens/home.dart';
-import '/utils/constants/colors.dart';
-import '/utils/themes/custom_themes/app_navbar.dart';
 import '/utils/themes/custom_themes/bottomnavbar.dart';
 import 'package:flutter/material.dart';
 
@@ -47,7 +47,8 @@ class _WishListScreenState extends State<WishListScreen> {
                       return Center(
                         child: NotFoundWidget(
                           title: "Your wishlist is empty",
-                          message: "You don't have any items added to wishlist yet.",
+                          message:
+                              "You don't have any items added to wishlist yet.",
                         ),
                       );
                     }
@@ -67,70 +68,115 @@ class _WishListScreenState extends State<WishListScreen> {
                           child: Row(
                             children: [
                               // Book Image + Heart
-                              Stack(
-                                children: [
-                                  Container(
-                                    width: 120,
-                                    height: 100,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                      color: AppTheme.cardDarkBg(context),
-                                      image: DecorationImage(
-                                        image: NetworkImage(item.imageUrl),
-                                        fit: BoxFit.cover,
-                                      ),
+                              InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    PageRouteBuilder(
+                                      opaque: false,
+                                      pageBuilder:
+                                          (
+                                            context,
+                                            animation,
+                                            secondaryAnimation,
+                                          ) => BookDetailPage(
+                                            bookId: item.bookId,
+                                          ),
+                                      transitionsBuilder:
+                                          (
+                                            context,
+                                            animation,
+                                            secondaryAnimation,
+                                            child,
+                                          ) {
+                                            const begin = Offset(0.0, 1.0);
+                                            const end = Offset.zero;
+                                            const curve = Curves.easeInOut;
+                                            final tween = Tween(
+                                              begin: begin,
+                                              end: end,
+                                            ).chain(CurveTween(curve: curve));
+                                            return SlideTransition(
+                                              position: animation.drive(tween),
+                                              child: child,
+                                            );
+                                          },
                                     ),
-                                  ),
-                                  Positioned(
-                                    top: 6,
-                                    right: 6,
-                                    child: InkWell(
-                                      onTap: () {
-                                        WishlistManager.removeFromWishlist(
-                                          item,
-                                        );
-                                        AppSnackBar.show(
-                                          context,
-                                          message:
-                                              "${item.title} removed from wishlist",
-                                          type: AppSnackBarType.success,
-                                        );
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.all(5),
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.customListBg(context),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          HugeIconsSolid.favourite,
-                                          size: 14,
-                                          color: Colors.red,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 6,
-                                    left: 6,
-                                    child: Container(
-                                      width: 25,
-                                      height: 88,
+                                  );
+                                },
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      width: 120,
+                                      height: 100,
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(20),
-                                        color: AppTheme.customListBg(context),
+                                        color: AppTheme.cardDarkBg(context),
+                                        image: DecorationImage(
+                                          image: NetworkImage(item.imageUrl),
+                                          fit: BoxFit.cover,
+                                        ),
                                       ),
-                                      child: Center(
-                                        child: Text(
-                                          (index+1).toString().padLeft(2, '0'),
-                                          style: AppTheme.textSearchInfoLabeled(
+                                    ),
+                                    Positioned(
+                                      top: 6,
+                                      right: 6,
+                                      child: InkWell(
+                                        onTap: () {
+                                          WishlistManager.removeFromWishlist(
+                                            item,
+                                          );
+                                          AppSnackBar.show(
                                             context,
+                                            message:
+                                                "${item.title} removed from wishlist",
+                                            type: AppSnackBarType.success,
+                                          );
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(5),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.customListBg(
+                                              context,
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            HugeIconsSolid.favourite,
+                                            size: 14,
+                                            color: Colors.red,
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    Positioned(
+                                      top: 6,
+                                      left: 6,
+                                      child: Container(
+                                        width: 25,
+                                        height: 88,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          color: AppTheme.customListBg(context),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            (index + 1).toString().padLeft(
+                                              2,
+                                              '0',
+                                            ),
+                                            style:
+                                                AppTheme.textSearchInfoLabeled(
+                                                  context,
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
 
                               // Book Info

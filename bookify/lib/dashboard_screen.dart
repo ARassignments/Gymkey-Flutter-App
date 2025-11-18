@@ -1,3 +1,6 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '/providers/user_provider.dart';
 import 'package:flutter/services.dart';
 import '/utils/themes/custom_themes/bottomnavbar.dart';
 import '/screens/home.dart';
@@ -16,14 +19,14 @@ import '/components/menu_drawer.dart';
 import '/components/dialog_logout.dart';
 import '/components/loading_screen.dart';
 
-class DashboardScreen extends StatefulWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final TextEditingController searchController = TextEditingController();
   final auth = FirebaseAuth.instance;
   final user = FirebaseAuth.instance.currentUser;
@@ -49,7 +52,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _onSearchChanged() {
-    final query = searchController.text.trim().toLowerCase();
+    // final query = searchController.text.trim().toLowerCase();
   }
 
   Future<void> fetchUserData() async {
@@ -337,6 +340,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(userProvider);
     final pages = _pages();
     return Scaffold(
       body: ZoomDrawer(
@@ -372,16 +376,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         SizedBox(width: 10),
                         if (_currentIndex < 1) ...[
                           ClipOval(
-                            child: (profileImage.isNotEmpty)
+                            child:
+                                (user != null && user.profileImage.isNotEmpty)
                                 ? Image.network(
-                                    profileImage,
-                                    width: 40,
-                                    height: 40,
-                                    fit: BoxFit.cover,
-                                  )
-                                : (user?.photoURL != null)
-                                ? Image.network(
-                                    user!.photoURL!,
+                                    user.profileImage,
                                     width: 40,
                                     height: 40,
                                     fit: BoxFit.cover,
@@ -410,7 +408,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Text(
                                 _currentIndex > 0
                                     ? menus[_currentIndex]
-                                    : user?.displayName ?? name,
+                                    : user?.name ?? name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: AppTheme.textTitle(context).copyWith(
@@ -421,11 +419,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                               Text(
                                 ".",
-                                style: AppTheme.textTitleActive(context)
-                                    .copyWith(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 19,
-                                    ),
+                                style: AppTheme.textTitleActive(
+                                  context,
+                                ).copyWith(fontFamily: 'Poppins', fontSize: 19),
                               ),
                             ],
                           ),

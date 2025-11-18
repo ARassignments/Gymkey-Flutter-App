@@ -1,8 +1,8 @@
-import 'package:bookify/screens/admin/screens/dashboard.dart';
-import 'package:bookify/screens/auth/users/sign_in.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/adminbottomnavbar.dart';
-import 'package:bookify/utils/themes/custom_themes/text_theme.dart';
+import '/screens/admin/screens/dashboard.dart';
+import '/screens/auth/users/sign_in.dart';
+import '/utils/constants/colors.dart';
+import '/utils/themes/custom_themes/adminbottomnavbar.dart';
+import '/utils/themes/custom_themes/text_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';

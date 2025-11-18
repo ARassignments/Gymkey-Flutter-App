@@ -1,8 +1,10 @@
+import 'package:bookify/utils/themes/themes.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
+
 import '/models/cart_item.dart';
 import '/managers/cart_manager.dart';
 import '/screens/home.dart';
 import '/utils/constants/colors.dart';
-import '/utils/themes/custom_themes/app_navbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -104,7 +106,27 @@ class _CheckoutState extends State<Checkout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFeeeeee),
+      backgroundColor: AppTheme.screenBg(context),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        titleSpacing: 0,
+        title: Text(
+          "Checkout",
+          style: AppTheme.textTitle(context).copyWith(
+            fontFamily: 'Poppins',
+            fontSize: 20,
+            fontWeight: FontWeight.w300,
+          ),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(HugeIconsStroke.arrowLeft01, size: 20),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [

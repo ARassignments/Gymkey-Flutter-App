@@ -100,55 +100,55 @@ class _BookDetailPageState extends State<BookDetailPage> {
   }
 
   Future<void> fetchReviews() async {
-  try {
-    final reviewSnapshot = await FirebaseFirestore.instance
-        .collection('book_reviews')
-        .where('bookId', isEqualTo: widget.bookId)
-        .orderBy('created_at', descending: true)
-        .get();
-
-    List<Map<String, dynamic>> enrichedReviews = [];
-
-    for (var doc in reviewSnapshot.docs) {
-      final reviewData = doc.data() as Map<String, dynamic>;
-      final userId = reviewData['userId'];
-
-      // Fetch user info from users collection
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
+    try {
+      final reviewSnapshot = await FirebaseFirestore.instance
+          .collection('book_reviews')
+          .where('bookId', isEqualTo: widget.bookId)
+          .orderBy('created_at', descending: true)
           .get();
 
-      final userData = userDoc.exists ? userDoc.data() as Map<String, dynamic> : {};
+      List<Map<String, dynamic>> enrichedReviews = [];
 
-      enrichedReviews.add({
-        "reviewId": doc.id,
-        "rating": reviewData['rating'],
-        "review": reviewData['review'],
-        "created_at": reviewData['created_at'],
-        "userId": userId,
-        "userName": userData['name'] ?? userData['username'] ?? "Anonymous",
-        "userImage": userData['profile_image_url'] ?? "",
+      for (var doc in reviewSnapshot.docs) {
+        final reviewData = doc.data() as Map<String, dynamic>;
+        final userId = reviewData['userId'];
+
+        // Fetch user info from users collection
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .get();
+
+        final userData = userDoc.exists
+            ? userDoc.data() as Map<String, dynamic>
+            : {};
+
+        enrichedReviews.add({
+          "reviewId": doc.id,
+          "rating": reviewData['rating'],
+          "review": reviewData['review'],
+          "created_at": reviewData['created_at'],
+          "userId": userId,
+          "userName": userData['name'] ?? userData['username'] ?? "Anonymous",
+          "userImage": userData['profile_image_url'] ?? "",
+        });
+      }
+
+      // Sort reviews by rating (descending)
+      enrichedReviews.sort((a, b) {
+        final r1 = (a['rating'] as num?)?.toDouble() ?? 0;
+        final r2 = (b['rating'] as num?)?.toDouble() ?? 0;
+        return r2.compareTo(r1);
       });
+
+      setState(() {
+        reviews = enrichedReviews;
+        topThreeReviews = enrichedReviews.take(3).toList();
+      });
+    } catch (e) {
+      print("Error fetching reviews: $e");
     }
-
-    // Sort reviews by rating (descending)
-    enrichedReviews.sort((a, b) {
-      final r1 = (a['rating'] as num?)?.toDouble() ?? 0;
-      final r2 = (b['rating'] as num?)?.toDouble() ?? 0;
-      return r2.compareTo(r1);
-    });
-
-    setState(() {
-      reviews = enrichedReviews;
-      topThreeReviews = enrichedReviews.take(3).toList();
-    });
-  } catch (e) {
-    print("Error fetching reviews: $e");
   }
-}
-
-
 
   Future<void> checkIfUserReviewed() async {
     final user = auth.currentUser;
@@ -300,9 +300,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
     final item = CartItem(
       bookId: widget.bookId,
       title: book['title'] ?? 'No Title',
-      author: book['auther'] ?? 'No Category',
       imageUrl: book['cover_image_url'],
       price: (book['price'] as int).toDouble(),
+      quantity: 1,
+      stock: (book['quantity'] as int).toInt(),
     );
 
     final newFavorited = !isFavorited;
@@ -369,7 +370,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
     final item = CartItem(
       bookId: widget.bookId,
       title: book['title'] ?? 'No Title',
-      author: book['author'] ?? 'Unknown',
       imageUrl: book['cover_image_url'] ?? '',
       price: price,
       stock: (book['quantity'] ?? 0),
@@ -466,7 +466,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
                             ? AppTheme.customListBg(context)
                             : MyColors.primary,
                       ),
-                      onPressed: hasUserReviewed ? null : submitReview,
+                      onPressed: () {
+                        Navigator.pop(context);
+                        hasUserReviewed ? null : submitReview();
+                      },
                       child: Text(
                         hasUserReviewed ? "Review Submitted" : "Submit Review",
                         style: const TextStyle(color: Colors.white),
@@ -666,7 +669,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.only(left: 20, top: 20, right: 20),
                 child: Center(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
@@ -800,7 +803,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              "${averageRating.toStringAsFixed(1)} (${reviews.length > 0 ? reviews.length.toString().padLeft(2, '0') : 'no'} reviews)",
+                              "${averageRating.toStringAsFixed(1)} (${reviews.isNotEmpty ? reviews.length.toString().padLeft(2, '0') : 'no'} reviews)",
                               style: AppTheme.textSearchInfoLabeled(
                                 context,
                               ).copyWith(fontSize: 13),

@@ -36,9 +36,9 @@ class _MenuDrawerState extends State<MenuDrawer>
     "Cart",
     "Wishlist",
     "Accounts",
-    "Customers",
-    "Payments",
-    "Scraps",
+    // "Customers",
+    // "Payments",
+    // "Scraps",
   ];
   final icons = [
     [HugeIconsStroke.home11, HugeIconsSolid.home11],
