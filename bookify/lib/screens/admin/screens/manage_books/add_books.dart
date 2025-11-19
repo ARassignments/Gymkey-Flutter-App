@@ -91,6 +91,7 @@ class _AddBooksState extends State<AddBooks> {
     await FirebaseFirestore.instance.collection('books').add({
       'title': titleController.text,
       'price': double.tryParse(priceController.text) ?? 0.0,
+      // 'discount': double.tryParse(discountController.text) ?? 0.0,
       'description': descriptionController.text,
       'category': selectedCategory ?? '',
       'cover_image_url': imageUrl,
