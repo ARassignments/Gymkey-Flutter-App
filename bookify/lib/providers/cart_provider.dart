@@ -63,6 +63,12 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
     await batch.commit();
   }
 
-  double get totalPrice =>
-      state.fold(0, (sum, item) => sum + (item.price * item.quantity));
+  double get totalPrice => state.fold(
+    0,
+    (sum, item) =>
+        sum +
+        (item.discount! > 0
+            ? (item.price - ((item.price * (item.discount ?? 0)) / 100))
+            : item.price * item.quantity),
+  );
 }

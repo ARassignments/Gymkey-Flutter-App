@@ -102,7 +102,7 @@ class CartScreen extends ConsumerWidget {
                                 itemTitle,
                                 style: AppTheme.textTitle(context),
                               ),
-                          
+
                               const SizedBox(height: 15),
                               Row(
                                 children: [
@@ -248,6 +248,9 @@ class CartScreen extends ConsumerWidget {
                       itemCount: cartItems.length,
                       itemBuilder: (context, index) {
                         final item = cartItems[index];
+                        final num discount = item.discount ?? 0;
+                        final double discountedPrice =
+                            item.price - ((item.price * discount) / 100);
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 16),
                           child: Dismissible(
@@ -305,11 +308,13 @@ class CartScreen extends ConsumerWidget {
                                   .removeFromCart(item.bookId);
                             },
                             child: Container(
+                              padding: EdgeInsets.all(16),
                               decoration: BoxDecoration(
                                 color: AppTheme.customListBg(context),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
+                                spacing: 16,
                                 children: [
                                   // Book Image
                                   InkWell(
@@ -397,151 +402,46 @@ class CartScreen extends ConsumerWidget {
                                             ),
                                           ),
                                         ),
+                                        if (item.discount! > 0)
+                                          Positioned(
+                                            top: 6,
+                                            left: 6,
+                                            child: Container(
+                                              padding: const EdgeInsets.all(6),
+                                              decoration: BoxDecoration(
+                                                color: AppColor.accent_50,
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                              child: Text(
+                                                "${item.discount.toString().padLeft(2, '0')}% OFF",
+                                                style:
+                                                    AppTheme.textLabel(
+                                                      context,
+                                                    ).copyWith(
+                                                      fontSize: 8,
+                                                      color: AppColor.white,
+                                                    ),
+                                              ),
+                                            ),
+                                          ),
                                       ],
                                     ),
                                   ),
 
                                   // Book Info
                                   Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            item.title,
-                                            style: AppTheme.textTitle(context),
-                                          ),
-
-                                          const SizedBox(height: 15),
-                                          Row(
-                                            children: [
-                                              Container(
-                                                padding: EdgeInsets.all(8),
-                                                decoration: BoxDecoration(
-                                                  color:
-                                                      AppTheme.sliderHighlightBg(
-                                                        context,
-                                                      ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(20),
-                                                ),
-                                                child: Row(
-                                                  children: [
-                                                    InkWell(
-                                                      onTap: () {
-                                                        final newQty =
-                                                            item.quantity - 1;
-                                                        ref
-                                                            .read(
-                                                              cartProvider
-                                                                  .notifier,
-                                                            )
-                                                            .updateQuantity(
-                                                              item.bookId,
-                                                              newQty,
-                                                              item.stock,
-                                                            );
-                                                      },
-                                                      child: Container(
-                                                        decoration: BoxDecoration(
-                                                          shape:
-                                                              BoxShape.circle,
-                                                          color:
-                                                              AppTheme.sliderHighlightBg(
-                                                                context,
-                                                              ),
-                                                        ),
-                                                        child: Icon(
-                                                          HugeIconsSolid
-                                                              .remove01,
-                                                          size: 14,
-                                                          color:
-                                                              AppTheme.iconColorThree(
-                                                                context,
-                                                              ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    Padding(
-                                                      padding:
-                                                          const EdgeInsets.symmetric(
-                                                            horizontal: 8,
-                                                          ),
-                                                      child: Text(
-                                                        "QTY: ${item.quantity.toString().padLeft(2, '0')}",
-                                                        style:
-                                                            AppTheme.textSearchInfoLabeled(
-                                                              context,
-                                                            ).copyWith(
-                                                              fontSize: 10,
-                                                            ),
-                                                      ),
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () {
-                                                        final newQty =
-                                                            item.quantity + 1;
-                                                        if (newQty <=
-                                                            item.stock) {
-                                                          ref
-                                                              .read(
-                                                                cartProvider
-                                                                    .notifier,
-                                                              )
-                                                              .updateQuantity(
-                                                                item.bookId,
-                                                                newQty,
-                                                                item.stock,
-                                                              );
-                                                        } else {
-                                                          AppSnackBar.show(
-                                                            context,
-                                                            message:
-                                                                "Maximum stock reached!",
-                                                            type:
-                                                                AppSnackBarType
-                                                                    .warning,
-                                                          );
-                                                        }
-                                                      },
-                                                      child: Container(
-                                                        decoration: BoxDecoration(
-                                                          shape:
-                                                              BoxShape.circle,
-                                                          color:
-                                                              AppTheme.sliderHighlightBg(
-                                                                context,
-                                                              ),
-                                                        ),
-                                                        child: Icon(
-                                                          HugeIconsSolid.add01,
-                                                          size: 14,
-                                                          color:
-                                                              AppTheme.iconColorThree(
-                                                                context,
-                                                              ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-
-                                  // Price + Delete
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 16),
                                     child: Column(
                                       crossAxisAlignment:
-                                          CrossAxisAlignment.end,
+                                          CrossAxisAlignment.start,
                                       children: [
+                                        Text(
+                                          item.title,
+                                          style: AppTheme.textTitle(context),
+                                        ),
+                                    
+                                        const SizedBox(height: 8),
+                                    
                                         Row(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.center,
@@ -555,41 +455,184 @@ class CartScreen extends ConsumerWidget {
                                               size: 16,
                                             ),
                                             Text(
-                                              "\$${(item.price * item.quantity)}",
-                                              style: AppTheme.textLabel(
-                                                context,
+                                              "\$${(item.discount! > 0 ? discountedPrice : item.price * item.quantity)}",
+                                              style:
+                                                  AppTheme.textLabel(
+                                                    context,
+                                                  ).copyWith(
+                                                    fontWeight:
+                                                        FontWeight.w600,
+                                                    fontSize: 14,
+                                                  ),
+                                            ),
+                                            if (item.discount! > 0)
+                                              Text(
+                                                '\$${(item.price * item.quantity)}',
+                                                style:
+                                                    AppTheme.textSearchInfoLabeled(
+                                                      context,
+                                                    ).copyWith(
+                                                      fontSize: 11,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      decoration:
+                                                          TextDecoration
+                                                              .lineThrough,
+                                                    ),
+                                              ),
+                                          ],
+                                        ),
+                                    
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    AppTheme.sliderHighlightBg(
+                                                      context,
+                                                    ),
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  InkWell(
+                                                    onTap: () {
+                                                      final newQty =
+                                                          item.quantity - 1;
+                                                      ref
+                                                          .read(
+                                                            cartProvider
+                                                                .notifier,
+                                                          )
+                                                          .updateQuantity(
+                                                            item.bookId,
+                                                            newQty,
+                                                            item.stock,
+                                                          );
+                                                    },
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        shape:
+                                                            BoxShape.circle,
+                                                        color:
+                                                            AppTheme.sliderHighlightBg(
+                                                              context,
+                                                            ),
+                                                      ),
+                                                      child: Icon(
+                                                        HugeIconsSolid
+                                                            .remove01,
+                                                        size: 14,
+                                                        color:
+                                                            AppTheme.iconColorThree(
+                                                              context,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                        ),
+                                                    child: Text(
+                                                      "QTY: ${item.quantity.toString().padLeft(2, '0')}",
+                                                      style:
+                                                          AppTheme.textSearchInfoLabeled(
+                                                            context,
+                                                          ).copyWith(
+                                                            fontSize: 10,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  InkWell(
+                                                    onTap: () {
+                                                      final newQty =
+                                                          item.quantity + 1;
+                                                      if (newQty <=
+                                                          item.stock) {
+                                                        ref
+                                                            .read(
+                                                              cartProvider
+                                                                  .notifier,
+                                                            )
+                                                            .updateQuantity(
+                                                              item.bookId,
+                                                              newQty,
+                                                              item.stock,
+                                                            );
+                                                      } else {
+                                                        AppSnackBar.show(
+                                                          context,
+                                                          message:
+                                                              "Maximum stock reached!",
+                                                          type:
+                                                              AppSnackBarType
+                                                                  .warning,
+                                                        );
+                                                      }
+                                                    },
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        shape:
+                                                            BoxShape.circle,
+                                                        color:
+                                                            AppTheme.sliderHighlightBg(
+                                                              context,
+                                                            ),
+                                                      ),
+                                                      child: Icon(
+                                                        HugeIconsSolid.add01,
+                                                        size: 14,
+                                                        color:
+                                                            AppTheme.iconColorThree(
+                                                              context,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(height: 20),
-                                        InkWell(
-                                          onTap: () {
-                                            removeItem(
-                                              context,
-                                              ref,
-                                              item.bookId,
-                                              item.imageUrl,
-                                              (index + 1).toString().padLeft(
-                                                2,
-                                                '0',
-                                              ),
-                                              item.title,
-                                              "QTY: ${item.quantity.toString().padLeft(2, '0')}",
-                                              "\$${(item.price * item.quantity)}"
-                                            );
-                                            // ref
-                                            //     .read(cartProvider.notifier)
-                                            //     .removeFromCart(item.bookId);
-                                          },
-                                          child: const Icon(
-                                            HugeIconsSolid.delete01,
-                                            color: AppColor.accent_50,
-                                            size: 18,
-                                          ),
-                                        ),
                                       ],
                                     ),
+                                  ),
+
+                                  // Delete
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      InkWell(
+                                        onTap: () {
+                                          removeItem(
+                                            context,
+                                            ref,
+                                            item.bookId,
+                                            item.imageUrl,
+                                            (index + 1).toString().padLeft(
+                                              2,
+                                              '0',
+                                            ),
+                                            item.title,
+                                            "QTY: ${item.quantity.toString().padLeft(2, '0')}",
+                                            "\$${(item.discount! > 0 ? discountedPrice : item.price * item.quantity)}",
+                                          );
+                                          // ref
+                                          //     .read(cartProvider.notifier)
+                                          //     .removeFromCart(item.bookId);
+                                        },
+                                        child: Icon(
+                                          HugeIconsStroke.delete01,
+                                          color: AppTheme.iconColor(context),
+                                          size: 18,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -670,7 +713,7 @@ class CartScreen extends ConsumerWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               spacing: 12,
                               children: [
-                                Text("Check Out"),
+                                Text("Checkout"),
                                 Icon(HugeIconsSolid.arrowRight04),
                               ],
                             ),

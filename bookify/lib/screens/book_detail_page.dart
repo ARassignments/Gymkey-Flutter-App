@@ -304,6 +304,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
       price: (book['price'] as int).toDouble(),
       quantity: 1,
       stock: (book['quantity'] as int).toInt(),
+      discount: (book['discount'] as int).toInt(),
     );
 
     final newFavorited = !isFavorited;
@@ -374,6 +375,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
       price: price,
       stock: (book['quantity'] ?? 0),
       quantity: selectedQty,
+      discount: (book['discount'] ?? 0)
     );
 
     try {

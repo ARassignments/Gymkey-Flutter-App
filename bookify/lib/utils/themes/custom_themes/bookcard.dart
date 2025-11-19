@@ -107,6 +107,7 @@ class _BookCardState extends ConsumerState<BookCard> {
       price: widget.price,
       stock: widget.stock ?? 1,
       quantity: 1,
+      discount: widget.discount ?? 0
     );
 
     final newFavorited = !isFavorited;
@@ -142,6 +143,7 @@ class _BookCardState extends ConsumerState<BookCard> {
       price: widget.price,
       stock: widget.stock ?? 1,
       quantity: 1,
+      discount: widget.discount ?? 0
     );
 
     // Add to cart via Riverpod

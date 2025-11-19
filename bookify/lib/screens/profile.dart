@@ -1,6 +1,5 @@
-import 'package:bookify/providers/user_provider.dart';
+import '/providers/user_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '/components/dialog_logout.dart';
 import '/components/loading_screen.dart';
 import '/utils/themes/themes.dart';
