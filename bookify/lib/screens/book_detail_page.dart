@@ -639,6 +639,13 @@ class _BookDetailPageState extends State<BookDetailPage> {
     final int stock = (book['quantity'] is int)
         ? book['quantity'] as int
         : ((book['quantity'] as num?)?.toInt() ?? 0);
+    final int discount = (book['discount'] is int)
+        ? book['discount'] as int
+        : ((book['discount'] as num?)?.toInt() ?? 0);
+    final int price = (book['price'] is int)
+        ? book['price'] as int
+        : ((book['price'] as num?)?.toInt() ?? 0);
+    final double discountedPrice = price - ((price * discount) / 100);
 
     return Scaffold(
       backgroundColor: AppTheme.screenBg(context),
@@ -671,59 +678,91 @@ class _BookDetailPageState extends State<BookDetailPage> {
               Padding(
                 padding: const EdgeInsets.only(left: 20, top: 20, right: 20),
                 child: Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: book['cover_image_url'] != null
-                        ? Image.network(
-                            book['cover_image_url'],
-                            width: double.infinity,
-                            height: 250,
-                            fit: BoxFit.cover,
-                            alignment: AlignmentGeometry.topCenter,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: book['cover_image_url'] != null
+                            ? Image.network(
+                                book['cover_image_url'],
+                                width: double.infinity,
+                                height: 250,
+                                fit: BoxFit.cover,
+                                alignment: AlignmentGeometry.topCenter,
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
 
-                              return Shimmer.fromColors(
-                                baseColor: AppTheme.customListBg(context),
-                                highlightColor: AppTheme.sliderHighlightBg(
-                                  context,
-                                ),
-                                child: Container(
+                                      return Shimmer.fromColors(
+                                        baseColor: AppTheme.customListBg(
+                                          context,
+                                        ),
+                                        highlightColor:
+                                            AppTheme.sliderHighlightBg(context),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.customListBg(
+                                              context,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          height: 250,
+                                          width: double.infinity,
+                                          child: Center(
+                                            child: CircularProgressIndicator(
+                                              color: AppTheme.iconColor(
+                                                context,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                errorBuilder: (context, _, __) => Container(
+                                  height: 250,
+                                  width: double.infinity,
                                   decoration: BoxDecoration(
                                     color: AppTheme.customListBg(context),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
-                                  height: 250,
-                                  width: double.infinity,
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      color: AppTheme.iconColor(context),
-                                    ),
+                                  child: const Icon(
+                                    Icons.broken_image,
+                                    color: Colors.grey,
                                   ),
                                 ),
-                              );
-                            },
-                            errorBuilder: (context, _, __) => Container(
-                              height: 250,
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: AppTheme.customListBg(context),
-                                borderRadius: BorderRadius.circular(20),
+                              )
+                            : const Image(
+                                image: AssetImage(
+                                  'assets/images/default_cover.jpg',
+                                ),
+                                width: double.infinity,
+                                height: 250,
+                                fit: BoxFit.cover,
                               ),
-                              child: const Icon(
-                                Icons.broken_image,
-                                color: Colors.grey,
+                      ),
+                      if (discount > 0)
+                        Positioned(
+                          top: 10,
+                          left: 10,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColor.accent_50,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              "${discount.toString().padLeft(2, '0')}% OFF",
+                              style: AppTheme.textLabel(context).copyWith(
+                                fontSize: 12,
+                                color: AppColor.white,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          )
-                        : const Image(
-                            image: AssetImage(
-                              'assets/images/default_cover.jpg',
-                            ),
-                            width: double.infinity,
-                            height: 250,
-                            fit: BoxFit.cover,
                           ),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -1072,12 +1111,22 @@ class _BookDetailPageState extends State<BookDetailPage> {
                               ).copyWith(fontSize: 12),
                             ),
                             Text(
-                              "\$${((book['price'] ?? 0) * selectedQty).toString()}",
+                              "\$${((discount > 0 ? discountedPrice : price) * selectedQty).toString()}",
                               style: AppTheme.textTitle(context).copyWith(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
+                            if (discount > 0)
+                              Text(
+                                '\$${price.toStringAsFixed(0)}',
+                                style: AppTheme.textSearchInfoLabeled(context)
+                                    .copyWith(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      decoration: TextDecoration.lineThrough,
+                                    ),
+                              ),
                           ],
                         ),
                         Expanded(

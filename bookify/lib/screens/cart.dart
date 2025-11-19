@@ -671,7 +671,7 @@ class CartScreen extends ConsumerWidget {
                               spacing: 12,
                               children: [
                                 Text("Check Out"),
-                                Icon(HugeIconsSolid.shoppingCartCheckOut02),
+                                Icon(HugeIconsSolid.arrowRight04),
                               ],
                             ),
                           ),
