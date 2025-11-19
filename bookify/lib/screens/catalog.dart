@@ -1,13 +1,9 @@
-import 'package:bookify/components/appsnackbar.dart';
-import 'package:bookify/components/loading_screen.dart';
+import '/components/appsnackbar.dart';
+import '/components/loading_screen.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shimmer/shimmer.dart';
-
 import '/screens/products.dart';
 import '/utils/themes/themes.dart';
-import '/screens/all_books.dart';
-import '/screens/home.dart';
-import '/utils/themes/custom_themes/bottomnavbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -19,9 +15,12 @@ class CatalogScreen extends StatefulWidget {
   State<CatalogScreen> createState() => _CatalogScreenState();
 }
 
-class _CatalogScreenState extends State<CatalogScreen> {
+class _CatalogScreenState extends State<CatalogScreen> with AutomaticKeepAliveClientMixin {
   final TextEditingController searchController = TextEditingController();
   final auth = FirebaseAuth.instance;
+
+  @override
+  bool get wantKeepAlive => true;
 
   Widget _buildCategoryCard(
     BuildContext context,
@@ -116,93 +115,79 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        navigateWithFade(context, const HomeScreen());
-        return false;
-      },
-      child: Scaffold(
-        backgroundColor: AppTheme.screenBg(context),
-        body: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Categories",
-                            style: AppTheme.textLabel(context).copyWith(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // 🔥 STREAM BUILDER FOR DYNAMIC CATEGORIES
-                      StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection("categories")
-                            .orderBy("name")
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return const Center(child: LoadingLogo());
-                          }
-
-                          final categories = snapshot.data!.docs;
-
-                          return GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount:
-                                categories.length +
-                                1, // 👉 Add one extra for Coming More
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 16,
-                                  mainAxisSpacing: 16,
-                                  childAspectRatio: 3 / 2,
-                                ),
-                            itemBuilder: (context, index) {
-                              // 👉 If last index → return Coming More Card
-                              if (index == categories.length) {
-                                return _buildComingMoreCard(context);
-                              }
-
-                              // 👉 Category Item
-                              final cat = categories[index];
-                              final title = cat['name'];
-
-                              // Safe Firestore data extraction
-                              final data = cat.data() as Map<String, dynamic>;
-                              final imageUrl = data['image_url'] ?? "";
-
-                              return _buildCategoryCard(
-                                context,
-                                title,
-                                imageUrl,
-                              );
-                            },
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                    ],
+    super.build(context);
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Categories",
+                  style: AppTheme.textLabel(context).copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+        
+            const SizedBox(height: 16),
+        
+            // 🔥 STREAM BUILDER FOR DYNAMIC CATEGORIES
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection("categories")
+                  .orderBy("name")
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: LoadingLogo());
+                }
+        
+                final categories = snapshot.data!.docs;
+        
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount:
+                      categories.length +
+                      1, // 👉 Add one extra for Coming More
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 3 / 2,
+                      ),
+                  itemBuilder: (context, index) {
+                    // 👉 If last index → return Coming More Card
+                    if (index == categories.length) {
+                      return _buildComingMoreCard(context);
+                    }
+        
+                    // 👉 Category Item
+                    final cat = categories[index];
+                    final title = cat['name'];
+        
+                    // Safe Firestore data extraction
+                    final data = cat.data() as Map<String, dynamic>;
+                    final imageUrl = data['image_url'] ?? "";
+        
+                    return _buildCategoryCard(
+                      context,
+                      title,
+                      imageUrl,
+                    );
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );

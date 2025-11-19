@@ -1,7 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '/providers/user_provider.dart';
-import 'package:flutter/services.dart';
 import '/utils/themes/custom_themes/bottomnavbar.dart';
 import '/screens/home.dart';
 import '/screens/auth/users/sign_in.dart';
@@ -37,11 +35,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _currentIndex = 0;
   final ZoomDrawerController _drawerController = ZoomDrawerController();
   List<String> menus = ["Home", "Catalogs", "Cart", "Wishlist", "Accounts"];
+  late final List<Widget> pages;
+  final HomeScreen homeScreen = const HomeScreen();
+  final CatalogScreen catalogScreen = const CatalogScreen();
+  final CartScreen cartScreen = const CartScreen();
+  final WishListScreen wishListScreen = const WishListScreen();
+  final ProfileScreen profileScreen = const ProfileScreen();
 
   @override
   void initState() {
     super.initState();
     fetchUserData();
+    pages = [
+      homeScreen,
+      catalogScreen,
+      cartScreen,
+      wishListScreen,
+      profileScreen
+    ];
   }
 
   @override
@@ -99,249 +110,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
-  List<Widget> _pages() {
-    return [
-      _homePage(),
-      _catalogPage(),
-      _cartPage(),
-      _wishlistPage(),
-      _accountsPage(),
-    ];
-  }
-
-  Widget _homePage() {
-    return HomeScreen();
-  }
-
-  Widget _catalogPage() {
-    return CatalogScreen();
-  }
-
-  // Widget _accountsPage() {
-  //   return ListView(
-  //     shrinkWrap: true,
-  //     children: [
-  //       ValueListenableBuilder<String?>(
-  //         valueListenable: avatarNotifier,
-  //         builder: (context, avatar, _) {
-  //           return ListTile(
-  //             contentPadding: const EdgeInsets.symmetric(
-  //               horizontal: 16,
-  //               vertical: 8,
-  //             ),
-  //             title: Row(
-  //               children: [
-  //                 CircleAvatar(
-  //                   radius: 40,
-  //                   backgroundColor: AppTheme.customListBg(context),
-  //                   foregroundImage: avatar != null
-  //                       ? AssetImage(avatar)
-  //                       : const AssetImage("assets/images/avatars/boy_14.png"),
-  //                 ),
-  //                 SizedBox(width: 16),
-  //                 Column(
-  //                   mainAxisAlignment: MainAxisAlignment.start,
-  //                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                   children: [
-  //                     Text(
-  //                       "${user!["FullName"]}",
-  //                       style: AppTheme.textLabel(context).copyWith(
-  //                         fontSize: 17,
-  //                         fontFamily: AppFontFamily.poppinsSemiBold,
-  //                       ),
-  //                     ),
-  //                     SizedBox(height: 4),
-  //                     Text(
-  //                       "View Profile",
-  //                       style: AppTheme.textLink(context).copyWith(
-  //                         fontSize: 12,
-  //                         fontFamily: AppFontFamily.poppinsRegular,
-  //                       ),
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ],
-  //             ),
-  //             onTap: () {
-  //               Navigator.push(
-  //                 context,
-  //                 MaterialPageRoute(builder: (_) => const ProfileScreen()),
-  //               );
-  //             },
-  //           );
-  //         },
-  //       ),
-  //       Divider(thickness: 30, height: 30, color: AppTheme.dividerBg(context)),
-  //       ListTile(
-  //         contentPadding: const EdgeInsets.symmetric(
-  //           horizontal: 16,
-  //           vertical: 8,
-  //         ),
-  //         leading: Icon(HugeIconsStroke.userGroup, size: 24),
-  //         title: Text("Customers", style: AppTheme.textLabel(context)),
-  //         onTap: () {
-  //           Navigator.push(
-  //             context,
-  //             MaterialPageRoute(builder: (_) => const CustomersScreen()),
-  //           );
-  //         },
-  //       ),
-  //       Divider(height: 1, color: AppTheme.dividerBg(context)),
-  //       ListTile(
-  //         contentPadding: const EdgeInsets.symmetric(
-  //           horizontal: 16,
-  //           vertical: 8,
-  //         ),
-  //         leading: Icon(HugeIconsStroke.moneyReceiveFlow01, size: 24),
-  //         title: Text("Payments", style: AppTheme.textLabel(context)),
-  //         onTap: () {
-  //           Navigator.push(
-  //             context,
-  //             MaterialPageRoute(builder: (_) => const PaymentsScreen()),
-  //           );
-  //         },
-  //       ),
-  //       Divider(height: 1, color: AppTheme.dividerBg(context)),
-  //       ListTile(
-  //         contentPadding: const EdgeInsets.symmetric(
-  //           horizontal: 16,
-  //           vertical: 8,
-  //         ),
-  //         leading: Icon(HugeIconsStroke.recycle02, size: 24),
-  //         title: Text("Scraps", style: AppTheme.textLabel(context)),
-  //         onTap: () {
-  //           Navigator.push(
-  //             context,
-  //             MaterialPageRoute(builder: (_) => const ScrapsScreen()),
-  //           );
-  //         },
-  //       ),
-  //       Divider(height: 1, color: AppTheme.dividerBg(context)),
-  //       ListTile(
-  //         contentPadding: const EdgeInsets.symmetric(
-  //           horizontal: 16,
-  //           vertical: 8,
-  //         ),
-  //         leading: Icon(HugeIconsStroke.userGroup03, size: 24),
-  //         title: Text("Users", style: AppTheme.textLabel(context)),
-  //         onTap: () {},
-  //       ),
-  //       Divider(height: 1, color: AppTheme.dividerBg(context)),
-  //       ListTile(
-  //         contentPadding: const EdgeInsets.symmetric(
-  //           horizontal: 16,
-  //           vertical: 8,
-  //         ),
-  //         leading: Icon(HugeIconsStroke.messageMultiple02, size: 24),
-  //         title: Text("Messages", style: AppTheme.textLabel(context)),
-  //         onTap: () {},
-  //       ),
-  //       Divider(thickness: 30, height: 30, color: AppTheme.dividerBg(context)),
-  //       ListTile(
-  //         contentPadding: const EdgeInsets.symmetric(
-  //           horizontal: 16,
-  //           vertical: 8,
-  //         ),
-  //         leading: Icon(
-  //           Theme.of(context).brightness == Brightness.dark
-  //               ? HugeIconsStroke.moon02
-  //               : HugeIconsStroke.sun02,
-  //           size: 24,
-  //         ),
-  //         title: Text(
-  //           Theme.of(context).brightness == Brightness.dark
-  //               ? "Dark Mode"
-  //               : "Light Mode",
-  //           style: AppTheme.textLabel(context),
-  //         ),
-  //         trailing: Switch(
-  //           value: ThemeController.themeNotifier.value == ThemeMode.dark,
-  //           onChanged: (value) {
-  //             ThemeController.setTheme(
-  //               value ? ThemeMode.dark : ThemeMode.light,
-  //             );
-  //           },
-  //         ),
-  //         onTap: () {
-  //           final isDark =
-  //               ThemeController.themeNotifier.value == ThemeMode.dark;
-  //           ThemeController.setTheme(isDark ? ThemeMode.light : ThemeMode.dark);
-  //         },
-  //       ),
-  //       Divider(height: 1, color: AppTheme.dividerBg(context)),
-  //       ListTile(
-  //         contentPadding: const EdgeInsets.symmetric(
-  //           horizontal: 16,
-  //           vertical: 8,
-  //         ),
-  //         leading: Icon(HugeIconsStroke.crown03, size: 24),
-  //         title: Text("Subscription", style: AppTheme.textLabel(context)),
-  //         onTap: () {},
-  //       ),
-  //       Divider(height: 1, color: AppTheme.dividerBg(context)),
-  //       ListTile(
-  //         contentPadding: const EdgeInsets.symmetric(
-  //           horizontal: 16,
-  //           vertical: 8,
-  //         ),
-  //         leading: Icon(HugeIconsStroke.note, size: 24),
-  //         title: Text("Privacy Policy", style: AppTheme.textLabel(context)),
-  //         onTap: () {},
-  //       ),
-  //       Divider(height: 1, color: AppTheme.dividerBg(context)),
-  //       ListTile(
-  //         contentPadding: const EdgeInsets.symmetric(
-  //           horizontal: 16,
-  //           vertical: 8,
-  //         ),
-  //         leading: Icon(HugeIconsStroke.headset, size: 24),
-  //         title: Text("Help Center", style: AppTheme.textLabel(context)),
-  //         onTap: () {},
-  //       ),
-  //       Divider(height: 1, color: AppTheme.dividerBg(context)),
-  //       ListTile(
-  //         contentPadding: const EdgeInsets.symmetric(
-  //           horizontal: 16,
-  //           vertical: 8,
-  //         ),
-  //         leading: Icon(HugeIconsStroke.chartBreakoutCircle, size: 24),
-  //         title: Text(
-  //           "About Y2K Solutions",
-  //           style: AppTheme.textLabel(context),
-  //         ),
-  //         onTap: () {},
-  //       ),
-  //       Divider(height: 1, color: AppTheme.dividerBg(context)),
-  //       const SizedBox(height: 50),
-  //       ListTile(
-  //         title: OutlineErrorButton(
-  //           text: 'Log Out',
-  //           onPressed: () {
-  //             DialogLogout().showDialog(context, _logout);
-  //           },
-  //         ),
-  //       ),
-  //       const SizedBox(height: 30),
-  //     ],
-  //   );
-  // }
-
-  Widget _cartPage() {
-    return CartScreen();
-  }
-
-  Widget _wishlistPage() {
-    return WishListScreen();
-  }
-
-  Widget _accountsPage() {
-    return ProfileScreen();
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(userProvider);
-    final pages = _pages();
     return Scaffold(
       body: ZoomDrawer(
         controller: _drawerController,
@@ -502,7 +273,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           body: user == null
               ? const Center(child: LoadingLogo())
-              : IndexedStack(index: _currentIndex, children: _pages()),
+              : IndexedStack(index: _currentIndex, children: pages),
           bottomNavigationBar: buildCurvedNavBar(context, _currentIndex, (
             index,
           ) {
