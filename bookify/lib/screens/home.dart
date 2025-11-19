@@ -1,11 +1,8 @@
-import 'dart:io' show Platform;
 import 'package:hugeicons_pro/hugeicons.dart';
 import '/components/dashboard_slider.dart';
 import '/components/loading_screen.dart';
-import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
 import '/components/not_found.dart';
 import '/utils/themes/themes.dart';
-import 'package:flutter/services.dart';
 import '/screens/book_detail_page.dart';
 import '/utils/themes/custom_themes/bookcard.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -19,41 +16,9 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  final TextEditingController searchController = TextEditingController();
+class _HomeScreenState extends State<HomeScreen>
+    with AutomaticKeepAliveClientMixin {
   final user = FirebaseAuth.instance.currentUser;
-  int _currentIndex = 0;
-  final ZoomDrawerController _drawerController = ZoomDrawerController();
-
-  DateTime? _lastBack;
-
-  Future<bool> _onWillPop() async {
-    final now = DateTime.now();
-    final pressedTwice =
-        _lastBack != null &&
-        now.difference(_lastBack!) <= const Duration(seconds: 2);
-
-    if (pressedTwice) {
-      if (Platform.isAndroid) {
-        SystemNavigator.pop();
-        return false;
-      }
-      return true;
-    }
-
-    _lastBack = now;
-    if (!mounted) return false;
-    ScaffoldMessenger.of(context)
-      ..removeCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          content: Text('Tap once more to exit'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    return false;
-  }
-
   List<String> categories = [];
 
   @override
@@ -61,6 +26,9 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     fetchCategories();
   }
+
+  @override
+  bool get wantKeepAlive => true;
 
   Future<void> fetchCategories() async {
     try {
@@ -83,231 +51,215 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.screenBg(context),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
+    super.build(context);
+    return SafeArea(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DashboardSlider(
+                slidesData: [
+                  _buildSliderCard(
+                    title: '',
+                    subtitle: '',
+                    image: 'assets/images/banner1.png',
+                  ),
+                  _buildSliderCard(
+                    title: '',
+                    subtitle: '',
+                    image: 'assets/images/banner2.png',
+                  ),
+                  _buildSliderCard(
+                    title: '',
+                    subtitle: '',
+                    image: 'assets/images/banner3.png',
+                  ),
+                ],
+              ),
+
+              // ===== Dynamic Categories Section =====
+              categories.isEmpty
+                  ? Center(child: LoadingLogo())
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Categories",
+                          style: AppTheme.textLabel(
+                            context,
+                          ).copyWith(fontSize: 14, fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          height: 45,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: categories.length,
+                            itemBuilder: (context, index) {
+                              final category = categories[index];
+                              return InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => CategoryDetailPage(
+                                        category: category,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 10),
+                                  child: Container(
+                                    height: 8,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.customListBg(context),
+                                      borderRadius: BorderRadius.circular(30),
+                                      border: Border.all(
+                                        color: AppTheme.sliderHighlightBg(
+                                          context,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        category,
+                                        style: AppTheme.textLabel(
+                                          context,
+                                        ).copyWith(fontSize: 12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+
+              const SizedBox(height: 30),
+
+              // ===== Dynamic Product Sections per Category =====
+              ...categories.map((category) {
+                return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    DashboardSlider(
-                      slidesData: [
-                        _buildSliderCard(
-                          title: '',
-                          subtitle: '',
-                          image: 'assets/images/banner1.png',
-                        ),
-                        _buildSliderCard(
-                          title: '',
-                          subtitle: '',
-                          image: 'assets/images/banner2.png',
-                        ),
-                        _buildSliderCard(
-                          title: '',
-                          subtitle: '',
-                          image: 'assets/images/banner3.png',
-                        ),
-                      ],
+                    _buildSectionHeader(context, category),
+                    const SizedBox(height: 10),
+                    _buildHorizontalBookList(
+                      FirebaseFirestore.instance
+                          .collection('books')
+                          .where('category', isEqualTo: category)
+                          .get(),
+                      category,
                     ),
-
-                    // ===== Dynamic Categories Section =====
-                    categories.isEmpty
-                        ? Center(child: LoadingLogo())
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Categories",
-                                style: AppTheme.textLabel(context).copyWith(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              SizedBox(
-                                height: 45,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: categories.length,
-                                  itemBuilder: (context, index) {
-                                    final category = categories[index];
-                                    return InkWell(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => CategoryDetailPage(
-                                              category: category,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: 10,
-                                        ),
-                                        child: Container(
-                                          height: 8,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.customListBg(
-                                              context,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              30,
-                                            ),
-                                            border: Border.all(
-                                              color: AppTheme.sliderHighlightBg(
-                                                context,
-                                              ),
-                                            ),
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              category,
-                                              style: AppTheme.textLabel(
-                                                context,
-                                              ).copyWith(fontSize: 12),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-
                     const SizedBox(height: 30),
-
-                    // ===== Dynamic Product Sections per Category =====
-                    ...categories.map((category) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildSectionHeader(context, category),
-                          const SizedBox(height: 10),
-                          _buildHorizontalBookList(
-                            FirebaseFirestore.instance
-                                .collection('books')
-                                .where('category', isEqualTo: category)
-                                .get(),
-                            category,
-                          ),
-                          const SizedBox(height: 30),
-                        ],
-                      );
-                    }).toList(),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Text(
-                        "Need Help?",
-                        style: AppTheme.textLabel(
-                          context,
-                        ).copyWith(fontSize: 14, fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                    Row(
-                      spacing: 16,
-                      children: [
-                        Expanded(
-                          child: Opacity(
-                            opacity: 0.5,
-                            child: InkWell(
-                              child: Stack(
-                                children: [
-                                  Container(
-                                    margin: const EdgeInsets.only(top: 16),
-                                    height: 100,
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.customListBg(context),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Text(
-                                        "FAQs",
-                                        style: AppTheme.textLink(context)
-                                            .copyWith(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    right: -40,
-                                    bottom: -35,
-                                    child: Image.asset(
-                                      "assets/images/faqs_image.png",
-                                      height: 180,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Opacity(
-                            opacity: 0.5,
-                            child: InkWell(
-                              child: Stack(
-                                children: [
-                                  Container(
-                                    margin: const EdgeInsets.only(top: 16),
-                                    height: 100,
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.customListBg(context),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Text(
-                                        "Chat Now",
-                                        style: AppTheme.textLink(context)
-                                            .copyWith(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    right: -40,
-                                    bottom: -28,
-                                    child: Image.asset(
-                                      "assets/images/chat_image.png",
-                                      height: 180,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20),
                   ],
+                );
+              }).toList(),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  "Need Help?",
+                  style: AppTheme.textLabel(
+                    context,
+                  ).copyWith(fontSize: 14, fontWeight: FontWeight.w700),
                 ),
               ),
-            ),
+              Row(
+                spacing: 16,
+                children: [
+                  Expanded(
+                    child: Opacity(
+                      opacity: 0.5,
+                      child: InkWell(
+                        child: Stack(
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.only(top: 16),
+                              height: 100,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: AppTheme.customListBg(context),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Text(
+                                  "FAQs",
+                                  style: AppTheme.textLink(context).copyWith(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: -40,
+                              bottom: -35,
+                              child: Image.asset(
+                                "assets/images/faqs_image.png",
+                                height: 180,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Opacity(
+                      opacity: 0.5,
+                      child: InkWell(
+                        child: Stack(
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.only(top: 16),
+                              height: 100,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: AppTheme.customListBg(context),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Text(
+                                  "Chat Now",
+                                  style: AppTheme.textLink(context).copyWith(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: -40,
+                              bottom: -28,
+                              child: Image.asset(
+                                "assets/images/chat_image.png",
+                                height: 180,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

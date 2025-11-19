@@ -1,5 +1,5 @@
-import 'package:bookify/components/appsnackbar.dart';
-import 'package:bookify/screens/book_detail_page.dart';
+import '/components/appsnackbar.dart';
+import '/screens/book_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
