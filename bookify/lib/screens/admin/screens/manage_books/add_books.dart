@@ -27,6 +27,7 @@ class _AddBooksState extends State<AddBooks> {
   final titleController = TextEditingController();
   final priceController = TextEditingController();
   final descriptionController = TextEditingController();
+  final discountController = TextEditingController();
   final quantityController = TextEditingController();
 
   String? selectedCategory;
@@ -66,8 +67,6 @@ class _AddBooksState extends State<AddBooks> {
   Future<String?> uploadImageToSupabase(Uint8List bytes, String name) async {
     try {
       final fileName = 'prod_${DateTime.now().millisecondsSinceEpoch}_$name';
-
-      // Upload binary using .upload
       final response = await Supabase.instance.client.storage
           .from('images')
           .uploadBinary(
@@ -76,7 +75,6 @@ class _AddBooksState extends State<AddBooks> {
             fileOptions: const FileOptions(upsert: true),
           );
 
-      // Generate public URL
       final publicUrl = Supabase.instance.client.storage
           .from('images')
           .getPublicUrl(fileName);
@@ -91,14 +89,14 @@ class _AddBooksState extends State<AddBooks> {
     await FirebaseFirestore.instance.collection('books').add({
       'title': titleController.text,
       'price': double.tryParse(priceController.text) ?? 0.0,
-      // 'discount': double.tryParse(discountController.text) ?? 0.0,
+      'discount': double.tryParse(discountController.text) ?? 0.0,
       'description': descriptionController.text,
       'category': selectedCategory ?? '',
       'cover_image_url': imageUrl,
       'quantity': int.tryParse(quantityController.text) ?? 0,
-      'is_featured': selectedCategory == "Featured",
-      'is_popular': selectedCategory == "Popular",
-      'is_best_selling': selectedCategory == "Best Selling",
+      // 'is_featured': selectedCategory == "Featured",
+      // 'is_popular': selectedCategory == "Popular",
+      // 'is_best_selling': selectedCategory == "Best Selling",
       'created_at': FieldValue.serverTimestamp(),
     });
   }
@@ -254,7 +252,7 @@ class _AddBooksState extends State<AddBooks> {
                       ),
                       _buildTextField(
                         titleController,
-                        'Title',
+                        'Name',
                         'Enter Product Name',
                         Icons.book,
                       ),
@@ -270,6 +268,13 @@ class _AddBooksState extends State<AddBooks> {
                         'Price',
                         'Enter Product Price',
                         Icons.currency_exchange_sharp,
+                        isNumber: true,
+                      ),
+                      _buildTextField(
+                        discountController,
+                        'Discount',
+                        'Enter Product Discount',
+                        Icons.discount,
                         isNumber: true,
                       ),
                       _buildTextField(

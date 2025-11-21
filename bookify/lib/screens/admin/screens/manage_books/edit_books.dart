@@ -13,11 +13,7 @@ class EditBooks extends StatefulWidget {
   final String bookId;
   final Map<String, dynamic> bookData;
 
-  const EditBooks({
-    super.key,
-    required this.bookId,
-    required this.bookData,
-  });
+  const EditBooks({super.key, required this.bookId, required this.bookData});
 
   @override
   State<EditBooks> createState() => _EditBooksState();
@@ -30,31 +26,17 @@ class _EditBooksState extends State<EditBooks> {
 
   late TextEditingController titleController;
   late TextEditingController priceController;
+  late TextEditingController discountController;
   late TextEditingController descriptionController;
   late TextEditingController quantityController;
- 
-
 
   Uint8List? _imageBytes;
   String? _imageName;
   String? currentImageUrl;
-  String selectedCategory = 'All Books';
+  String selectedCategory = 'All Products';
 
-  // ✅ Your available categories
-  final List<String> categories = [
-    "Featured",
-    "Popular",
-    "Best Selling",
-    "Novels",
-    "Self Love",
-    "Action",
-    "History",
-    "Fantasy",
-    "Romance",
-    "Science",
-    "Poetry",
-    "All Books",
-  ];
+  List<String> categories = [];
+  bool isCategoryLoading = true;
 
   @override
   void initState() {
@@ -64,23 +46,23 @@ class _EditBooksState extends State<EditBooks> {
     priceController = TextEditingController(
       text: widget.bookData['price'].toString(),
     );
+    discountController = TextEditingController(
+      text: widget.bookData['discount'].toString(),
+    );
     descriptionController = TextEditingController(
       text: widget.bookData['description'],
     );
     quantityController = TextEditingController(
-  text: widget.bookData['quantity']?.toString() ?? '0',
-);
+      text: widget.bookData['quantity']?.toString() ?? '0',
+    );
 
     currentImageUrl = widget.bookData['cover_image_url'];
 
-    final genre = widget.bookData['genre'];
-    // ✅ Handle missing or unknown genres safely
-    if (genre != null && genre is String && genre.isNotEmpty) {
-      if (!categories.contains(genre)) {
-        categories.insert(0, genre);
-      }
-      selectedCategory = genre;
-    }
+    // Show current book genre immediately
+    selectedCategory = widget.bookData['genre'] ?? 'All Products';
+
+    // Fetch all categories in the background
+    fetchCategories();
   }
 
   // ---------- Pick image ----------
@@ -116,14 +98,78 @@ class _EditBooksState extends State<EditBooks> {
 
   // ---------- Update Firestore ----------
   Future<void> updateBook(String? newImageUrl) async {
-    await FirebaseFirestore.instance.collection('books').doc(widget.bookId).update({
-      'title': titleController.text.trim(),
-      'price': double.tryParse(priceController.text.trim()) ?? 0.0,
-      'description': descriptionController.text.trim(),
-      'quantity': int.tryParse(quantityController.text) ?? 0,
-      'genre': selectedCategory,
-      'cover_image_url': newImageUrl ?? currentImageUrl,
+    await FirebaseFirestore.instance
+        .collection('books')
+        .doc(widget.bookId)
+        .update({
+          'title': titleController.text.trim(),
+          'price': double.tryParse(priceController.text.trim()) ?? 0.0,
+          'discount': double.tryParse(discountController.text.trim()) ?? 0.0,
+          'description': descriptionController.text.trim(),
+          'quantity': int.tryParse(quantityController.text) ?? 0,
+          'genre': selectedCategory,
+          'cover_image_url': newImageUrl ?? currentImageUrl,
+        });
+  }
+
+  // ---------- Fetch Categories ----------
+  Future<void> fetchCategories() async {
+    setState(() {
+      isCategoryLoading = true;
     });
+
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('books')
+          .get();
+
+      Set<String> uniqueGenres = {};
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        if (data.containsKey('genre')) {
+          final genre = data['genre'];
+          if (genre != null && genre.toString().trim().isNotEmpty) {
+            uniqueGenres.add(genre.toString().trim());
+          }
+        }
+      }
+
+      List<String> fetched = uniqueGenres.toList();
+
+      // Current book genre
+      final currentGenre = widget.bookData['genre']?.toString().trim();
+
+      if (currentGenre != null &&
+          currentGenre.isNotEmpty &&
+          fetched.any((g) => g.toLowerCase() == currentGenre.toLowerCase())) {
+        // Remove current genre to place at top
+        fetched.removeWhere(
+          (g) => g.toLowerCase() == currentGenre.toLowerCase(),
+        );
+      }
+
+      // Sort remaining alphabetically
+      fetched.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+      // Insert current genre at top
+      if (currentGenre != null && currentGenre.isNotEmpty) {
+        fetched.insert(0, currentGenre);
+      }
+
+      setState(() {
+        categories = fetched.isEmpty ? ['Uncategorized'] : fetched;
+        selectedCategory = currentGenre ?? categories.first;
+        isCategoryLoading = false;
+      });
+    } catch (e) {
+      print("Error fetching categories: $e");
+      setState(() {
+        categories = ['Uncategorized'];
+        selectedCategory = 'Uncategorized';
+        isCategoryLoading = false;
+      });
+    }
   }
 
   @override
@@ -164,7 +210,11 @@ class _EditBooksState extends State<EditBooks> {
                           );
                         });
                       },
-                      child: const Icon(Icons.logout, color: MyColors.primary, size: 30),
+                      child: const Icon(
+                        Icons.logout,
+                        color: MyColors.primary,
+                        size: 30,
+                      ),
                     ),
                   ],
                 ),
@@ -194,49 +244,103 @@ class _EditBooksState extends State<EditBooks> {
                     child: _imageBytes != null
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.memory(_imageBytes!, fit: BoxFit.cover),
+                            child: Image.memory(
+                              _imageBytes!,
+                              fit: BoxFit.cover,
+                            ),
                           )
                         : currentImageUrl != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.network(currentImageUrl!, fit: BoxFit.cover),
-                              )
-                            : const Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.image, size: 40, color: MyColors.primary),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      "Tap to upload product image",
-                                      style: TextStyle(color: MyColors.primary),
-                                    ),
-                                  ],
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              currentImageUrl!,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.image,
+                                  size: 40,
+                                  color: MyColors.primary,
                                 ),
-                              ),
+                                SizedBox(height: 8),
+                                Text(
+                                  "Tap to upload product image",
+                                  style: TextStyle(color: MyColors.primary),
+                                ),
+                              ],
+                            ),
+                          ),
                   ),
                 ),
 
                 // ---------- Fields ----------
-                _buildTextField(titleController, 'Title', 'Enter Product Name', Icons.book),
-                _buildTextField(priceController, 'Price', 'Enter Price', Icons.attach_money,
-                    keyboardType: TextInputType.number),
-                _buildTextField(quantityController, 'Quantity', 'Enter Quantity', Icons.attach_money,
-                    keyboardType: TextInputType.number),
-                _buildTextField(descriptionController, 'Description', 'Enter Description',
-                    Icons.description, maxLines: 3),
+                _buildTextField(
+                  titleController,
+                  'Title',
+                  'Enter Product Name',
+                  Icons.book,
+                ),
+                _buildTextField(
+                  priceController,
+                  'Price',
+                  'Enter Price',
+                  Icons.attach_money,
+                  keyboardType: TextInputType.number,
+                ),
+                _buildTextField(
+                  discountController,
+                  'Discount',
+                  'Enter Discount',
+                  Icons.discount,
+                  keyboardType: TextInputType.number,
+                ),
+                _buildTextField(
+                  quantityController,
+                  'Quantity',
+                  'Enter Quantity',
+                  Icons.attach_money,
+                  keyboardType: TextInputType.number,
+                ),
+                _buildTextField(
+                  descriptionController,
+                  'Description',
+                  'Enter Description',
+                  Icons.description,
+                  maxLines: 3,
+                ),
 
                 // ---------- Category Dropdown ----------
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: DropdownButtonFormField<String>(
                     value: selectedCategory,
-                    items: categories
-                        .map((cat) => DropdownMenuItem(
-                              value: cat,
-                              child: Text(cat, style: const TextStyle(color: MyColors.primary)),
-                            ))
-                        .toList(),
+                    items: isCategoryLoading
+                        ? [
+                            DropdownMenuItem(
+                              value: selectedCategory,
+                              child: Text(
+                                selectedCategory,
+                                style: const TextStyle(color: MyColors.primary),
+                              ),
+                            ),
+                          ]
+                        : categories
+                              .map(
+                                (cat) => DropdownMenuItem(
+                                  value: cat,
+                                  child: Text(
+                                    cat,
+                                    style: const TextStyle(
+                                      color: MyColors.primary,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
                     onChanged: (value) {
                       setState(() {
                         selectedCategory = value!;
@@ -244,7 +348,10 @@ class _EditBooksState extends State<EditBooks> {
                     },
                     decoration: InputDecoration(
                       labelText: 'Category',
-                      prefixIcon: const Icon(Icons.category, color: MyColors.primary),
+                      prefixIcon: const Icon(
+                        Icons.category,
+                        color: MyColors.primary,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: const BorderSide(color: MyColors.primary),
@@ -261,17 +368,23 @@ class _EditBooksState extends State<EditBooks> {
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      style: MyElevatedButtonTheme.lightElevatedButtonTheme.style,
+                      style:
+                          MyElevatedButtonTheme.lightElevatedButtonTheme.style,
                       onPressed: () async {
                         if (_formKey.currentState!.validate()) {
                           String? imageUrl = currentImageUrl;
                           if (_imageBytes != null && _imageName != null) {
-                            imageUrl = await uploadImageToSupabase(_imageBytes!, _imageName!);
+                            imageUrl = await uploadImageToSupabase(
+                              _imageBytes!,
+                              _imageName!,
+                            );
                           }
 
                           await updateBook(imageUrl);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Product updated successfully!")),
+                            const SnackBar(
+                              content: Text("Product updated successfully!"),
+                            ),
                           );
                           Navigator.pop(context);
                         }
