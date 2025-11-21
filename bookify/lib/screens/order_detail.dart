@@ -72,11 +72,11 @@ class OrderDetailsPage extends StatelessWidget {
                   children: [
                     _orderHeader(order, context),
                     const SizedBox(height: 16),
-                    _promoPriceCard(order, context),
+                    _itemsCard(items, context),
                     const SizedBox(height: 16),
                     _shippingCard(order, context),
                     const SizedBox(height: 16),
-                    _itemsCard(items, context),
+                    _promoPriceCard(order, context),
                   ],
                 );
               },

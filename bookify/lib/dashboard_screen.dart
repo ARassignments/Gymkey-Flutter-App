@@ -1,3 +1,4 @@
+import '/screens/all_books.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '/providers/user_provider.dart';
 import '/utils/themes/custom_themes/bottomnavbar.dart';
@@ -51,7 +52,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       catalogScreen,
       cartScreen,
       wishListScreen,
-      profileScreen
+      profileScreen,
     ];
   }
 
@@ -243,6 +244,34 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           setState(() {
                             _showSearchBar = !_showSearchBar;
                           });
+                          // Navigator.push(
+                          //   context,
+                          //   PageRouteBuilder(
+                          //     opaque: false,
+                          //     pageBuilder:
+                          //         (context, animation, secondaryAnimation) =>
+                          //             AllBooksPage(),
+                          //     transitionsBuilder:
+                          //         (
+                          //           context,
+                          //           animation,
+                          //           secondaryAnimation,
+                          //           child,
+                          //         ) {
+                          //           const begin = Offset(0.0, 1.0);
+                          //           const end = Offset.zero;
+                          //           const curve = Curves.easeInOut;
+                          //           final tween = Tween(
+                          //             begin: begin,
+                          //             end: end,
+                          //           ).chain(CurveTween(curve: curve));
+                          //           return SlideTransition(
+                          //             position: animation.drive(tween),
+                          //             child: child,
+                          //           );
+                          //         },
+                          //   ),
+                          // );
                         },
                         child: Icon(
                           _showSearchBar

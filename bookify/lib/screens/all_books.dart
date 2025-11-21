@@ -1,8 +1,10 @@
+import '/components/loading_screen.dart';
+import '/components/not_found.dart';
+import '/utils/themes/themes.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
 import '/screens/book_detail_page.dart';
 import '/utils/constants/colors.dart';
-import '/utils/themes/custom_themes/app_navbar.dart';
 import '/utils/themes/custom_themes/bookcard.dart';
-import '/utils/themes/custom_themes/text_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +16,8 @@ class AllBooksPage extends StatefulWidget {
   State<AllBooksPage> createState() => _AllBooksPageState();
 }
 
-class _AllBooksPageState extends State<AllBooksPage> {
+class _AllBooksPageState extends State<AllBooksPage>
+    with AutomaticKeepAliveClientMixin {
   final TextEditingController searchController = TextEditingController();
   final auth = FirebaseAuth.instance;
 
@@ -41,6 +44,9 @@ class _AllBooksPageState extends State<AllBooksPage> {
     _updateStream();
     searchController.addListener(_onSearchChanged); // live search
   }
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void dispose() {
@@ -175,18 +181,42 @@ class _AllBooksPageState extends State<AllBooksPage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final q = searchController.text.trim();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFeeeeee),
+      backgroundColor: AppTheme.screenBg(context),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        titleSpacing: 0,
+        title: Text(
+          "All Items",
+          style: AppTheme.textTitle(context).copyWith(
+            fontFamily: 'Poppins',
+            fontSize: 20,
+            fontWeight: FontWeight.w300,
+          ),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(HugeIconsStroke.arrowLeft01, size: 20),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 30),
-
-            // Categories List
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text("Categories", style: AppTheme.textTitle(context)),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: SizedBox(
                 height: 45,
                 child: ListView.builder(
@@ -195,23 +225,27 @@ class _AllBooksPageState extends State<AllBooksPage> {
                   itemBuilder: (context, index) {
                     return Padding(
                       padding: const EdgeInsets.only(right: 10),
-                      child: GestureDetector(
+                      child: InkWell(
                         onTap: () => navigateToCategory(categories[index]),
                         child: Container(
+                          height: 8,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
-                            vertical: 10,
+                            vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(25),
-                            border: Border.all(color: MyColors.primary),
+                            color: AppTheme.customListBg(context),
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(
+                              color: AppTheme.sliderHighlightBg(context),
+                            ),
                           ),
-                          child: Text(
-                            categories[index],
-                            style: const TextStyle(
-                              color: MyColors.primary,
-                              fontWeight: FontWeight.w500,
+                          child: Center(
+                            child: Text(
+                              categories[index],
+                              style: AppTheme.textLabel(
+                                context,
+                              ).copyWith(fontSize: 12),
                             ),
                           ),
                         ),
@@ -222,50 +256,57 @@ class _AllBooksPageState extends State<AllBooksPage> {
               ),
             ),
 
+            const SizedBox(height: 16),
+
             // Filter + Title Row
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     q.isEmpty ? "Our All Books" : 'Results for “$q”',
-                    style: MyTextTheme.lightTextTheme.headlineMedium,
+                    style: AppTheme.textTitle(context),
                   ),
                   Theme(
                     data: Theme.of(context).copyWith(
-                      popupMenuTheme: const PopupMenuThemeData(
-                        color: Colors.white,
+                      popupMenuTheme: PopupMenuThemeData(
+                        color: AppTheme.customListBg(context),
                         surfaceTintColor: Colors.transparent,
-                        textStyle: TextStyle(
-                          color: Colors.teal,
-                          fontWeight: FontWeight.w600,
+                        textStyle: AppTheme.textLabel(context),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                     ),
                     child: PopupMenuButton<String>(
-                      icon: Icon(Icons.filter_list, color: MyColors.primary),
+                      icon: Icon(
+                        HugeIconsStroke.sorting05,
+                        color: AppTheme.iconColor(context),
+                      ),
                       onSelected: sortBooks,
-                      itemBuilder: (context) => const [
+                      itemBuilder: (context) => [
                         PopupMenuItem(
                           value: "Price: Low to High",
                           child: Text(
                             "Price: Low to High",
-                            style: TextStyle(color: Colors.teal),
+                            style: AppTheme.textLabel(context),
                           ),
                         ),
                         PopupMenuItem(
                           value: "Price: High to Low",
                           child: Text(
                             "Price: High to Low",
-                            style: TextStyle(color: Colors.teal),
+                            style: AppTheme.textLabel(context),
                           ),
                         ),
                         PopupMenuItem(
                           value: "Top Rated",
                           child: Text(
                             "Top Rated",
-                            style: TextStyle(color: Colors.teal),
+                            style: AppTheme.textLabel(context),
                           ),
                         ),
                       ],
@@ -275,17 +316,17 @@ class _AllBooksPageState extends State<AllBooksPage> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             // Books grid (live search + client sort)
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: StreamBuilder<QuerySnapshot>(
                   stream: _booksStream,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const Center(child: LoadingLogo());
                     }
 
                     if (snapshot.hasError) {
@@ -306,9 +347,9 @@ class _AllBooksPageState extends State<AllBooksPage> {
 
                     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                       return const Center(
-                        child: Text(
-                          'No books available.',
-                          style: TextStyle(color: MyColors.primary),
+                        child: NotFoundWidget(
+                          title: "Not Items Found",
+                          message: "",
                         ),
                       );
                     }
@@ -413,16 +454,13 @@ class _AllBooksPageState extends State<AllBooksPage> {
                             crossAxisCount: 2,
                             crossAxisSpacing: 16,
                             mainAxisSpacing: 20,
-                            childAspectRatio: 0.63,
+                            childAspectRatio: 0.95,
                           ),
                       itemBuilder: (context, index) {
                         final doc =
                             computed[index]['doc'] as QueryDocumentSnapshot;
                         final data = doc.data() as Map<String, dynamic>;
                         final String bookId = doc.id;
-
-                        final double? r = computed[index]['rating'] as double?;
-                        final ratingForCard = (r ?? 0.0);
 
                         return GestureDetector(
                           key: ValueKey('item-$bookId'), // stable identity
@@ -462,12 +500,16 @@ class _AllBooksPageState extends State<AllBooksPage> {
                               child: BookCard(
                                 key: ValueKey('card-$bookId'),
                                 bookId: bookId,
-                                title: data['title'],
-                                author: data['author'],
-                                imagePath: data['cover_image_url'],
-                                category: data['genre'],
-                                price: _numOf(data['price']).toDouble(),
-                                rating: ratingForCard,
+                                title: data['title'] ?? 'Untitled',
+                                author: data['description'] ?? 'Unknown Author',
+                                imagePath:
+                                    data['cover_image_url'] ??
+                                    'assets/images/placeholder.jpg',
+                                category: data['category'] ?? 'Uncategorized',
+                                price: (data['price'] ?? 0).toDouble(),
+                                rating: (data['rating'] ?? 0).toDouble(),
+                                stock: (data['quantity'] ?? 0),
+                                discount: (data['discount'] ?? 0),
                               ),
                             ),
                           ),
