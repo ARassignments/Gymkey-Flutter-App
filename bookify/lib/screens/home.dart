@@ -423,6 +423,7 @@ class _HomeScreenState extends State<HomeScreen>
                         price: (data['price'] ?? 0).toDouble(),
                         rating: (data['rating'] ?? 0).toDouble(),
                         stock: (data['quantity'] ?? 0),
+                        discount: (data['discount'] ?? 0),
                       ),
                     ),
                   ),
@@ -517,7 +518,7 @@ class CategoryDetailPage extends StatelessWidget {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 0.95,
+              childAspectRatio: 0.90,
             ),
             itemCount: books.length,
             itemBuilder: (context, index) {
@@ -560,6 +561,7 @@ class CategoryDetailPage extends StatelessWidget {
                   price: (data['price'] ?? 0).toDouble(),
                   rating: (data['rating'] ?? 0).toDouble(),
                   stock: (data['quantity'] ?? 0),
+                  discount: (data['discount'] ?? 0),
                 ),
               );
             },

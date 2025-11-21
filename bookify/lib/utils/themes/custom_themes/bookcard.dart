@@ -18,6 +18,7 @@ class BookCard extends ConsumerStatefulWidget {
   final double price;
   final double? rating;
   final int? stock;
+  final int? discount;
 
   const BookCard({
     super.key,
@@ -29,6 +30,7 @@ class BookCard extends ConsumerStatefulWidget {
     required this.price,
     this.rating,
     this.stock,
+    this.discount,
   });
 
   @override
@@ -105,6 +107,7 @@ class _BookCardState extends ConsumerState<BookCard> {
       price: widget.price,
       stock: widget.stock ?? 1,
       quantity: 1,
+      discount: widget.discount ?? 0
     );
 
     final newFavorited = !isFavorited;
@@ -139,7 +142,8 @@ class _BookCardState extends ConsumerState<BookCard> {
       imageUrl: widget.imagePath,
       price: widget.price,
       stock: widget.stock ?? 1,
-      quantity: 1
+      quantity: 1,
+      discount: widget.discount ?? 0
     );
 
     // Add to cart via Riverpod
@@ -156,6 +160,9 @@ class _BookCardState extends ConsumerState<BookCard> {
   Widget build(BuildContext context) {
     final cartItems = ref.watch(cartProvider);
     final inCart = cartItems.any((item) => item.bookId == widget.bookId);
+    final double price = widget.price;
+    final num discount = widget.discount ?? 0;
+    final double discountedPrice = price - ((price * discount) / 100);
     return Container(
       width: 160,
       decoration: BoxDecoration(
@@ -250,6 +257,24 @@ class _BookCardState extends ConsumerState<BookCard> {
                   ),
                 ),
               ),
+              if (widget.discount! > 0)
+                Positioned(
+                  top: 6,
+                  left: 6,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColor.accent_50,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      "${widget.discount.toString().padLeft(2, '0')}% OFF",
+                      style: AppTheme.textLabel(
+                        context,
+                      ).copyWith(fontSize: 8, color: AppColor.white),
+                    ),
+                  ),
+                ),
             ],
           ),
 
@@ -319,16 +344,26 @@ class _BookCardState extends ConsumerState<BookCard> {
                 // ),
                 const SizedBox(height: 6),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  spacing: 8,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '\$${widget.price.toStringAsFixed(0)}',
+                      '\$${widget.discount! > 0 ? discountedPrice.toStringAsFixed(0) : widget.price.toStringAsFixed(0)}',
                       style: AppTheme.textLink(context).copyWith(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.primaryTextBg(context),
                       ),
                     ),
+                    if (widget.discount! > 0)
+                      Text(
+                        '\$${widget.price.toStringAsFixed(0)}',
+                        style: AppTheme.textSearchInfoLabeled(context).copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
                   ],
                 ),
               ],
