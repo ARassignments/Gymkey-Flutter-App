@@ -1,3 +1,5 @@
+import 'package:bookify/screens/admin/screens/manage_users/manage_users.dart';
+
 import '/providers/user_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '/components/dialog_logout.dart';
@@ -12,13 +14,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
-  const ProfileScreen({super.key});
+  final bool? forAdmin;
+  const ProfileScreen({super.key, this.forAdmin = false});
 
   @override
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends ConsumerState<ProfileScreen> with AutomaticKeepAliveClientMixin {
+class _ProfileScreenState extends ConsumerState<ProfileScreen>
+    with AutomaticKeepAliveClientMixin {
   final TextEditingController searchController = TextEditingController();
   final auth = FirebaseAuth.instance;
 
@@ -98,15 +102,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with AutomaticKee
                           : null,
                     ),
                   ),
-    
+
                   const SizedBox(height: 16),
                   Text(
                     "Profile Details",
                     style: AppTheme.textTitle(context).copyWith(fontSize: 20),
                   ),
-    
+
                   const SizedBox(height: 20),
-    
+
                   // Card with details
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -202,9 +206,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with AutomaticKee
                       ),
                     ),
                   ),
-    
+
                   const SizedBox(height: 20),
-    
+
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Container(
@@ -215,38 +219,61 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with AutomaticKee
                       ),
                       child: Column(
                         children: [
+                          if (widget.forAdmin == false)
+                            ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              leading: Icon(
+                                HugeIconsStroke.shoppingBag01,
+                                size: 24,
+                              ),
+                              title: Text(
+                                "View Orders",
+                                style: AppTheme.textLabel(context),
+                              ),
+                              trailing: AnimatedContainer(
+                                duration: const Duration(milliseconds: 250),
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.cardDarkBg(context),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  "02",
+                                  style: AppTheme.textSearchInfoLabeled(
+                                    context,
+                                  ).copyWith(fontSize: 10),
+                                ),
+                              ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => UserOrders(),
+                                  ),
+                                );
+                              },
+                            ),
                           ListTile(
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 8,
                             ),
                             leading: Icon(
-                              HugeIconsStroke.shoppingBag01,
+                              HugeIconsStroke.userGroup,
                               size: 24,
                             ),
                             title: Text(
-                              "View Orders",
+                              "Manage Users",
                               style: AppTheme.textLabel(context),
-                            ),
-                            trailing: AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: AppTheme.cardDarkBg(context),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Text(
-                                "02",
-                                style: AppTheme.textSearchInfoLabeled(
-                                  context,
-                                ).copyWith(fontSize: 10),
-                              ),
                             ),
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => UserOrders(),
+                                  builder: (context) => ManageUsers(),
                                 ),
                               );
                             },
@@ -315,7 +342,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with AutomaticKee
                     ),
                   ),
                   const SizedBox(height: 30),
-    
+
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: SizedBox(
@@ -335,7 +362,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with AutomaticKee
                       ),
                     ),
                   ),
-    
+
                   const SizedBox(height: 30),
                 ],
               ),

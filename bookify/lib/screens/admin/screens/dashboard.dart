@@ -1,363 +1,340 @@
-import 'dart:io' show Platform;
+import '/providers/search_provider.dart';
+import '/screens/admin/screens/home_admin.dart';
 import '/screens/admin/screens/manage_categories/manage_categories.dart';
-import 'package:flutter/services.dart'; // SystemNavigator.pop()
+import '/components/dialog_logout.dart';
+import '/components/loading_screen.dart';
+import '/components/menu_drawer.dart';
+import '/utils/themes/themes.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
+import '/screens/profile.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '/providers/user_provider.dart';
 import '/screens/admin/screens/manage_books/manage_books.dart';
 import '/screens/admin/screens/manage_orders/manage_orders.dart';
-import '/screens/admin/screens/manage_users/manage_users.dart';
 import '/screens/auth/users/sign_in.dart';
-import '/utils/constants/colors.dart';
 import '/utils/themes/custom_themes/adminbottomnavbar.dart';
-import '/utils/themes/custom_themes/text_theme.dart';
+import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 
-final List<Map<String, dynamic>> categories = [
-  {'title': 'Manage Categories', 'icon': Icons.category},
-  {'title': 'Manage Products', 'icon': Icons.book},
-  {'title': 'Manage Users', 'icon': Icons.people},
-  {'title': 'Manage Orders', 'icon': Icons.shopping_cart},
-];
-
-class Dashboard extends StatefulWidget {
+class Dashboard extends ConsumerStatefulWidget {
   const Dashboard({super.key});
 
   @override
-  State<Dashboard> createState() => _DashboardState();
+  ConsumerState<Dashboard> createState() => _DashboardState();
 }
 
-class _DashboardState extends State<Dashboard> {
-  final auth = FirebaseAuth.instance;
-  bool _showSearchBar = false;
+class _DashboardState extends ConsumerState<Dashboard> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  final auth = FirebaseAuth.instance;
+  final user = FirebaseAuth.instance.currentUser;
+  bool _showSearchBar = false;
+  String name = '';
+  String profileImage = '';
+  bool isLoading = true;
+  int _currentIndex = 0;
+  final forAdmin = true;
+  final ZoomDrawerController _drawerController = ZoomDrawerController();
+  List<String> menus = [
+    "Dashboard",
+    "Categories",
+    "Products",
+    "Orders",
+    "Accounts",
+  ];
+  late final List<Widget> pages;
+  final ManageCategories manageCategoriesScreen = const ManageCategories();
+  final ManageBooks manageProductsScreen = const ManageBooks();
+  final ManageOrders manageOrdersScreen = const ManageOrders();
+  final ProfileScreen profileScreen = const ProfileScreen(forAdmin: true);
 
-  // Double-back to exit (Android)
-  DateTime? _lastBack;
-  Future<bool> _onWillPop() async {
-    final now = DateTime.now();
-    final pressedTwice =
-        _lastBack != null &&
-        now.difference(_lastBack!) <= const Duration(seconds: 2);
-
-    if (pressedTwice) {
-      if (Platform.isAndroid) {
-        SystemNavigator.pop(); 
-        return false;
-      }
-      return true;
-    }
-
-    _lastBack = now;
-    if (!mounted) return false;
-    ScaffoldMessenger.of(context)
-      ..removeCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          content: Text('Tap one more to exit'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    return false;
+  @override
+  void initState() {
+    super.initState();
+    fetchUserData();
+    _searchController.addListener(() {
+      final query = _searchController.text.trim();
+      ref.read(searchQueryProvider.notifier).state = query;
+    });
+    pages = [
+      HomeAdminScreen(
+        onMenuSelect: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+      ),
+      manageCategoriesScreen,
+      manageProductsScreen,
+      manageOrdersScreen,
+      profileScreen,
+    ];
   }
 
-  void navigateToCategory(String title) {
-    if (title == 'Manage Products') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ManageBooks()),
-      );
-    } else if (title == 'Manage Users') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ManageUsers()),
-      );
-    } else if (title == 'Manage Orders') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ManageOrders()),
-      );
-    } else if (title == 'Manage Categories') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ManageCategories()),
-      );
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    // _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    // final query = _searchController.text.trim().toLowerCase();
+  }
+
+  Future<void> fetchUserData() async {
+    final uid = user?.uid;
+    if (uid != null) {
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
+        final data = doc.data();
+
+        if (!mounted) return;
+
+        if (data != null) {
+          setState(() {
+            name = data['name'] ?? '';
+            profileImage = data['profile_image_url'] ?? '';
+          });
+        }
+      } catch (e) {
+        print("Error fetching profile: $e");
+      }
     }
+
+    if (!mounted) return;
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  void _logout() {
+    if (mounted) {
+      auth.signOut().then((_) {
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => SignIn(),
+            transitionsBuilder: (_, a, __, c) =>
+                FadeTransition(opacity: a, child: c),
+          ),
+        );
+      });
+    }
+  }
+
+  void closeSearchBar() {
+    setState(() {
+      _showSearchBar = false;
+      _searchController.clear();
+    });
+    ref.read(searchQueryProvider.notifier).state = "";
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _onWillPop,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFeeeeee),
-        bottomNavigationBar: buildAdminCurvedNavBar(context, 0),
-        body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 30),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Row(
-                  children: [
-                    ClipOval(
-                      child: Image.asset(
-                        "assets/images/b.jpg",
-                        width: 40,
-                        height: 40,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Hi, Admin",
-                          style: MyTextTheme.lightTextTheme.titleLarge,
+    final user = ref.watch(userProvider);
+    return Scaffold(
+      body: ZoomDrawer(
+        controller: _drawerController,
+        menuScreen: MenuDrawer(
+          currentIndex: _currentIndex,
+          onItemSelected: (index) {
+            closeSearchBar();
+            setState(() => _currentIndex = index);
+            _drawerController.toggle!();
+          },
+          forAdmin: true,
+        ),
+        mainScreen: Scaffold(
+          appBar: AppBar(
+            leading: null,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            titleSpacing: 0,
+            toolbarHeight: 70,
+            title: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Row(
+                    children: [
+                      if (!_showSearchBar) ...[
+                        InkWell(
+                          child: Image.asset(
+                            AppTheme.appLogo(context),
+                            width: 60,
+                          ),
+                          onTap: () => _drawerController.toggle!(),
                         ),
-                        const Text(
-                          "Administrator",
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                        SizedBox(width: 10),
+                        if (_currentIndex < 1) ...[
+                          ClipOval(
+                            child:
+                                (user != null && user.profileImage.isNotEmpty)
+                                ? Image.network(
+                                    user.profileImage,
+                                    width: 40,
+                                    height: 40,
+                                    fit: BoxFit.cover,
+                                  )
+                                : SizedBox(
+                                    width: 40,
+                                    height: 40,
+                                    child: Icon(
+                                      HugeIconsSolid.user03,
+                                      size: 30,
+                                      color: AppTheme.iconColorThree(context),
+                                    ),
+                                  ),
+                          ),
+                          const SizedBox(width: 10),
+                          Row(
+                            children: [
+                              Text(
+                                "Hi, ",
+                                style: AppTheme.textTitle(context).copyWith(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Text(
+                                _currentIndex > 0
+                                    ? menus[_currentIndex]
+                                    : user?.name ?? name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTheme.textTitle(context).copyWith(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w300,
+                                ),
+                              ),
+                              Text(
+                                ".",
+                                style: AppTheme.textTitleActive(
+                                  context,
+                                ).copyWith(fontFamily: 'Poppins', fontSize: 19),
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (_currentIndex > 0) ...[
+                          Text(
+                            forAdmin
+                                ? _currentIndex > 0 && _currentIndex < 4
+                                      ? "Manage"
+                                      : "My"
+                                : "My",
+                            style: AppTheme.textTitle(context).copyWith(
+                              fontFamily: 'Poppins',
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            menus[_currentIndex],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTheme.textTitle(context).copyWith(
+                              fontFamily: 'Poppins',
+                              fontSize: 20,
+                              fontWeight: FontWeight.w300,
+                            ),
+                          ),
+                          Text(
+                            ".",
+                            style: AppTheme.textTitleActive(
+                              context,
+                            ).copyWith(fontFamily: 'Poppins', fontSize: 18),
+                          ),
+                        ],
+                        const Spacer(),
+                      ],
+                      if (_showSearchBar) ...[
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            focusNode: _searchFocusNode,
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(HugeIconsSolid.search01),
+                              labelText: "Search",
+                              hintText: "Search Here...",
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                      ],
+                      InkWell(
+                        onTap: () {
+                          setState(() {
+                            _showSearchBar = !_showSearchBar;
+                            if (_showSearchBar) {
+                              Future.delayed(Duration(milliseconds: 50), () {
+                                _searchFocusNode.requestFocus();
+                              });
+                            } else {
+                              _searchController.clear();
+                              ref.read(searchQueryProvider.notifier).state = "";
+                            }
+                          });
+                        },
+                        child: Icon(
+                          _showSearchBar
+                              ? HugeIconsStroke.cancel02
+                              : HugeIconsSolid.search01,
+                          color: AppTheme.iconColorThree(context),
+                          size: 24,
+                        ),
+                      ),
+                      if (!_showSearchBar) ...[
+                        const SizedBox(width: 16),
+                        InkWell(
+                          onTap: () {
+                            DialogLogout().showDialog(context, _logout);
+                          },
+                          child: Icon(
+                            HugeIconsSolid.logout02,
+                            color: AppTheme.iconColorThree(context),
+                            size: 24,
                           ),
                         ),
                       ],
-                    ),
-                    const Spacer(),
-                    InkWell(
-                      onTap: () =>
-                          setState(() => _showSearchBar = !_showSearchBar),
-                      child: Icon(
-                        Icons.search_rounded,
-                        color: MyColors.primary,
-                        size: 30,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    InkWell(
-                      onTap: () {
-                        auth.signOut().then((_) {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (_) => const SignIn()),
-                          );
-                        });
-                      },
-                      child: Icon(
-                        Icons.logout,
-                        color: MyColors.primary,
-                        size: 30,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (_showSearchBar)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                  child: TextField(
-                    controller: _searchController,
-                    style: const TextStyle(color: Colors.black),
-                    decoration: InputDecoration(
-                      hintText: "Search...",
-                      hintStyle: const TextStyle(color: Colors.grey),
-                      prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
+                    ],
                   ),
                 ),
-              const SizedBox(height: 30),
-
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.0),
-                child: Text(
-                  "Overview",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: MyColors.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.0),
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: Text(
-                    "Weekly Sales Data",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: MyColors.primary,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 5),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: _buildBarChart(),
-              ),
-              const SizedBox(height: 30),
-
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: categories.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: 3 / 2,
-                        ),
-                    itemBuilder: (context, index) {
-                      final category = categories[index];
-                      return GestureDetector(
-                        onTap: () => navigateToCategory(category['title']),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: MyColors.primary),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: MyColors.primary,
-                                blurRadius: 4,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                category['icon'],
-                                size: 30,
-                                color: MyColors.primary,
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                category['title'],
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ===== Bar Chart Section =====
-  Widget _buildBarChart() {
-    return Container(
-      height: 220,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: MyColors.primary,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: BarChart(
-          BarChartData(
-            borderData: FlBorderData(show: false),
-            gridData: FlGridData(show: false),
-            titlesData: FlTitlesData(
-              leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (value, meta) {
-                    const style = TextStyle(
-                      fontSize: 10,
-                      color: MyColors.primary,
-                      fontWeight: FontWeight.w500,
-                    );
-                    switch (value.toInt()) {
-                      case 0:
-                        return const Text('Mon', style: style);
-                      case 1:
-                        return const Text('Tue', style: style);
-                      case 2:
-                        return const Text('Wed', style: style);
-                      case 3:
-                        return const Text('Thu', style: style);
-                      case 4:
-                        return const Text('Fri', style: style);
-                      case 5:
-                        return const Text('Sat', style: style);
-                      case 6:
-                        return const Text('Sun', style: style);
-                      default:
-                        return const Text('');
-                    }
-                  },
-                ),
-              ),
-              rightTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
+              ],
             ),
-            barGroups: [
-              makeGroupData(0, 5),
-              makeGroupData(1, 9),
-              makeGroupData(2, 6),
-              makeGroupData(3, 10),
-              makeGroupData(4, 8),
-              makeGroupData(5, 7),
-              makeGroupData(6, 4),
-            ],
           ),
+          body: user == null
+              ? const Center(child: LoadingLogo())
+              : IndexedStack(index: _currentIndex, children: pages),
+          bottomNavigationBar: buildAdminCurvedNavBar(context, _currentIndex, (
+            index,
+          ) {
+            closeSearchBar();
+            setState(() => _currentIndex = index);
+          }),
         ),
+        borderRadius: 24.0,
+        showShadow: true,
+        angle: -8.0,
+        mainScreenScale: 0.05,
+        shadowLayer1Color: AppTheme.customListBg(context).withOpacity(0.5),
+        shadowLayer2Color: AppTheme.customListBg(context).withOpacity(1.0),
+        mainScreenTapClose: true,
+        slideWidth: MediaQuery.of(context).size.width * 0.85,
+        menuBackgroundColor: Colors.transparent,
+        openCurve: Curves.fastOutSlowIn,
+        closeCurve: Curves.easeInBack,
       ),
-    );
-  }
-
-  BarChartGroupData makeGroupData(int x, double y) {
-    return BarChartGroupData(
-      x: x,
-      barRods: [
-        BarChartRodData(
-          toY: y,
-          width: 14,
-          borderRadius: BorderRadius.circular(4),
-          color: MyColors.primary,
-        ),
-      ],
     );
   }
 }

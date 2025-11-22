@@ -1,341 +1,268 @@
-import 'package:bookify/screens/admin/screens/dashboard.dart';
-import 'package:bookify/screens/admin/screens/manage_categories/add_category.dart';
-import 'package:bookify/screens/admin/screens/manage_categories/edit_categories.dart';
+import '/components/loading_screen.dart';
+import '/components/not_found.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:shimmer/shimmer.dart';
+import '/utils/themes/themes.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '/providers/search_provider.dart';
+import '/screens/admin/screens/manage_categories/add_category.dart';
+import '/screens/admin/screens/manage_categories/edit_categories.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:bookify/screens/auth/users/sign_in.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/adminbottomnavbar.dart';
-import 'package:bookify/utils/themes/custom_themes/text_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ManageCategories extends StatefulWidget {
+class ManageCategories extends ConsumerStatefulWidget {
   const ManageCategories({super.key});
 
   @override
-  State<ManageCategories> createState() => _ManageCategoriesState();
+  ConsumerState<ManageCategories> createState() => _ManageCategoriesState();
 }
 
-class _ManageCategoriesState extends State<ManageCategories> {
+class _ManageCategoriesState extends ConsumerState<ManageCategories>
+    with AutomaticKeepAliveClientMixin {
   final auth = FirebaseAuth.instance;
-  bool _showSearchBar = false;
-  final TextEditingController _searchController = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    _searchController.addListener(() => setState(() {}));
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  bool _matchesSearch(Map<String, dynamic> data, String query) {
-    if (query.isEmpty) return true;
-    final name = (data['name'] ?? '').toString().toLowerCase();
-    return name.contains(query.toLowerCase());
-  }
+  bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        navigateWithFade(context, const Dashboard());
-        return false;
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFeeeeee),
-        bottomNavigationBar: buildAdminCurvedNavBar(context, 2),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 30),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Row(
-                    children: [
-                      ClipOval(
-                        child: Image.asset(
-                          "assets/images/b.jpg",
-                          width: 40,
-                          height: 40,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Hi, Admin",
-                            style: MyTextTheme.lightTextTheme.titleLarge,
-                          ),
-                          const Text(
-                            "Administrator",
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      InkWell(
-                        onTap: () =>
-                            setState(() => _showSearchBar = !_showSearchBar),
-                        child: const Icon(
-                          Icons.search_rounded,
-                          color: MyColors.primary,
-                          size: 30,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      InkWell(
-                        onTap: () {
-                          auth.signOut().then((value) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SignIn(),
-                              ),
-                            );
-                          });
-                        },
-                        child: const Icon(
-                          Icons.logout,
-                          color: MyColors.primary,
-                          size: 30,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+    super.build(context);
+    final searchQuery = ref.watch(searchQueryProvider).toLowerCase();
+    return Scaffold(
+      backgroundColor: AppTheme.screenBg(context),
+      body: SafeArea(
+        child: Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('categories')
+                .orderBy('created_at', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: LoadingLogo());
+              }
 
-                if (_showSearchBar)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: "Search categories...",
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: Colors.grey,
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Center(
+                  child: NotFoundWidget(
+                    title: "No Categories Found",
+                    message: "",
+                  ),
+                );
+              }
+
+              final filtered = snapshot.data!.docs.where((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final name = (data['name'] ?? '').toString().toLowerCase();
+                return name.contains(searchQuery);
+              }).toList();
+
+              if (filtered.isEmpty) {
+                return const Center(
+                  child: NotFoundWidget(
+                    title: "No Categories Found",
+                    message: "",
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                ),
+                itemCount: filtered.length,
+                itemBuilder: (context, i) {
+                  final doc = filtered[i];
+                  final data = doc.data() as Map<String, dynamic>;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Dismissible(
+                      key: Key(doc.id),
+                      direction: DismissDirection.horizontal,
+                      background: Container(
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.only(left: 16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.cardBg(context),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                      ),
-                    ),
-                  ),
-
-                const SizedBox(height: 20),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: MyColors.primary),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: MyColors.primary,
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Shimmer(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppTheme.sliderHighlightBg(context),
+                                  AppTheme.iconColorThree(context),
+                                  AppTheme.sliderHighlightBg(context),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              direction: ShimmerDirection.ltr,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                spacing: 12,
+                                children: [
+                                  Icon(
+                                    HugeIconsSolid.delete01,
+                                    color: AppColor.accent_50,
+                                    size: 24,
+                                  ),
+                                  Text(
+                                    "Swipe right to remove",
+                                    style: AppTheme.textLink(context).copyWith(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const Icon(HugeIconsStroke.swipeRight01),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.only(left: 8),
-                            child: Text(
-                              "Manage Categories",
-                              style: TextStyle(
-                                color: MyColors.primary,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const AddCategory(),
-                                  ),
-                                );
-                              },
-                              child: const Icon(
-                                Icons.add_circle_rounded,
-                                size: 40,
-                                color: MyColors.primary,
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
-                    ),
-                  ),
-                ),
 
-                const SizedBox(height: 20),
-
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('categories')
-                        .orderBy('created_at', descending: true)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return const Center(child: Text("No categories found"));
-                      }
-
-                      final query = _searchController.text.trim().toLowerCase();
-                      final filtered = snapshot.data!.docs.where((doc) {
-                        final data = doc.data() as Map<String, dynamic>;
-                        return _matchesSearch(data, query);
-                      }).toList();
-
-                      if (filtered.isEmpty) {
-                        return const Center(child: Text("No results found"));
-                      }
-
-                      return Column(
-                        children: filtered.map((doc) {
-                          final data = doc.data() as Map<String, dynamic>;
-
-                          return Dismissible(
-                            key: Key(doc.id),
-                            direction: DismissDirection.horizontal,
-                            background: Container(
-                              color: Colors.red,
-                              alignment: Alignment.centerLeft,
-                              child: const Padding(
-                                padding: EdgeInsets.only(left: 20),
-                                child: Icon(Icons.delete, color: Colors.white),
+                      secondaryBackground: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.cardBg(context),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Shimmer(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppTheme.sliderHighlightBg(context),
+                                  AppTheme.iconColorThree(context),
+                                  AppTheme.sliderHighlightBg(context),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
-                            ),
-                            secondaryBackground: Container(
-                              color: MyColors.primary,
-                              alignment: Alignment.centerRight,
-                              child: const Padding(
-                                padding: EdgeInsets.only(right: 20),
-                                child: Icon(Icons.edit, color: Colors.white),
-                              ),
-                            ),
-                            confirmDismiss: (direction) async {
-                              if (direction == DismissDirection.endToStart) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => EditCategory(
-                                      categoryId: doc.id,
-                                      categoryData: data,
+                              direction: ShimmerDirection.rtl,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                spacing: 12,
+                                children: [
+                                  const Icon(HugeIconsStroke.swipeLeft01),
+                                  Text(
+                                    "Swipe left to edit",
+                                    style: AppTheme.textLink(context).copyWith(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
                                     ),
                                   ),
-                                );
-                                return false;
-                              } else if (direction ==
-                                  DismissDirection.startToEnd) {
-                                await FirebaseFirestore.instance
-                                    .collection('categories')
-                                    .doc(doc.id)
-                                    .delete();
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Category deleted successfully!',
-                                    ),
+                                  Icon(
+                                    HugeIconsSolid.edit01,
+                                    color: AppColor.accent_50,
+                                    size: 24,
                                   ),
-                                );
-                                return true;
-                              }
-                              return false;
-                            },
-                            child: Card(
-                              color: Colors.white,
-                              margin: const EdgeInsets.symmetric(
-                                vertical: 8,
-                                horizontal: 12,
+                                ],
                               ),
-                              child: ListTile(
-                                leading:
-                                    data['image_url'] != null &&
-                                        data['image_url'].isNotEmpty
-                                    ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Image.network(
-                                          data['image_url'],
-                                          width: 50,
-                                          height: 50,
-                                          fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) =>
-                                                  Container(
-                                                    width: 50,
-                                                    height: 50,
-                                                    color: Colors.grey[300],
-                                                    child: const Icon(
-                                                      Icons.image_not_supported,
-                                                      color: Colors.grey,
-                                                    ),
-                                                  ),
-                                        ),
-                                      )
-                                    : Container(
-                                        width: 50,
-                                        height: 50,
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey[300],
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        child: const Icon(
-                                          Icons.image,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                title: Text(
-                                  (data['name'] ?? '').toString(),
-                                  style: const TextStyle(
-                                    color: MyColors.primary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      confirmDismiss: (direction) async {
+                        if (direction == DismissDirection.endToStart) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditCategory(
+                                categoryId: doc.id,
+                                categoryData: data,
                               ),
                             ),
                           );
-                        }).toList(),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+                          return false;
+                        }
+
+                        if (direction == DismissDirection.startToEnd) {
+                          await FirebaseFirestore.instance
+                              .collection('categories')
+                              .doc(doc.id)
+                              .delete();
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Category deleted")),
+                          );
+
+                          return true;
+                        }
+
+                        return false;
+                      },
+                      child: Card(
+                        color: AppTheme.customListBg(context),
+                        margin: EdgeInsets.all(0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(8),
+                          leading: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                (i + 1).toString().padLeft(2, '0'),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child:
+                                    data['image_url'] != null &&
+                                        data['image_url'].isNotEmpty
+                                    ? Image.network(
+                                        data['image_url'],
+                                        width: 80,
+                                        height: 60,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Container(
+                                        width: 80,
+                                        height: 60,
+                                        color: Colors.grey[300],
+                                        child: const Icon(Icons.image),
+                                      ),
+                              ),
+                            ],
+                          ),
+                          title: Text(
+                            data['name'],
+                            style: AppTheme.textLabel(context).copyWith(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => AddCategory()),
+          );
+        },
+        backgroundColor: AppTheme.customListBg(context),
+        child: Icon(HugeIconsStroke.add01, color: AppTheme.iconColor(context)),
       ),
     );
   }

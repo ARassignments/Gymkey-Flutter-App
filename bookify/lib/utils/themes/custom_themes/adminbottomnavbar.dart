@@ -1,61 +1,71 @@
-import 'package:bookify/screens/admin/screens/dashboard.dart';
-import 'package:bookify/screens/admin/screens/manage_books/manage_books.dart';
-import 'package:bookify/screens/admin/screens/manage_orders/manage_orders.dart';
-import 'package:bookify/screens/admin/screens/manage_users/manage_users.dart';
-import 'package:bookify/utils/constants/colors.dart';
+import '/utils/themes/themes.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 
-/// Smooth fade transition navigation
-void navigateWithFade(BuildContext context, Widget targetPage) {
-  Navigator.of(context).pushReplacement(
-    PageRouteBuilder(
-      transitionDuration: const Duration(milliseconds: 400),
-      pageBuilder: (context, animation, secondaryAnimation) => targetPage,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return FadeTransition(opacity: animation, child: child);
-      },
-    ),
-  );
-}
-
 /// Curved Navigation Bar builder
-Widget buildAdminCurvedNavBar(BuildContext context, int currentIndex) {
+Widget buildAdminCurvedNavBar(
+  BuildContext context,
+  int currentIndex,
+  Function(int) onItemSelected,
+) {
   return CurvedNavigationBar(
     index: currentIndex,
-    height: 60,
-    backgroundColor: const Color(0xFFeeeeee),
-    color: MyColors.primary,
-    buttonBackgroundColor: Color.fromARGB(255, 10, 129, 234),
-    animationDuration: const Duration(milliseconds: 600),
+    height: 65,
+    backgroundColor: AppTheme.screenBg(context),
+    color: AppTheme.navbarBg(context),
+    buttonBackgroundColor: AppTheme.navbarBg(context),
+    animationDuration: const Duration(milliseconds: 300),
     animationCurve: Curves.easeInOut,
-    items: const [
-      Icon(Icons.dashboard, size: 30, color: Colors.white),
-      Icon(Icons.book, size: 30, color: Colors.white),
-      Icon(Icons.people, size: 30, color: Colors.white),
-      Icon(Icons.shopping_cart, size: 30, color: Colors.white),
+
+    items: [
+      const Icon(HugeIconsSolid.home11, size: 30, color: Colors.white),
+      const Icon(HugeIconsSolid.catalogue, size: 30, color: Colors.white),
+      const Icon(HugeIconsSolid.deliveryBox01, size: 30, color: Colors.white),
+      const Icon(HugeIconsSolid.shoppingBag02, size: 30, color: Colors.white),
+      const Icon(HugeIconsSolid.user03, size: 30, color: Colors.white),
     ],
-    onTap: (index) async {
+
+    onTap: (index) {
       if (index == currentIndex) return;
-
-      await Future.delayed(
-        const Duration(milliseconds: 300),
-      ); // slight delay for nav bar animation
-
-      switch (index) {
-        case 0:
-          navigateWithFade(context, const Dashboard());
-          break;
-        case 1:
-          navigateWithFade(context, const ManageBooks());
-          break;
-        case 2:
-          navigateWithFade(context, const ManageUsers());
-          break;
-        case 3:
-          navigateWithFade(context, const ManageOrders());
-          break;
-      }
+      onItemSelected(index);
     },
+  );
+
+}
+
+Widget buildBadgeIcon(
+  BuildContext context, {
+  required IconData icon,
+  required int count,
+  Color iconColor = Colors.white,
+  double size = 26,
+}) {
+  return Stack(
+    clipBehavior: Clip.none,
+    children: [
+      Padding(
+        padding: EdgeInsets.all(3),
+        child: Icon(icon, size: count > 0 ? 26 : size, color: iconColor),
+      ),
+
+      if (count > 0)
+        Positioned(
+          right: -12,
+          top: -12,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 850),
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: AppTheme.sliderHighlightBg(context),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              count.toString().padLeft(2, '0'),
+              style: AppTheme.textTitle(context).copyWith(fontSize: 8),
+            ),
+          ),
+        ),
+    ],
   );
 }

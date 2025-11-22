@@ -14,7 +14,12 @@ import 'package:flutter/material.dart';
 
 class BookDetailPage extends StatefulWidget {
   final String bookId;
-  const BookDetailPage({super.key, required this.bookId});
+  final bool? forAdmin;
+  const BookDetailPage({
+    super.key,
+    required this.bookId,
+    this.forAdmin = false,
+  });
 
   @override
   State<BookDetailPage> createState() => _BookDetailPageState();
@@ -375,7 +380,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
       price: price,
       stock: (book['quantity'] ?? 0),
       quantity: selectedQty,
-      discount: (book['discount'] ?? 0)
+      discount: (book['discount'] ?? 0),
     );
 
     try {
@@ -577,7 +582,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                       InkWell(
                         onTap: () {
                           Navigator.pop(context);
-                          _reviewDialog();
+                          if (widget.forAdmin == false) _reviewDialog();
                         },
                         child: SizedBox(
                           height: 80,
@@ -599,9 +604,15 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 spacing: 12,
                                 children: [
-                                  const Icon(HugeIconsStroke.tap01),
+                                  Icon(
+                                    widget.forAdmin == false
+                                        ? HugeIconsStroke.tap01
+                                        : HugeIconsSolid.singLeft,
+                                  ),
                                   Text(
-                                    "Write your review here...",
+                                    widget.forAdmin == false
+                                        ? "Write your review here..."
+                                        : "User's reviews is not found...",
                                     style: AppTheme.textLink(context).copyWith(
                                       fontWeight: FontWeight.w500,
                                       fontSize: 14,
@@ -688,7 +699,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                             ? Image.network(
                                 book['cover_image_url'],
                                 width: double.infinity,
-                                height: 250,
+                                height: widget.forAdmin == false ? 250 : 450,
                                 fit: BoxFit.cover,
                                 alignment: AlignmentGeometry.topCenter,
                                 loadingBuilder:
@@ -794,18 +805,19 @@ class _BookDetailPageState extends State<BookDetailPage> {
                             ).copyWith(fontSize: 25),
                           ),
                         ),
-                        InkWell(
-                          onTap: _toggleWishlist,
-                          child: Icon(
-                            isFavorited
-                                ? HugeIconsSolid.favourite
-                                : HugeIconsStroke.favourite,
-                            size: 22,
-                            color: isFavorited
-                                ? Colors.red
-                                : AppTheme.iconColorThree(context),
+                        if (widget.forAdmin == false)
+                          InkWell(
+                            onTap: _toggleWishlist,
+                            child: Icon(
+                              isFavorited
+                                  ? HugeIconsSolid.favourite
+                                  : HugeIconsStroke.favourite,
+                              size: 22,
+                              color: isFavorited
+                                  ? Colors.red
+                                  : AppTheme.iconColorThree(context),
+                            ),
                           ),
-                        ),
                       ],
                     ),
 
@@ -870,83 +882,90 @@ class _BookDetailPageState extends State<BookDetailPage> {
                       style: AppTheme.textLabel(context).copyWith(fontSize: 14),
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      spacing: 16,
-                      children: [
-                        Text(
-                          "Quantity",
-                          style: AppTheme.textLink(
-                            context,
-                          ).copyWith(fontSize: 18, fontWeight: FontWeight.w600),
-                        ),
-                        Container(
-                          padding: EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppTheme.customListBg(context),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: AppTheme.sliderHighlightBg(context),
+                    if (widget.forAdmin == false) ...[
+                      Row(
+                        spacing: 16,
+                        children: [
+                          Text(
+                            "Quantity",
+                            style: AppTheme.textLink(context).copyWith(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          child: Row(
-                            children: [
-                              InkWell(
-                                onTap: () async {
-                                  if (selectedQty > 1) {
-                                    setState(() => selectedQty--);
-                                    await CartManager.updateQuantity(
-                                      widget.bookId,
-                                      selectedQty,
-                                      context,
-                                      stock: stock,
-                                    );
-                                  } else {
-                                    AppSnackBar.show(
-                                      context,
-                                      message: "Minimum quantity is 1",
-                                      type: AppSnackBarType.warning,
-                                    );
-                                  }
-                                },
-                                child: Icon(HugeIconsSolid.remove01, size: 14),
+                          Container(
+                            padding: EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.customListBg(context),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AppTheme.sliderHighlightBg(context),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
+                            ),
+                            child: Row(
+                              children: [
+                                InkWell(
+                                  onTap: () async {
+                                    if (selectedQty > 1) {
+                                      setState(() => selectedQty--);
+                                      await CartManager.updateQuantity(
+                                        widget.bookId,
+                                        selectedQty,
+                                        context,
+                                        stock: stock,
+                                      );
+                                    } else {
+                                      AppSnackBar.show(
+                                        context,
+                                        message: "Minimum quantity is 1",
+                                        type: AppSnackBarType.warning,
+                                      );
+                                    }
+                                  },
+                                  child: Icon(
+                                    HugeIconsSolid.remove01,
+                                    size: 14,
+                                  ),
                                 ),
-                                child: Text(
-                                  selectedQty.toString().padLeft(2, '0'),
-                                  style: AppTheme.textSearchInfoLabeled(
-                                    context,
-                                  ).copyWith(fontSize: 14),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  child: Text(
+                                    selectedQty.toString().padLeft(2, '0'),
+                                    style: AppTheme.textSearchInfoLabeled(
+                                      context,
+                                    ).copyWith(fontSize: 14),
+                                  ),
                                 ),
-                              ),
-                              InkWell(
-                                onTap: () async {
-                                  if (selectedQty < stock) {
-                                    setState(() => selectedQty++);
-                                    await CartManager.updateQuantity(
-                                      widget.bookId,
-                                      selectedQty,
-                                      context,
-                                      stock: stock,
-                                    );
-                                  } else {
-                                    AppSnackBar.show(
-                                      context,
-                                      message: "Maximum stock reached!",
-                                      type: AppSnackBarType.warning,
-                                    );
-                                  }
-                                },
-                                child: Icon(HugeIconsSolid.add01, size: 14),
-                              ),
-                            ],
+                                InkWell(
+                                  onTap: () async {
+                                    if (selectedQty < stock) {
+                                      setState(() => selectedQty++);
+                                      await CartManager.updateQuantity(
+                                        widget.bookId,
+                                        selectedQty,
+                                        context,
+                                        stock: stock,
+                                      );
+                                    } else {
+                                      AppSnackBar.show(
+                                        context,
+                                        message: "Maximum stock reached!",
+                                        type: AppSnackBarType.warning,
+                                      );
+                                    }
+                                  },
+                                  child: Icon(HugeIconsSolid.add01, size: 14),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -968,17 +987,18 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                 ),
                               ),
                             ),
-                            if (!hasUserReviewed)
-                              InkWell(
-                                onTap: () {
-                                  _reviewDialog();
-                                },
-                                child: Icon(
-                                  HugeIconsSolid.commentAdd01,
-                                  size: 18,
-                                  color: AppTheme.iconColorTwo(context),
+                            if (widget.forAdmin == false)
+                              if (!hasUserReviewed)
+                                InkWell(
+                                  onTap: () {
+                                    _reviewDialog();
+                                  },
+                                  child: Icon(
+                                    HugeIconsSolid.commentAdd01,
+                                    size: 18,
+                                    color: AppTheme.iconColorTwo(context),
+                                  ),
                                 ),
-                              ),
                           ],
                         ),
                       ],
@@ -1059,7 +1079,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                     if (topThreeReviews.isEmpty) ...[
                       InkWell(
                         onTap: () {
-                          _reviewDialog();
+                          if (widget.forAdmin == false) _reviewDialog();
                         },
                         child: SizedBox(
                           height: 80,
@@ -1081,9 +1101,15 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 spacing: 12,
                                 children: [
-                                  const Icon(HugeIconsStroke.tap01),
+                                  Icon(
+                                    widget.forAdmin == false
+                                        ? HugeIconsStroke.tap01
+                                        : HugeIconsSolid.singLeft,
+                                  ),
                                   Text(
-                                    "Write your review here...",
+                                    widget.forAdmin == false
+                                        ? "Write your review here..."
+                                        : "User's reviews is not found...",
                                     style: AppTheme.textLink(context).copyWith(
                                       fontWeight: FontWeight.w500,
                                       fontSize: 14,
@@ -1101,9 +1127,14 @@ class _BookDetailPageState extends State<BookDetailPage> {
                     const SizedBox(height: 16),
                     Row(
                       spacing: 16,
+                      mainAxisAlignment: widget.forAdmin == false
+                          ? MainAxisAlignment.start
+                          : MainAxisAlignment.center,
                       children: [
                         Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: widget.forAdmin == false
+                              ? CrossAxisAlignment.start
+                              : CrossAxisAlignment.center,
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Text(
@@ -1131,25 +1162,28 @@ class _BookDetailPageState extends State<BookDetailPage> {
                               ),
                           ],
                         ),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: stock > 0
-                                ? () => _addToCartWithSelectedQty(book)
-                                : null,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              spacing: 12,
-                              children: [
-                                Icon(HugeIconsSolid.shoppingBag01),
-                                Text(
-                                  itemExistsInCart
-                                      ? "Update Cart"
-                                      : "Add to Cart",
-                                ),
-                              ],
+                        if (widget.forAdmin == false)
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: widget.forAdmin == false
+                                  ? stock > 0
+                                        ? () => _addToCartWithSelectedQty(book)
+                                        : null
+                                  : null,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                spacing: 12,
+                                children: [
+                                  Icon(HugeIconsSolid.shoppingBag01),
+                                  Text(
+                                    itemExistsInCart
+                                        ? "Update Cart"
+                                        : "Add to Cart",
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ],

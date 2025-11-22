@@ -1,25 +1,30 @@
-import 'package:bookify/screens/admin/screens/dashboard.dart';
-import 'package:bookify/screens/admin/screens/manage_books/add_books.dart';
-import 'package:bookify/screens/admin/screens/manage_books/edit_books.dart';
+import 'package:bookify/components/loading_screen.dart';
+import 'package:bookify/components/not_found.dart';
+import 'package:bookify/screens/book_detail_page.dart';
+import 'package:bookify/utils/themes/themes.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:shimmer/shimmer.dart';
+import '/providers/search_provider.dart';
+import '/screens/admin/screens/manage_books/add_books.dart';
+import '/screens/admin/screens/manage_books/edit_books.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:bookify/screens/auth/users/sign_in.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/adminbottomnavbar.dart';
-import 'package:bookify/utils/themes/custom_themes/text_theme.dart';
+import '/screens/auth/users/sign_in.dart';
+import '/utils/constants/colors.dart';
+import '/utils/themes/custom_themes/text_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ManageBooks extends StatefulWidget {
+class ManageBooks extends ConsumerStatefulWidget {
   const ManageBooks({super.key});
 
   @override
-  State<ManageBooks> createState() => _ManageBooksState();
+  ConsumerState<ManageBooks> createState() => _ManageBooksState();
 }
 
-class _ManageBooksState extends State<ManageBooks> {
+class _ManageBooksState extends ConsumerState<ManageBooks>
+    with AutomaticKeepAliveClientMixin {
   final auth = FirebaseAuth.instance;
-  bool _showSearchBar = false;
-  final TextEditingController _searchController = TextEditingController();
 
   String selectedCategory = 'All Products';
 
@@ -42,14 +47,14 @@ class _ManageBooksState extends State<ManageBooks> {
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(_searchBooks);
     fetchCategories();
   }
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void dispose() {
-    _searchController.removeListener(_searchBooks);
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -206,347 +211,334 @@ class _ManageBooksState extends State<ManageBooks> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        navigateWithFade(context, const Dashboard());
-        return false;
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFeeeeee),
-        bottomNavigationBar: buildAdminCurvedNavBar(context, 1),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 30),
-                // Header
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Row(
-                    children: [
-                      ClipOval(
-                        child: Image.asset(
-                          "assets/images/b.jpg",
-                          width: 40,
-                          height: 40,
-                          fit: BoxFit.cover,
+    super.build(context);
+    final searchQuery = ref.watch(searchQueryProvider).toLowerCase();
+    return Scaffold(
+      backgroundColor: AppTheme.screenBg(context),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Categories chips
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('categories')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: LoadingLogo());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(
+                        child: NotFoundWidget(
+                          title: "No categories found",
+                          message: "",
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Hi, Admin",
-                            style: MyTextTheme.lightTextTheme.titleLarge,
-                          ),
-                          const Text(
-                            "Administrator",
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      InkWell(
-                        onTap: () =>
-                            setState(() => _showSearchBar = !_showSearchBar),
-                        child: const Icon(
-                          Icons.search_rounded,
-                          color: MyColors.primary,
-                          size: 30,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      InkWell(
-                        onTap: () {
-                          auth.signOut().then((value) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SignIn(),
-                              ),
-                            );
-                          });
-                        },
-                        child: const Icon(
-                          Icons.logout,
-                          color: MyColors.primary,
-                          size: 30,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                      );
+                    }
 
-                // Search bar
-                if (_showSearchBar)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                    child: TextField(
-                      controller: _searchController,
-                      style: const TextStyle(color: Colors.black),
-                      decoration: InputDecoration(
-                        hintText: "Search...",
-                        hintStyle: const TextStyle(color: Colors.grey),
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: Colors.grey,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                    ),
-                  ),
+                    final docs = snapshot.data!.docs;
+                    final dynamicCategories = [
+                      'All Products',
+                      ...docs.map((e) => e['name'].toString()).toList(),
+                    ];
 
-                const SizedBox(height: 10),
-
-                // Manage Books header card
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: MyColors.primary),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: MyColors.primary,
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.only(left: 8),
-                            child: Text(
-                              "Manage Products",
-                              style: TextStyle(
-                                color: MyColors.primary,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
+                    return SizedBox(
+                      height: 45,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: dynamicCategories.length,
+                        itemBuilder: (context, index) {
+                          final cat = dynamicCategories[index];
+                          final isSelected = selectedCategory == cat;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 10),
                             child: InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const AddBooks(),
-                                  ),
-                                );
-                              },
-                              child: const Icon(
-                                Icons.add_circle_rounded,
-                                size: 40,
-                                color: MyColors.primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Categories chips
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('categories')
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return const Text('No categories found');
-                      }
-
-                      final docs = snapshot.data!.docs;
-                      final dynamicCategories = [
-                        'All Products',
-                        ...docs.map((e) => e['name'].toString()).toList(),
-                      ];
-
-                      return SizedBox(
-                        height: 45,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: dynamicCategories.length,
-                          itemBuilder: (context, index) {
-                            final cat = dynamicCategories[index];
-                            final isSelected = selectedCategory == cat;
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 10),
-                              child: GestureDetector(
-                                onTap: () =>
-                                    setState(() => selectedCategory = cat),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 10,
-                                  ),
-                                  decoration: BoxDecoration(
+                              onTap: () =>
+                                  setState(() => selectedCategory = cat),
+                              child: Container(
+                                height: 8,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? MyColors.primary
+                                      : AppTheme.customListBg(context),
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
                                     color: isSelected
                                         ? MyColors.primary
-                                        : Colors.white,
-                                    borderRadius: BorderRadius.circular(25),
-                                    border: Border.all(color: MyColors.primary),
+                                        : AppTheme.sliderHighlightBg(context),
                                   ),
+                                ),
+                                child: Center(
                                   child: Text(
                                     cat,
-                                    style: TextStyle(
+                                    style: AppTheme.textLabel(context).copyWith(
+                                      fontSize: 12,
                                       color: isSelected
                                           ? Colors.white
-                                          : MyColors.primary,
-                                      fontWeight: FontWeight.w500,
+                                          : AppTheme.iconColor(context),
                                     ),
                                   ),
                                 ),
                               ),
-                            );
-                          },
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Books list
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: StreamBuilder<QuerySnapshot>(
+                  // Saare books laao; filtering neeche client-side hogi
+                  stream: FirebaseFirestore.instance
+                      .collection('books')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: LoadingLogo());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(
+                        child: NotFoundWidget(
+                          title: "No products found",
+                          message: "",
                         ),
                       );
-                    },
-                  ),
-                ),
+                    }
 
-                const SizedBox(height: 30),
+                    final q = searchQuery;
+                    final docs = snapshot.data!.docs;
 
-                // Books list
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: StreamBuilder<QuerySnapshot>(
-                    // Saare books laao; filtering neeche client-side hogi
-                    stream: FirebaseFirestore.instance
-                        .collection('books')
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return const Center(child: Text('No products found.',style: TextStyle(color:Color(0xFF0059a7) ),));
-                      }
+                    // 1) Category filter
+                    final byCategory = docs.where((doc) {
+                      final data = (doc.data() as Map<String, dynamic>?) ?? {};
+                      return _matchesCategory(data);
+                    }).toList();
 
-                      final q = _searchController.text.trim().toLowerCase();
-                      final docs = snapshot.data!.docs;
+                    // 2) Search filter
+                    final filteredBooks = byCategory.where((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      return _matchesSearch(data, q);
+                    }).toList();
 
-                      // 1) Category filter
-                      final byCategory = docs.where((doc) {
-                        final data =
-                            (doc.data() as Map<String, dynamic>?) ?? {};
-                        return _matchesCategory(data);
-                      }).toList();
+                    if (filteredBooks.isEmpty) {
+                      return const Center(
+                        child: NotFoundWidget(
+                          title: "No products found",
+                          message: "",
+                        ),
+                      );
+                    }
 
-                      // 2) Search filter
-                      final filteredBooks = byCategory.where((doc) {
+                    return Column(
+                      spacing: 12,
+                      children: filteredBooks.map((doc) {
                         final data = doc.data() as Map<String, dynamic>;
-                        return _matchesSearch(data, q);
-                      }).toList();
 
-                      if (filteredBooks.isEmpty) {
-                        return const Center(child: Text('No products found.',style: TextStyle(color:Color(0xFF0059a7) ),));
-                      }
-
-                      return Column(
-                        children: filteredBooks.map((doc) {
-                          final data = doc.data() as Map<String, dynamic>;
-
-                          return Dismissible(
-                            key: Key(doc.id),
-                            direction: DismissDirection.horizontal,
-                            background: Container(
-                              color: Colors.red,
-                              alignment: Alignment.centerLeft,
-                              child: const Padding(
-                                padding: EdgeInsets.only(left: 20),
-                                child: Icon(Icons.delete, color: Colors.white),
-                              ),
+                        return Dismissible(
+                          key: Key(doc.id),
+                          direction: DismissDirection.horizontal,
+                          background: Container(
+                            alignment: Alignment.centerLeft,
+                            padding: const EdgeInsets.only(left: 16),
+                            decoration: BoxDecoration(
+                              color: AppTheme.cardBg(context),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            secondaryBackground: Container(
-                              color: MyColors.primary,
-                              alignment: Alignment.centerRight,
-                              child: const Padding(
-                                padding: EdgeInsets.only(right: 20),
-                                child: Icon(Icons.edit, color: Colors.white),
-                              ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Shimmer(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppTheme.sliderHighlightBg(context),
+                                      AppTheme.iconColorThree(context),
+                                      AppTheme.sliderHighlightBg(context),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  direction: ShimmerDirection.ltr,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    spacing: 12,
+                                    children: [
+                                      Icon(
+                                        HugeIconsSolid.delete01,
+                                        color: AppColor.accent_50,
+                                        size: 24,
+                                      ),
+                                      Text(
+                                        "Swipe right to remove",
+                                        style: AppTheme.textLink(context)
+                                            .copyWith(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14,
+                                            ),
+                                      ),
+                                      const Icon(HugeIconsStroke.swipeRight01),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                            confirmDismiss: (direction) async {
-                              if (direction == DismissDirection.endToStart) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => EditBooks(
-                                      bookId: doc.id,
-                                      bookData: data,
-                                    ),
-                                  ),
-                                );
-                                return false;
-                              } else if (direction ==
-                                  DismissDirection.startToEnd) {
-                                await FirebaseFirestore.instance
-                                    .collection('books')
-                                    .doc(doc.id)
-                                    .delete();
+                          ),
 
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Product deleted successfully!'),
-                                    duration: Duration(seconds: 2),
+                          secondaryBackground: Container(
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 16),
+                            decoration: BoxDecoration(
+                              color: AppTheme.cardBg(context),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Shimmer(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppTheme.sliderHighlightBg(context),
+                                      AppTheme.iconColorThree(context),
+                                      AppTheme.sliderHighlightBg(context),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
                                   ),
-                                );
-                                return true;
-                              }
+                                  direction: ShimmerDirection.rtl,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    spacing: 12,
+                                    children: [
+                                      const Icon(HugeIconsStroke.swipeLeft01),
+                                      Text(
+                                        "Swipe left to edit",
+                                        style: AppTheme.textLink(context)
+                                            .copyWith(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14,
+                                            ),
+                                      ),
+                                      Icon(
+                                        HugeIconsSolid.edit01,
+                                        color: AppColor.accent_50,
+                                        size: 24,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          confirmDismiss: (direction) async {
+                            if (direction == DismissDirection.endToStart) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      EditBooks(bookId: doc.id, bookData: data),
+                                ),
+                              );
                               return false;
+                            } else if (direction ==
+                                DismissDirection.startToEnd) {
+                              await FirebaseFirestore.instance
+                                  .collection('books')
+                                  .doc(doc.id)
+                                  .delete();
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Product deleted successfully!',
+                                  ),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                              return true;
+                            }
+                            return false;
+                          },
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                PageRouteBuilder(
+                                  opaque: false,
+                                  pageBuilder:
+                                      (
+                                        context,
+                                        animation,
+                                        secondaryAnimation,
+                                      ) => BookDetailPage(
+                                        bookId: doc.id,
+                                        forAdmin: true,
+                                      ),
+                                  transitionsBuilder:
+                                      (
+                                        context,
+                                        animation,
+                                        secondaryAnimation,
+                                        child,
+                                      ) {
+                                        const begin = Offset(0.0, 1.0);
+                                        const end = Offset.zero;
+                                        const curve = Curves.easeInOut;
+                                        final tween = Tween(
+                                          begin: begin,
+                                          end: end,
+                                        ).chain(CurveTween(curve: curve));
+                                        return SlideTransition(
+                                          position: animation.drive(tween),
+                                          child: child,
+                                        );
+                                      },
+                                ),
+                              );
                             },
                             child: Card(
-                              color: Colors.white,
-                              margin: const EdgeInsets.symmetric(
-                                vertical: 8.0,
-                                horizontal: 12.0,
+                              color: AppTheme.customListBg(context),
+                              margin: EdgeInsets.all(0),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              elevation: 5,
                               child: Padding(
                                 padding: const EdgeInsets.all(12.0),
                                 child: Row(
                                   children: [
-                                    (data['cover_image_url'] != null &&
-                                            data['cover_image_url']
-                                                .toString()
-                                                .isNotEmpty)
-                                        ? Image.network(
-                                            data['cover_image_url'],
-                                            width: 50,
-                                            height: 50,
-                                            fit: BoxFit.contain,
-                                          )
-                                        : const Icon(
-                                            Icons.broken_image,
-                                            color: Colors.grey,
-                                          ),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child:
+                                          (data['cover_image_url'] != null &&
+                                              data['cover_image_url']
+                                                  .toString()
+                                                  .isNotEmpty)
+                                          ? Image.network(
+                                              data['cover_image_url'],
+                                              width: 80,
+                                              height: 80,
+                                              fit: BoxFit.cover,
+                                            )
+                                          : const Icon(
+                                              Icons.broken_image,
+                                              color: Colors.grey,
+                                            ),
+                                    ),
+
                                     const SizedBox(width: 12),
                                     Flexible(
                                       child: Column(
@@ -555,11 +547,9 @@ class _ManageBooksState extends State<ManageBooks> {
                                         children: [
                                           Text(
                                             (data['title'] ?? '').toString(),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: MyColors.primary,
-                                              fontSize: 16,
-                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTheme.textTitle(context),
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
@@ -570,16 +560,15 @@ class _ManageBooksState extends State<ManageBooks> {
                                                     ]) ??
                                                     '')
                                                 .toString(),
-                                            style: const TextStyle(
-                                              color: MyColors.primary,
-                                            ),
+                                            style: AppTheme.textLabel(context),
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
                                             '\$${(data['price'] ?? '').toString()}',
-                                            style: const TextStyle(
-                                              color: Colors.deepOrange,
-                                            ),
+                                            style:
+                                                AppTheme.textSearchInfoLabeled(
+                                                  context,
+                                                ).copyWith(fontSize: 14),
                                           ),
                                         ],
                                       ),
@@ -588,16 +577,26 @@ class _ManageBooksState extends State<ManageBooks> {
                                 ),
                               ),
                             ),
-                          );
-                        }).toList(),
-                      );
-                    },
-                  ),
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => AddBooks()),
+          );
+        },
+        backgroundColor: AppTheme.customListBg(context),
+        child: Icon(HugeIconsStroke.add01, color: AppTheme.iconColor(context)),
       ),
     );
   }

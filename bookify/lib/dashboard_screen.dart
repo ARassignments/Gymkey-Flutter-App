@@ -123,6 +123,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             setState(() => _currentIndex = index);
             _drawerController.toggle!();
           },
+          forAdmin: false,
         ),
         mainScreen: Scaffold(
           appBar: AppBar(
