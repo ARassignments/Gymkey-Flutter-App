@@ -1,4 +1,4 @@
-import 'package:bookify/utils/constants/colors.dart';
+import '/utils/constants/colors.dart';
 import 'package:flutter/material.dart';
 
 class MyElevatedButtonTheme {
@@ -14,6 +14,7 @@ class MyElevatedButtonTheme {
       side: const BorderSide(color: Colors.transparent),
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
       textStyle: const TextStyle(
+        fontFamily: 'Poppins',
         fontSize: 16,
         fontWeight: FontWeight.w500,
       ),
@@ -31,6 +32,7 @@ class MyElevatedButtonTheme {
       side: const BorderSide(color: Colors.transparent),
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
       textStyle: const TextStyle(
+        fontFamily: 'Poppins',
         fontSize: 16,
         fontWeight: FontWeight.w500,
       ),

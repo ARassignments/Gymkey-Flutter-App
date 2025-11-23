@@ -1,4 +1,3 @@
-import '/utils/constants/colors.dart';
 import 'package:flutter/material.dart';
 
 class MyOutlinedButtonTheme {
@@ -9,7 +8,7 @@ class MyOutlinedButtonTheme {
       elevation: 0,
       foregroundColor: Colors.black,
       backgroundColor: Colors.transparent,
-      side: const BorderSide(color: MyColors.primary),
+      side: const BorderSide(color: Colors.black),
       textStyle: const TextStyle(
         fontFamily: 'Poppins',
         fontSize: 16,

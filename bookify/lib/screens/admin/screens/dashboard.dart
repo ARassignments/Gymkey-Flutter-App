@@ -260,14 +260,51 @@ class _DashboardState extends ConsumerState<Dashboard> {
                       ],
                       if (_showSearchBar) ...[
                         Expanded(
-                          child: TextField(
+                          child: TextFormField(
                             controller: _searchController,
                             focusNode: _searchFocusNode,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
                             decoration: InputDecoration(
-                              prefixIcon: Icon(HugeIconsSolid.search01),
                               labelText: "Search",
                               hintText: "Search Here...",
+                              prefixIcon: Icon(HugeIconsSolid.search01),
+                              counter: const SizedBox.shrink(),
+                              suffixIcon: _searchController.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(
+                                        HugeIconsStroke.cancel02,
+                                      ),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        ref
+                                                .read(
+                                                  searchQueryProvider.notifier,
+                                                )
+                                                .state =
+                                            "";
+                                        setState(() {});
+                                      },
+                                    )
+                                  : null,
                             ),
+                            keyboardType: TextInputType.name,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return null;
+                              } else if (!RegExp(
+                                r'^[a-zA-Z0-9 ]+$',
+                              ).hasMatch(value)) {
+                                return 'Must contain only letters or digits';
+                              }
+                              return null;
+                            },
+                            maxLength: 20,
+                            onChanged: (value) {
+                              ref.read(searchQueryProvider.notifier).state =
+                                  value;
+                              setState(() {});
+                            },
                           ),
                         ),
                         const SizedBox(width: 16),
