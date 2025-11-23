@@ -320,8 +320,8 @@ class _SignInState extends State<SignIn> {
                               : signInWithEmailAndPassword,
                           child: _isLoading
                               ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
+                                  height: 24,
+                                  width: 24,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     strokeCap: StrokeCap.round,

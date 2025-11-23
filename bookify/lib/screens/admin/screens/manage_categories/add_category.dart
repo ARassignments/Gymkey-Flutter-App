@@ -1,32 +1,32 @@
-import 'dart:io';
 import 'dart:typed_data';
-import 'package:bookify/utils/themes/custom_themes/elevated_button_theme.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/text_theme.dart';
+import '/components/appsnackbar.dart';
+import '/utils/constants/colors.dart';
+import '/utils/themes/themes.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class AddCategory extends StatefulWidget {
-  const AddCategory({super.key});
+class AddCategoryBottomSheet extends StatefulWidget {
+  const AddCategoryBottomSheet({super.key});
 
   @override
-  State<AddCategory> createState() => _AddCategoryState();
+  State<AddCategoryBottomSheet> createState() => _AddCategoryBottomSheetState();
 }
 
-class _AddCategoryState extends State<AddCategory> {
+class _AddCategoryBottomSheetState extends State<AddCategoryBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   final nameController = TextEditingController();
   Uint8List? _imageBytes;
   String? _imageName;
+  bool _isLoading = false;
+
   final ImagePicker picker = ImagePicker();
   final supabase = Supabase.instance.client;
 
-  bool _isLoading = false;
-
   Future<void> pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(
+    final pickedFile = await picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 80,
     );
@@ -43,8 +43,7 @@ class _AddCategoryState extends State<AddCategory> {
     try {
       final fileName = 'cat_${DateTime.now().millisecondsSinceEpoch}_$name';
 
-      // Upload binary using .upload
-      final response = await Supabase.instance.client.storage
+      await supabase.storage
           .from('images')
           .uploadBinary(
             fileName,
@@ -52,32 +51,27 @@ class _AddCategoryState extends State<AddCategory> {
             fileOptions: const FileOptions(upsert: true),
           );
 
-      // Generate public URL
-      final publicUrl = Supabase.instance.client.storage
-          .from('images')
-          .getPublicUrl(fileName);
-      return publicUrl;
+      return supabase.storage.from('images').getPublicUrl(fileName);
     } catch (e) {
       print("Image upload error: $e");
       return null;
     }
   }
 
-  // Add category to Firestore
-  Future<void> addCategoryToFirestore() async {
+  Future<void> addCategory() async {
     if (_imageBytes == null) {
-      ScaffoldMessenger.of(
+      AppSnackBar.show(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Please select an image")));
+        message: "Please select an image",
+        type: AppSnackBarType.error,
+      );
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
-      final imageUrl = await uploadImageToSupabase(_imageBytes!,_imageName!);
+      final imageUrl = await uploadImageToSupabase(_imageBytes!, _imageName!);
 
       await FirebaseFirestore.instance.collection('categories').add({
         'name': nameController.text.trim(),
@@ -86,134 +80,137 @@ class _AddCategoryState extends State<AddCategory> {
         'created_at': FieldValue.serverTimestamp(),
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Category added successfully")),
+      Navigator.pop(context); // close bottom sheet
+      AppSnackBar.show(
+        context,
+        message: "Category Added Successfully",
+        type: AppSnackBarType.success,
       );
-
-      Navigator.pop(context);
     } catch (e) {
-      print("Firestore add category error: $e");
+      print("Add category error: $e");
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Failed to add category")));
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
     }
-  }
 
-  @override
-  void dispose() {
-    nameController.dispose();
-    super.dispose();
+    setState(() => _isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFeeeeee),
-      appBar: AppBar(
-        title: const Text("Add Category"),
-        backgroundColor: MyColors.primary,
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        left: 20,
+        right: 20,
       ),
-      body: SafeArea(
+      child: Form(
+        key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
-                GestureDetector(
-                  onTap: pickImage,
-                  child: _imageBytes != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: Image.memory(
-                            _imageBytes!,
-                            height: 150,
-                            width: 150,
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      : Container(
-                          height: 150,
-                          width: 150,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: const Icon(
-                            Icons.add_a_photo,
-                            size: 50,
-                            color: MyColors.primary,
-                          ),
-                        ),
-                ),
-                const SizedBox(height: 20),
-                _buildTextField(
-                  nameController,
-                  "Category Name",
-                  "Enter Category Name",
-                  Icons.category,
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: MyElevatedButtonTheme.lightElevatedButtonTheme.style,
-                    onPressed: _isLoading
-                        ? null
-                        : () {
-                            if (_formKey.currentState!.validate()) {
-                              addCategoryToFirestore();
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Please fill all fields"),
-                                ),
-                              );
-                            }
-                          },
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("Add Category"),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+          child: Column(
+            spacing: 16,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Add Category",
+                textAlign: TextAlign.center,
+                style: AppTheme.textLabel(
+                  context,
+                ).copyWith(fontSize: 17, fontWeight: FontWeight.w600),
+              ),
 
-  Widget _buildTextField(
-    TextEditingController controller,
-    String label,
-    String hint,
-    IconData icon,
-  ) {
-    return TextFormField(
-      controller: controller,
-      validator: (value) =>
-          value == null || value.isEmpty ? "$label is required" : null,
-      style: const TextStyle(color: MyColors.primary),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        labelStyle: const TextStyle(color: MyColors.primary),
-        prefixIcon: Icon(icon, color: MyColors.primary),
-        filled: true,
-        fillColor: Colors.white,
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: MyColors.primary),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: MyColors.primary, width: 2),
+              Divider(height: 1, color: AppTheme.dividerBg(context)),
+              InkWell(
+                onTap: pickImage,
+                child: _imageBytes != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.memory(
+                          _imageBytes!,
+                          height: 180,
+                          width: 150,
+                          fit: BoxFit.cover,
+                          alignment: Alignment.topCenter,
+                        ),
+                      )
+                    : Container(
+                        height: 180,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: AppTheme.customListBg(context),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Column(
+                          spacing: 12,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              HugeIconsSolid.imageAdd01,
+                              size: 50,
+                              color: MyColors.primary,
+                            ),
+                            Text(
+                              "Tap to upload or choose category image",
+                              style: AppTheme.textSearchInfoLabeled(
+                                context,
+                              ).copyWith(fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+
+              TextFormField(
+                controller: nameController,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                decoration: InputDecoration(
+                  labelText: "Category Name",
+                  hintText: 'e.g. Shirts/Bottles/Bags...',
+                  prefixIcon: Icon(HugeIconsSolid.catalogue),
+                  counter: const SizedBox.shrink(),
+                ),
+                keyboardType: TextInputType.text,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Category Name is required';
+                  } else if (value.length < 4) {
+                    return 'Category Name must be at least 4 characters long';
+                  } else if (!RegExp(r'^[a-zA-Z ]+$').hasMatch(value)) {
+                    return 'Category Name must contain only letters';
+                  }
+                  return null;
+                },
+                maxLength: 20,
+              ),
+
+              Divider(height: 1, color: AppTheme.dividerBg(context)),
+
+              ElevatedButton(
+                onPressed: _isLoading
+                    ? null
+                    : () {
+                        if (_formKey.currentState!.validate()) addCategory();
+                      },
+                child: _isLoading
+                    ? SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          strokeCap: StrokeCap.round,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text("Add Category"),
+              ),
+
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Cancel"),
+              ),
+            ],
+          ),
         ),
       ),
     );

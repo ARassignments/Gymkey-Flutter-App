@@ -13,11 +13,13 @@ import '/components/dialog_logout.dart';
 class MenuDrawer extends StatefulWidget {
   final Function(int) onItemSelected;
   final int currentIndex;
+  final bool? forAdmin;
 
   const MenuDrawer({
     super.key,
     required this.onItemSelected,
     required this.currentIndex,
+    this.forAdmin,
   });
 
   @override
@@ -29,31 +31,42 @@ class _MenuDrawerState extends State<MenuDrawer>
   late AnimationController _controller;
   late List<Animation<Offset>> _slideAnimations;
   late List<Animation<double>> _fadeAnimations;
-
-  final menus = [
-    "Home",
-    "Catalogs",
-    "Cart",
-    "Wishlist",
-    "Accounts",
-    // "Customers",
-    // "Payments",
-    // "Scraps",
-  ];
-  final icons = [
-    [HugeIconsStroke.home11, HugeIconsSolid.home11],
-    [HugeIconsStroke.catalogue, HugeIconsSolid.catalogue],
-    [HugeIconsStroke.shoppingCart01, HugeIconsSolid.shoppingCart01],
-    [HugeIconsStroke.favourite, HugeIconsSolid.favourite],
-    [HugeIconsStroke.user03, HugeIconsSolid.user03],
-    [HugeIconsStroke.userGroup, HugeIconsSolid.userGroup],
-    [HugeIconsStroke.moneyReceiveFlow01, HugeIconsSolid.moneyReceiveFlow01],
-    [HugeIconsStroke.recycle02, HugeIconsSolid.recycle02],
-  ];
+  late List<String> menus;
+  late List<List<IconData>> icons;
 
   @override
   void initState() {
     super.initState();
+    if (widget.forAdmin == true) {
+      menus = [
+        "Home",
+        "Manage Categories",
+        "Manage Products",
+        "Manage Orders",
+        "Profile",
+      ];
+
+      icons = [
+        [HugeIconsStroke.home11, HugeIconsSolid.home11],
+        [HugeIconsStroke.catalogue, HugeIconsSolid.catalogue],
+        [HugeIconsStroke.deliveryBox01, HugeIconsSolid.deliveryBox01],
+        [HugeIconsStroke.shoppingBag02, HugeIconsSolid.shoppingBag02],
+        [HugeIconsStroke.user03, HugeIconsSolid.user03],
+      ];
+    } else {
+      menus = ["Home", "Catalogs", "Cart", "Wishlist", "Accounts"];
+
+      icons = [
+        [HugeIconsStroke.home11, HugeIconsSolid.home11],
+        [HugeIconsStroke.catalogue, HugeIconsSolid.catalogue],
+        [HugeIconsStroke.shoppingCart01, HugeIconsSolid.shoppingCart01],
+        [HugeIconsStroke.favourite, HugeIconsSolid.favourite],
+        [HugeIconsStroke.user03, HugeIconsSolid.user03],
+        [HugeIconsStroke.userGroup, HugeIconsSolid.userGroup],
+        [HugeIconsStroke.moneyReceiveFlow01, HugeIconsSolid.moneyReceiveFlow01],
+        [HugeIconsStroke.recycle02, HugeIconsSolid.recycle02],
+      ];
+    }
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
