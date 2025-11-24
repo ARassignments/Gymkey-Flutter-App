@@ -1,8 +1,8 @@
 import 'dart:typed_data';
-import 'package:bookify/utils/themes/custom_themes/elevated_button_theme.dart';
-import 'package:bookify/screens/auth/users/sign_in.dart';
-import 'package:bookify/utils/constants/colors.dart';
-import 'package:bookify/utils/themes/custom_themes/text_theme.dart';
+import '/components/appsnackbar.dart';
+import '/utils/themes/themes.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
+import '/utils/constants/colors.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -22,8 +22,6 @@ class _AddBooksState extends State<AddBooks> {
   final _formKey = GlobalKey<FormState>();
   final _auth = FirebaseAuth.instance;
   final _storageSupabase = Supabase.instance.client.storage.from("images");
-  bool _showSearchBar = false;
-  final TextEditingController _searchController = TextEditingController();
   final titleController = TextEditingController();
   final priceController = TextEditingController();
   final descriptionController = TextEditingController();
@@ -104,310 +102,259 @@ class _AddBooksState extends State<AddBooks> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFeeeeee),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 30),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Row(
-                children: [
-                  ClipOval(
-                    child: Image.asset(
-                      "assets/images/b.jpg",
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Hi, Admin",
-                        style: MyTextTheme.lightTextTheme.titleLarge,
-                      ),
-                      // const Text(
-                      //   "Have a nice day",
-                      //   style: TextStyle(
-                      //     color: Colors.grey,
-                      //     fontSize: 12,
-                      //     fontWeight: FontWeight.w500,
-                      //   ),
-                      // ),
-                    ],
-                  ),
-                  const Spacer(),
-                  InkWell(
-                    onTap: () =>
-                        setState(() => _showSearchBar = !_showSearchBar),
-                    child: Icon(
-                      Icons.search_rounded,
-                      color: MyColors.primary,
-                      size: 30,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  InkWell(
-                    onTap: () {
-                      _auth.signOut().then((value) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SignIn(),
-                          ),
-                        );
-                      });
-                    },
-                    child: Icon(
-                      Icons.logout,
-                      color: MyColors.primary,
-                      size: 30,
-                    ),
-                  ),
-                ],
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        left: 20,
+        right: 20,
+      ),
+      child: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            spacing: 16,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Add Product",
+                textAlign: TextAlign.center,
+                style: AppTheme.textLabel(
+                  context,
+                ).copyWith(fontSize: 17, fontWeight: FontWeight.w600),
               ),
-            ),
-            if (_showSearchBar)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                child: TextField(
-                  controller: _searchController,
-                  style: const TextStyle(color: Colors.black),
-                  decoration: InputDecoration(
-                    hintText: "Search...",
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                ),
-              ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 24),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 10),
-                      Center(
-                        child: Text(
-                          "Add Product",
-                          style: TextStyle(
-                            color: MyColors.primary,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: GestureDetector(
-                          onTap: pickImage,
-                          child: Container(
-                            height: 150,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              border: Border.all(color: MyColors.primary),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: _imageBytes != null
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.memory(
-                                      _imageBytes!,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : const Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.image,
-                                          size: 40,
-                                          color: MyColors.primary,
-                                        ),
-                                        SizedBox(height: 8),
-                                        Text(
-                                          "Tap to upload Product image",
-                                          style: TextStyle(
-                                            color: MyColors.primary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ),
-                      _buildTextField(
-                        titleController,
-                        'Title',
-                        'Enter Product Name',
-                        Icons.book,
-                      ),
-                      _buildTextField(
-                        descriptionController,
-                        'Description',
-                        'Enter Product Description',
-                        Icons.description,
-                        maxLines: 4,
-                      ),
-                      _buildTextField(
-                        priceController,
-                        'Price',
-                        'Enter Product Price',
-                        Icons.currency_exchange_sharp,
-                        isNumber: true,
-                      ),
-                      _buildTextField(
-                        quantityController,
-                        'Quantity',
-                        'Enter Product quantity',
-                        Icons.confirmation_num,
-                        isNumber: true,
-                      ),
 
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton2(
-                            isExpanded: true,
-                            hint: const Text(
-                              "Select Category",
-                              style: TextStyle(color: MyColors.primary),
-                            ),
-                            value: selectedCategory,
-                            onChanged: (value) =>
-                                setState(() => selectedCategory = value),
-                            items: categories.map((cat) {
-                              return DropdownMenuItem(
-                                value: cat,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      cat,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: MyColors.primary,
-                                      ),
-                                    ),
-                                    if (selectedCategory == cat)
-                                      const Icon(
-                                        Icons.check_circle,
-                                        color: MyColors.primary,
-                                        size: 18,
-                                      ),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
-                            buttonStyleData: ButtonStyleData(
-                              height: 50,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                color: Colors.white,
-                                border: Border.all(color: MyColors.primary),
-                              ),
-                              elevation: 3,
-                            ),
-                            iconStyleData: const IconStyleData(
-                              icon: Icon(
-                                Icons.arrow_drop_down,
+              Divider(height: 1, color: AppTheme.dividerBg(context)),
+              InkWell(
+                onTap: pickImage,
+                child: Container(
+                  height: 180,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppTheme.customListBg(context),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: _imageBytes != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Image.memory(
+                            _imageBytes!,
+                            height: 180,
+                            width: 150,
+                            fit: BoxFit.cover,
+                            alignment: Alignment.center,
+                          ),
+                        )
+                      : Center(
+                          child: Column(
+                            spacing: 12,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                HugeIconsSolid.imageAdd01,
+                                size: 50,
                                 color: MyColors.primary,
                               ),
-                              iconSize: 28,
-                            ),
-                            dropdownStyleData: DropdownStyleData(
-                              maxHeight: 250,
-                              width: MediaQuery.of(context).size.width - 32,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                color: Colors.white,
+                              Text(
+                                "Tap to upload or choose category image",
+                                style: AppTheme.textSearchInfoLabeled(
+                                  context,
+                                ).copyWith(fontSize: 12),
                               ),
-                              offset: const Offset(0, -4),
-                              scrollbarTheme: ScrollbarThemeData(
-                                radius: const Radius.circular(40),
-                                thickness: MaterialStateProperty.all(5),
-                              ),
-                            ),
-                            menuItemStyleData: const MenuItemStyleData(
-                              height: 40,
-                              padding: EdgeInsets.symmetric(horizontal: 16),
-                            ),
+                            ],
                           ),
                         ),
-                      ),
+                ),
+              ),
+              _buildTextField(
+                titleController,
+                'Title',
+                'Enter Product Name',
+                HugeIconsSolid.textFont,
+              ),
+              _buildTextField(
+                priceController,
+                'Price',
+                'Enter Product Price',
+                HugeIconsSolid.money01,
+                isNumber: true,
+              ),
+              _buildTextField(
+                quantityController,
+                'Quantity',
+                'Enter Product quantity',
+                HugeIconsSolid.package,
+                isNumber: true,
+              ),
+              _buildTextField(
+                descriptionController,
+                'Description',
+                'Enter Product Description',
+                HugeIconsSolid.documentValidation,
+                maxLines: 4,
+              ),
 
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: MyElevatedButtonTheme
-                                .lightElevatedButtonTheme
-                                .style,
-                            onPressed: () async {
-                              if (_formKey.currentState!.validate() &&
-                                  _imageBytes != null &&
-                                  _imageName != null) {
-                                final imageUrl = await uploadImageToSupabase(
-                                  _imageBytes!,
-                                  _imageName!,
-                                );
-                                if (imageUrl != null) {
-                                  await addBookToFirestore(imageUrl);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        "Product added successfully",
-                                      ),
-                                    ),
-                                  );
-                                  Navigator.pop(context);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text("Image upload failed"),
-                                    ),
-                                  );
-                                }
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Please complete all fields and upload image",
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                            child: const Text("Add Product"),
-                          ),
-                        ),
+              DropdownButtonHideUnderline(
+                child: DropdownButton2(
+                  isExpanded: true,
+                  hint: Row(
+                    spacing: 12,
+                    children: [
+                      Icon(
+                        HugeIconsSolid.catalogue,
+                        size: 24,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColor.neutral_70
+                            : AppColor.neutral_20,
+                      ),
+                      Text(
+                        "Select Category",
+                        style: Theme.of(context).brightness == Brightness.dark
+                            ? TextStyle(
+                                fontSize: 14,
+                                color: AppColor.neutral_60,
+                              )
+                            : TextStyle(
+                                fontSize: 14,
+                                color: AppColor.neutral_40,
+                              ),
                       ),
                     ],
                   ),
+                  value: selectedCategory,
+                  onChanged: (value) =>
+                      setState(() => selectedCategory = value),
+                  items: categories.map((cat) {
+                    return DropdownMenuItem(
+                      value: cat,
+                      child: Row(
+                        spacing: 12,
+                        children: [
+                          Icon(
+                            HugeIconsSolid.catalogue,
+                            size: 24,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? AppColor.neutral_70
+                                : AppColor.neutral_20,
+                          ),
+                          Expanded(
+                            child: Text(
+                              cat,
+                              style:
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? TextStyle(
+                                      fontSize: 14,
+                                      color: AppColor.neutral_60,
+                                    )
+                                  : TextStyle(
+                                      fontSize: 14,
+                                      color: AppColor.neutral_40,
+                                    ),
+                            ),
+                          ),
+                          if (selectedCategory == cat)
+                            Icon(
+                              HugeIconsSolid.checkmarkCircle01,
+                              color:
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? AppColor.neutral_70
+                                  : AppColor.neutral_20,
+                              size: 20,
+                            ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  buttonStyleData: ButtonStyleData(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColor.neutral_90
+                          : AppColor.neutral_5,
+                    ),
+                    elevation: 0,
+                  ),
+                  iconStyleData: IconStyleData(
+                    icon: Icon(
+                      HugeIconsSolid.arrowDown01,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColor.neutral_70
+                          : AppColor.neutral_20,
+                    ),
+                    iconSize: 24,
+                  ),
+
+                  dropdownStyleData: DropdownStyleData(
+                    maxHeight: 250,
+                    elevation: 0,
+                    width: MediaQuery.of(context).size.width - 40,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: AppTheme.sliderHighlightBg(context),
+                    ),
+                    offset: const Offset(0, -4),
+                    scrollbarTheme: ScrollbarThemeData(
+                      radius: const Radius.circular(40),
+                      thickness: MaterialStateProperty.all(5),
+                    ),
+                  ),
+                  menuItemStyleData: const MenuItemStyleData(
+                    height: 40,
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                  ),
                 ),
               ),
-            ),
-          ],
+
+              Divider(height: 1, color: AppTheme.dividerBg(context)),
+
+              ElevatedButton(
+                onPressed: () async {
+                  if (_formKey.currentState!.validate() &&
+                      _imageBytes != null &&
+                      _imageName != null) {
+                    final imageUrl = await uploadImageToSupabase(
+                      _imageBytes!,
+                      _imageName!,
+                    );
+                    if (imageUrl != null) {
+                      await addBookToFirestore(imageUrl);
+                      AppSnackBar.show(
+                        context,
+                        message: "Product added successfully",
+                        type: AppSnackBarType.success,
+                      );
+                      Navigator.pop(context);
+                    } else {
+                      AppSnackBar.show(
+                        context,
+                        message: "Image upload failed",
+                        type: AppSnackBarType.error,
+                      );
+                    }
+                  } else {
+                    AppSnackBar.show(
+                      context,
+                      message: "Please complete all fields and upload image",
+                      type: AppSnackBarType.error,
+                    );
+                  }
+                },
+                child: Text("Add Product"),
+              ),
+
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Cancel"),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -421,34 +368,18 @@ class _AddBooksState extends State<AddBooks> {
     int maxLines = 1,
     bool isNumber = false,
   }) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        maxLines: maxLines,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        style: const TextStyle(color: MyColors.primary),
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          labelStyle: const TextStyle(color: MyColors.primary),
-          hintStyle: const TextStyle(color: MyColors.primary),
-          prefixIcon: Icon(icon, color: MyColors.primary),
-          filled: true,
-          fillColor: Colors.white,
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: MyColors.primary, width: 1),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: MyColors.primary, width: 2),
-          ),
-        ),
-        validator: (value) =>
-            value == null || value.isEmpty ? "$label is required" : null,
+    return TextFormField(
+      controller: controller,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      maxLines: maxLines,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(icon),
       ),
+      validator: (value) =>
+          value == null || value.isEmpty ? "$label is required" : null,
     );
   }
 }

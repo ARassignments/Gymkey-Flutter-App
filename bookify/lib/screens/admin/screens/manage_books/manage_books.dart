@@ -1,7 +1,7 @@
-import 'package:bookify/components/loading_screen.dart';
-import 'package:bookify/components/not_found.dart';
-import 'package:bookify/screens/book_detail_page.dart';
-import 'package:bookify/utils/themes/themes.dart';
+import '/components/loading_screen.dart';
+import '/components/not_found.dart';
+import '/screens/book_detail_page.dart';
+import '/utils/themes/themes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shimmer/shimmer.dart';
@@ -10,9 +10,7 @@ import '/screens/admin/screens/manage_books/add_books.dart';
 import '/screens/admin/screens/manage_books/edit_books.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '/screens/auth/users/sign_in.dart';
 import '/utils/constants/colors.dart';
-import '/utils/themes/custom_themes/text_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ManageBooks extends ConsumerStatefulWidget {
@@ -446,30 +444,124 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
 
                           confirmDismiss: (direction) async {
                             if (direction == DismissDirection.endToStart) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      EditBooks(bookId: doc.id, bookData: data),
+                              showModalBottomSheet(
+                                context: context,
+                                isDismissible: false,
+                                enableDrag: false,
+                                showDragHandle: true,
+                                isScrollControlled: true,
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).scaffoldBackgroundColor,
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(30),
+                                  ),
                                 ),
+                                builder: (context) =>
+                                    EditBooks(bookId: doc.id, bookData: data),
                               );
                               return false;
-                            } else if (direction ==
-                                DismissDirection.startToEnd) {
-                              await FirebaseFirestore.instance
-                                  .collection('books')
-                                  .doc(doc.id)
-                                  .delete();
+                            }
 
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Product deleted successfully!',
+                            if (direction == DismissDirection.startToEnd) {
+                              final bool?
+                              confirmDelete = await showModalBottomSheet<bool>(
+                                context: context,
+                                isDismissible: false,
+                                enableDrag: false,
+                                showDragHandle: true,
+                                isScrollControlled: true,
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).scaffoldBackgroundColor,
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(30),
                                   ),
-                                  duration: Duration(seconds: 2),
                                 ),
+                                builder: (context) {
+                                  return Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom:
+                                          MediaQuery.of(
+                                            context,
+                                          ).viewInsets.bottom +
+                                          20,
+                                      left: 20,
+                                      right: 20,
+                                    ),
+                                    child: Column(
+                                      spacing: 16,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          "Confirm Delete",
+                                          textAlign: TextAlign.center,
+                                          style: AppTheme.textLabel(context)
+                                              .copyWith(
+                                                fontSize: 17,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                        ),
+                                        Divider(
+                                          height: 1,
+                                          color: AppTheme.dividerBg(context),
+                                        ),
+
+                                        Text(
+                                          "Are you sure you want to delete '${data['title']}' product?",
+                                          textAlign: TextAlign.center,
+                                          style: AppTheme.textLabel(context),
+                                        ),
+
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            overlayColor: AppColor.accent_50
+                                                .withOpacity(0.1),
+                                            backgroundColor: AppColor.accent_50,
+                                          ),
+                                          child: Text(
+                                            'Yes, Remove',
+                                            style: TextStyle(
+                                              color: AppColor.white,
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            Navigator.pop(context, true);
+                                          },
+                                        ),
+                                        OutlinedButton(
+                                          child: Text("Cancel"),
+                                          onPressed: () {
+                                            Navigator.pop(context, false);
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               );
-                              return true;
+
+                              if (confirmDelete == true) {
+                                // perform delete
+                                await FirebaseFirestore.instance
+                                    .collection('books')
+                                    .doc(doc.id)
+                                    .delete();
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Product deleted successfully!",
+                                    ),
+                                  ),
+                                );
+
+                                return true; // dismiss item
+                              }
                             }
                             return false;
                           },
@@ -513,6 +605,7 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
                             child: Card(
                               color: AppTheme.customListBg(context),
                               margin: EdgeInsets.all(0),
+                              elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -588,15 +681,39 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
+        isExtended: true,
+        foregroundColor: AppTheme.iconColor(context),
+        elevation: 0,
+        focusElevation: 0,
+        hoverElevation: 0,
+        highlightElevation: 0,
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => AddBooks()),
+          showModalBottomSheet(
+            context: context,
+            isDismissible: false,
+            enableDrag: false,
+            showDragHandle: true,
+            isScrollControlled: true,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            ),
+            builder: (context) => AddBooks(),
           );
         },
         backgroundColor: AppTheme.customListBg(context),
-        child: Icon(HugeIconsStroke.add01, color: AppTheme.iconColor(context)),
+        label: Row(
+          spacing: 8,
+          children: [
+            Icon(
+              HugeIconsStroke.add01,
+              color: AppTheme.iconColor(context),
+              size: 20,
+            ),
+            Text("Add Product", style: AppTheme.textLabel(context)),
+          ],
+        ),
       ),
     );
   }

@@ -30,6 +30,10 @@ class UserNotifier extends StateNotifier<UserModel?> {
     }
   }
 
+  void clearUser() {
+    state = null;
+  }
+
   Future<void> updateUser(Map<String, dynamic> updates) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
