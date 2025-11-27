@@ -1,3 +1,4 @@
+import '/screens/admin/screens/manage_users/manage_users.dart';
 import '/utils/themes/themes.dart';
 import '/utils/constants/colors.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -170,6 +171,36 @@ class _HomeAdminScreenState extends State<HomeAdminScreen>
                   ),
                   Expanded(
                     child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          PageRouteBuilder(
+                            opaque: false,
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    ManageUsers(),
+                            transitionsBuilder:
+                                (
+                                  context,
+                                  animation,
+                                  secondaryAnimation,
+                                  child,
+                                ) {
+                                  const begin = Offset(0.0, 1.0);
+                                  const end = Offset.zero;
+                                  const curve = Curves.easeInOut;
+                                  final tween = Tween(
+                                    begin: begin,
+                                    end: end,
+                                  ).chain(CurveTween(curve: curve));
+                                  return SlideTransition(
+                                    position: animation.drive(tween),
+                                    child: child,
+                                  );
+                                },
+                          ),
+                        );
+                      },
                       child: Stack(
                         children: [
                           Container(

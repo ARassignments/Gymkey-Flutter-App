@@ -3,7 +3,6 @@ import '/components/appsnackbar.dart';
 import '/utils/constants/colors.dart';
 import '/utils/themes/themes.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:image_picker/image_picker.dart';
@@ -26,7 +25,6 @@ class EditCategoryBottomSheet extends StatefulWidget {
 
 class _EditCategoryBottomSheetState extends State<EditCategoryBottomSheet> {
   final _formKey = GlobalKey<FormState>();
-  final _auth = FirebaseAuth.instance;
   final _storageSupabase = Supabase.instance.client.storage.from("images");
   late TextEditingController nameController;
   late TextEditingController descriptionController;

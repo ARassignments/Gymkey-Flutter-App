@@ -1,23 +1,25 @@
-import '/screens/auth/users/sign_in.dart';
+import '/components/appsnackbar.dart';
+import '/providers/search_provider.dart';
+import '/utils/themes/themes.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
 import '/utils/constants/colors.dart';
-import '/utils/themes/custom_themes/text_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class ManageUsers extends StatefulWidget {
+class ManageUsers extends ConsumerStatefulWidget {
   const ManageUsers({super.key});
 
   @override
-  State<ManageUsers> createState() => _ManageUsersState();
+  ConsumerState<ManageUsers> createState() => _ManageUsersState();
 }
 
-class _ManageUsersState extends State<ManageUsers> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+class _ManageUsersState extends ConsumerState<ManageUsers> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   bool _showSearchBar = false;
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   List<DocumentSnapshot> _users = [];
   List<DocumentSnapshot> _filteredUsers = [];
 
@@ -29,7 +31,10 @@ class _ManageUsersState extends State<ManageUsers> {
   }
 
   void fetchUsers() async {
-    final querySnapshot = await _firestore.collection('users').get();
+    final querySnapshot = await _firestore
+        .collection('users')
+        .where('role', isEqualTo: 'User')
+        .get();
     setState(() {
       _users = querySnapshot.docs;
       _filteredUsers = _users;
@@ -50,91 +55,120 @@ class _ManageUsersState extends State<ManageUsers> {
 
   void toggleUserStatus(String uid, bool status) async {
     await _firestore.collection('users').doc(uid).update({'enabled': status});
+    AppSnackBar.show(
+      context,
+      message: status
+          ? "Account enable successfully!"
+          : "Account disable successfully!",
+      type: status?AppSnackBarType.success:AppSnackBarType.warning,
+    );
     fetchUsers();
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchFocusNode.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFeeeeee),
+      backgroundColor: AppTheme.screenBg(context),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        titleSpacing: 0,
+        title: Text(
+          "Manage Users",
+          style: AppTheme.textTitle(context).copyWith(
+            fontFamily: 'Poppins',
+            fontSize: 20,
+            fontWeight: FontWeight.w300,
+          ),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(HugeIconsStroke.arrowLeft01, size: 20),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _showSearchBar = !_showSearchBar;
+                if (_showSearchBar) {
+                  Future.delayed(Duration(milliseconds: 50), () {
+                    _searchFocusNode.requestFocus();
+                  });
+                } else {
+                  _searchController.clear();
+                  ref.read(searchQueryProvider.notifier).state = "";
+                }
+              });
+            },
+            icon: Icon(
+              _showSearchBar
+                  ? HugeIconsStroke.cancel02
+                  : HugeIconsSolid.search01,
+              color: AppTheme.iconColorThree(context),
+              size: 24,
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 30),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Row(
-                  children: [
-                    const CircleAvatar(
-                      backgroundImage: AssetImage("assets/images/b.jpg"),
-                      radius: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Hi, Admin",
-                          style: MyTextTheme.lightTextTheme.titleLarge,
-                        ),
-                        const Text(
-                          "Administrator",
-                          style: TextStyle(color: Colors.grey, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: Icon(Icons.search_rounded, color: MyColors.primary),
-                      onPressed: () =>
-                          setState(() => _showSearchBar = !_showSearchBar),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.logout, color: MyColors.primary),
-                      onPressed: () async {
-                        await _auth.signOut();
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const SignIn()),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              if (_showSearchBar)
+              if (_showSearchBar) ...[
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                  child: TextField(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: TextFormField(
                     controller: _searchController,
-                    style: const TextStyle(color: Colors.black),
+                    focusNode: _searchFocusNode,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     decoration: InputDecoration(
-                      hintText: "Search...",
-                      prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
+                      labelText: "Search",
+                      hintText: "Search Here...",
+                      prefixIcon: Icon(HugeIconsSolid.search01),
+                      counter: const SizedBox.shrink(),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(HugeIconsStroke.cancel02),
+                              onPressed: () {
+                                _searchController.clear();
+                                ref.read(searchQueryProvider.notifier).state =
+                                    "";
+                                setState(() {});
+                              },
+                            )
+                          : null,
                     ),
+                    keyboardType: TextInputType.name,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return null;
+                      } else if (!RegExp(r'^[a-zA-Z ]+$').hasMatch(value)) {
+                        return 'Must contain only letters';
+                      }
+                      return null;
+                    },
+                    maxLength: 20,
+                    onChanged: (value) {
+                      ref.read(searchQueryProvider.notifier).state = value;
+                      setState(() {});
+                    },
                   ),
                 ),
-              const SizedBox(height: 30),
-              Center(
-                child: Text(
-                  "Manage Users",
-                  style: TextStyle(
-                    color: MyColors.primary,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
+                SizedBox(height: 10),
+              ],
               Padding(
-                padding: const EdgeInsets.all(12.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -150,17 +184,22 @@ class _ManageUsersState extends State<ManageUsers> {
                     final enabled = data['enabled'] ?? true;
 
                     return Card(
-                      color: Colors.white,
-                      margin: const EdgeInsets.symmetric(vertical: 8.0),
-                      elevation: 5,
+                      color: AppTheme.customListBg(context),
+                      margin: const EdgeInsets.only(bottom: 10),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       child: Padding(
-                        padding: const EdgeInsets.all(12.0),
+                        padding: const EdgeInsets.all(16),
                         child: Row(
                           children: [
                             // Profile image with better error handling
                             CircleAvatar(
                               radius: 30,
-                              backgroundColor: Colors.grey[200],
+                              backgroundColor: AppTheme.sliderHighlightBg(
+                                context,
+                              ),
                               child: profileImage.isNotEmpty
                                   ? ClipOval(
                                       child: Image.network(
@@ -170,47 +209,50 @@ class _ManageUsersState extends State<ManageUsers> {
                                         fit: BoxFit.cover,
                                         errorBuilder:
                                             (context, error, stackTrace) =>
-                                                const Icon(
-                                                  Icons.person,
+                                                Icon(
+                                                  HugeIconsSolid.user03,
                                                   size: 30,
                                                 ),
                                         loadingBuilder:
                                             (context, child, loadingProgress) {
                                               if (loadingProgress == null)
                                                 return child;
-                                              return const SizedBox(
+                                              return SizedBox(
                                                 width: 30,
                                                 height: 30,
-                                                child:
-                                                    CircularProgressIndicator(),
+                                                child: CircularProgressIndicator(
+                                                  strokeCap: StrokeCap.round,
+                                                  strokeWidth: 4,
+                                                  color:
+                                                      AppTheme.iconColorThree(
+                                                        context,
+                                                      ),
+                                                ),
                                               );
                                             },
                                       ),
                                     )
-                                  : const Icon(Icons.person, size: 30),
+                                  : const Icon(HugeIconsSolid.user03, size: 30),
                             ),
                             const SizedBox(width: 12),
-                            Flexible(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     name,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: Colors.black87,
-                                    ),
+                                    style: AppTheme.textTitle(context),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     email,
-                                    style: TextStyle(color: MyColors.primary),
+                                    style: AppTheme.textSearchInfoLabeled(
+                                      context,
+                                    ).copyWith(fontSize: 14),
                                   ),
                                 ],
                               ),
                             ),
-                            const Spacer(),
                             Switch(
                               value: enabled,
                               onChanged: (val) =>

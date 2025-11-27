@@ -1,23 +1,24 @@
+import '/components/appsnackbar.dart';
+import '/providers/user_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '/dashboard_screen.dart';
 import '/utils/themes/themes.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import '/screens/admin/screens/dashboard.dart';
 import '/screens/auth/users/forgetpass.dart';
 import '/screens/auth/users/sign_up.dart';
-import '/screens/home.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class SignIn extends StatefulWidget {
+class SignIn extends ConsumerStatefulWidget {
   const SignIn({super.key});
 
   @override
-  State<SignIn> createState() => _SignInState();
+  ConsumerState<SignIn> createState() => _SignInState();
 }
 
-class _SignInState extends State<SignIn> {
+class _SignInState extends ConsumerState<SignIn> {
   final formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final passController = TextEditingController();
@@ -31,6 +32,10 @@ class _SignInState extends State<SignIn> {
       setState(() => _isLoading = true);
 
       try {
+        // 1️⃣ Clear Old User Data
+        ref.read(userProvider.notifier).clearUser();
+
+        // 2️⃣ Firebase Sign In
         UserCredential userCredential = await _auth.signInWithEmailAndPassword(
           email: emailController.text.trim(),
           password: passController.text.trim(),
@@ -39,6 +44,7 @@ class _SignInState extends State<SignIn> {
         User? user = userCredential.user;
 
         if (user != null) {
+          // 3️⃣ Fetch User Document
           DocumentSnapshot userDoc = await FirebaseFirestore.instance
               .collection('users')
               .doc(user.uid)
@@ -46,21 +52,33 @@ class _SignInState extends State<SignIn> {
 
           if (!userDoc.exists) {
             await _auth.signOut();
-            _showError("User record not found.");
+            AppSnackBar.show(
+              context,
+              message: "User record not found",
+              type: AppSnackBarType.error,
+            );
             return;
           }
 
           final data = userDoc.data() as Map<String, dynamic>;
 
+          // 4️⃣ Check user blocked
           if (data['enabled'] == false) {
             await _auth.signOut();
-            _showError("This user is blocked by admin");
+            AppSnackBar.show(
+              context,
+              message: "This user is blocked by admin",
+              type: AppSnackBarType.error,
+            );
             return;
           }
 
+          // 5️⃣ Important — Fetch into Riverpod Provider
+          await ref.read(userProvider.notifier).fetchUser();
+
+          // 6️⃣ Navigate Based on Role
           final role = data['role'] ?? 'User';
 
-          // Direct navigation
           if (role == "User") {
             Navigator.pushReplacement(
               context,
@@ -82,7 +100,11 @@ class _SignInState extends State<SignIn> {
           }
         }
       } on FirebaseAuthException catch (e) {
-        _showError(_getErrorMessage(e));
+        AppSnackBar.show(
+          context,
+          message: _getErrorMessage(e),
+          type: AppSnackBarType.error,
+        );
         emailController.clear();
         passController.clear();
       } catch (e) {
@@ -151,7 +173,11 @@ class _SignInState extends State<SignIn> {
         });
       } else if (userDoc.data()?['enabled'] == false) {
         await _auth.signOut();
-        _showError("This user is blocked by admin");
+        AppSnackBar.show(
+          context,
+          message: "This user is blocked by admin",
+          type: AppSnackBarType.error,
+        );
         return;
       }
 

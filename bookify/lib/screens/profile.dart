@@ -250,8 +250,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               onTap: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (context) => UserOrders(),
+                                  PageRouteBuilder(
+                                    opaque: false,
+                                    pageBuilder:
+                                        (
+                                          context,
+                                          animation,
+                                          secondaryAnimation,
+                                        ) => UserOrders(),
+                                    transitionsBuilder:
+                                        (
+                                          context,
+                                          animation,
+                                          secondaryAnimation,
+                                          child,
+                                        ) {
+                                          const begin = Offset(0.0, 1.0);
+                                          const end = Offset.zero;
+                                          const curve = Curves.easeInOut;
+                                          final tween = Tween(
+                                            begin: begin,
+                                            end: end,
+                                          ).chain(CurveTween(curve: curve));
+                                          return SlideTransition(
+                                            position: animation.drive(tween),
+                                            child: child,
+                                          );
+                                        },
                                   ),
                                 );
                               },
@@ -261,10 +286,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               horizontal: 16,
                               vertical: 8,
                             ),
-                            leading: Icon(
-                              HugeIconsStroke.userGroup,
-                              size: 24,
-                            ),
+                            leading: Icon(HugeIconsStroke.userGroup, size: 24),
                             title: Text(
                               "Manage Users",
                               style: AppTheme.textLabel(context),
@@ -272,8 +294,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (context) => ManageUsers(),
+                                PageRouteBuilder(
+                                  opaque: false,
+                                  pageBuilder:
+                                      (
+                                        context,
+                                        animation,
+                                        secondaryAnimation,
+                                      ) => ManageUsers(),
+                                  transitionsBuilder:
+                                      (
+                                        context,
+                                        animation,
+                                        secondaryAnimation,
+                                        child,
+                                      ) {
+                                        const begin = Offset(0.0, 1.0);
+                                        const end = Offset.zero;
+                                        const curve = Curves.easeInOut;
+                                        final tween = Tween(
+                                          begin: begin,
+                                          end: end,
+                                        ).chain(CurveTween(curve: curve));
+                                        return SlideTransition(
+                                          position: animation.drive(tween),
+                                          child: child,
+                                        );
+                                      },
                                 ),
                               );
                             },

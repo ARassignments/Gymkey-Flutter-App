@@ -309,28 +309,34 @@ class _DashboardState extends ConsumerState<Dashboard> {
                         ),
                         const SizedBox(width: 16),
                       ],
-                      InkWell(
-                        onTap: () {
-                          setState(() {
-                            _showSearchBar = !_showSearchBar;
-                            if (_showSearchBar) {
-                              Future.delayed(Duration(milliseconds: 50), () {
-                                _searchFocusNode.requestFocus();
+                      if (forAdmin)
+                        if (_currentIndex > 0 && _currentIndex < 4)
+                          InkWell(
+                            onTap: () {
+                              setState(() {
+                                _showSearchBar = !_showSearchBar;
+                                if (_showSearchBar) {
+                                  Future.delayed(
+                                    Duration(milliseconds: 50),
+                                    () {
+                                      _searchFocusNode.requestFocus();
+                                    },
+                                  );
+                                } else {
+                                  _searchController.clear();
+                                  ref.read(searchQueryProvider.notifier).state =
+                                      "";
+                                }
                               });
-                            } else {
-                              _searchController.clear();
-                              ref.read(searchQueryProvider.notifier).state = "";
-                            }
-                          });
-                        },
-                        child: Icon(
-                          _showSearchBar
-                              ? HugeIconsStroke.cancel02
-                              : HugeIconsSolid.search01,
-                          color: AppTheme.iconColorThree(context),
-                          size: 24,
-                        ),
-                      ),
+                            },
+                            child: Icon(
+                              _showSearchBar
+                                  ? HugeIconsStroke.cancel02
+                                  : HugeIconsSolid.search01,
+                              color: AppTheme.iconColorThree(context),
+                              size: 24,
+                            ),
+                          ),
                       if (!_showSearchBar) ...[
                         const SizedBox(width: 16),
                         InkWell(
