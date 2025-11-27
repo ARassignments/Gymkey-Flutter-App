@@ -1,5 +1,4 @@
-import 'package:bookify/screens/admin/screens/manage_users/manage_users.dart';
-
+import '/screens/admin/screens/manage_users/manage_users.dart';
 import '/providers/user_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '/components/dialog_logout.dart';
@@ -281,50 +280,54 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                 );
                               },
                             ),
-                          ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
+                          if (widget.forAdmin == true)
+                            ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              leading: Icon(
+                                HugeIconsStroke.userGroup,
+                                size: 24,
+                              ),
+                              title: Text(
+                                "Manage Users",
+                                style: AppTheme.textLabel(context),
+                              ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  PageRouteBuilder(
+                                    opaque: false,
+                                    pageBuilder:
+                                        (
+                                          context,
+                                          animation,
+                                          secondaryAnimation,
+                                        ) => ManageUsers(),
+                                    transitionsBuilder:
+                                        (
+                                          context,
+                                          animation,
+                                          secondaryAnimation,
+                                          child,
+                                        ) {
+                                          const begin = Offset(0.0, 1.0);
+                                          const end = Offset.zero;
+                                          const curve = Curves.easeInOut;
+                                          final tween = Tween(
+                                            begin: begin,
+                                            end: end,
+                                          ).chain(CurveTween(curve: curve));
+                                          return SlideTransition(
+                                            position: animation.drive(tween),
+                                            child: child,
+                                          );
+                                        },
+                                  ),
+                                );
+                              },
                             ),
-                            leading: Icon(HugeIconsStroke.userGroup, size: 24),
-                            title: Text(
-                              "Manage Users",
-                              style: AppTheme.textLabel(context),
-                            ),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                PageRouteBuilder(
-                                  opaque: false,
-                                  pageBuilder:
-                                      (
-                                        context,
-                                        animation,
-                                        secondaryAnimation,
-                                      ) => ManageUsers(),
-                                  transitionsBuilder:
-                                      (
-                                        context,
-                                        animation,
-                                        secondaryAnimation,
-                                        child,
-                                      ) {
-                                        const begin = Offset(0.0, 1.0);
-                                        const end = Offset.zero;
-                                        const curve = Curves.easeInOut;
-                                        final tween = Tween(
-                                          begin: begin,
-                                          end: end,
-                                        ).chain(CurveTween(curve: curve));
-                                        return SlideTransition(
-                                          position: animation.drive(tween),
-                                          child: child,
-                                        );
-                                      },
-                                ),
-                              );
-                            },
-                          ),
                           Divider(
                             height: 1,
                             color: AppTheme.dividerBg(context),
@@ -350,6 +353,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               value:
                                   Theme.of(context).brightness ==
                                   Brightness.dark,
+                              activeColor: AppTheme.iconColor(context),
                               onChanged: (value) {
                                 ThemeController.setTheme(
                                   value ? ThemeMode.dark : ThemeMode.light,

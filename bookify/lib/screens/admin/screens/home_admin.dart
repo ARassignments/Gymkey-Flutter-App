@@ -14,6 +14,7 @@ class HomeAdminScreen extends StatefulWidget {
 
 class _HomeAdminScreenState extends State<HomeAdminScreen>
     with AutomaticKeepAliveClientMixin {
+  bool _hover = false;
   @override
   void initState() {
     super.initState();
@@ -73,7 +74,7 @@ class _HomeAdminScreenState extends State<HomeAdminScreen>
                               child: Text(
                                 "Manage\nCategories",
                                 style: AppTheme.textLink(context).copyWith(
-                                  fontSize: 14,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -84,7 +85,7 @@ class _HomeAdminScreenState extends State<HomeAdminScreen>
                             bottom: -5,
                             child: Image.asset(
                               "assets/images/items.png",
-                              height: 130,
+                              height: 110,
                             ),
                           ),
                         ],
@@ -94,42 +95,55 @@ class _HomeAdminScreenState extends State<HomeAdminScreen>
                   Expanded(
                     child: InkWell(
                       onTap: () => widget.onMenuSelect(3),
-                      child: Stack(
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(top: 16),
-                            height: 100,
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: AppTheme.customListBg(context),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Text(
-                                "Manage\nOrders",
-                                style: AppTheme.textLink(context).copyWith(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                      child: MouseRegion(
+                        onEnter: (_) => setState(() => _hover = true),
+                        onExit: (_) => setState(() => _hover = false),
+                        child: Stack(
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.only(top: 16),
+                              height: 100,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: AppTheme.customListBg(context),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Text(
+                                  "Manage\nOrders",
+                                  style: AppTheme.textLink(context).copyWith(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          Positioned(
-                            right: -25,
-                            bottom: -35,
-                            child: Image.asset(
-                              "assets/images/orders.png",
-                              height: 190,
+                            AnimatedPositioned(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeOut,
+                              right: _hover ? -20 : -25,
+                              bottom: _hover ? -20 : -35,
+                              child: AnimatedScale(
+                                scale: _hover
+                                    ? 1.12
+                                    : 1.0,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOut,
+                                child: Image.asset(
+                                  "assets/images/orders.png",
+                                  height: 170,
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 8),
               Row(
                 spacing: 16,
                 children: [
@@ -151,7 +165,7 @@ class _HomeAdminScreenState extends State<HomeAdminScreen>
                               child: Text(
                                 "Manage\nProducts",
                                 style: AppTheme.textLink(context).copyWith(
-                                  fontSize: 14,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -162,7 +176,7 @@ class _HomeAdminScreenState extends State<HomeAdminScreen>
                             bottom: -30,
                             child: Image.asset(
                               "assets/images/products.png",
-                              height: 180,
+                              height: 170,
                             ),
                           ),
                         ],
@@ -216,7 +230,7 @@ class _HomeAdminScreenState extends State<HomeAdminScreen>
                               child: Text(
                                 "Manage\nUsers",
                                 style: AppTheme.textLink(context).copyWith(
-                                  fontSize: 14,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),

@@ -24,39 +24,59 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
     with AutomaticKeepAliveClientMixin {
   final auth = FirebaseAuth.instance;
 
+  // Local caches (offline filtering)
+  List<QueryDocumentSnapshot> _allBooks = [];
+  List<QueryDocumentSnapshot> _allCategories = [];
+
+  // UI state
   String selectedCategory = 'All Products';
-
-  List<String> categories = ['All Products'];
-
-  Future<void> fetchCategories() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('categories')
-        .get();
-
-    final fetched = snapshot.docs
-        .map((doc) => (doc['name'] ?? '').toString())
-        .toList();
-
-    setState(() {
-      categories = ['All Products', ...fetched];
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    fetchCategories();
-  }
+  bool _loading = true;
+  String? _error;
 
   @override
   bool get wantKeepAlive => true;
 
   @override
-  void dispose() {
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadAll();
   }
 
-  void _searchBooks() => setState(() {});
+  Future<void> _loadAll() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      // fetch categories and books in parallel
+      final catsFuture = FirebaseFirestore.instance
+          .collection('categories')
+          .get();
+      final booksFuture = FirebaseFirestore.instance.collection('books').get();
+
+      final results = await Future.wait([catsFuture, booksFuture]);
+
+      final cats = results[0] as QuerySnapshot;
+      final books = results[1] as QuerySnapshot;
+
+      if (!mounted) return;
+
+      setState(() {
+        _allCategories = cats.docs;
+        _allBooks = books.docs;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'Failed to load data';
+      });
+    }
+  }
+
+  Future<void> _refresh() async => _loadAll();
 
   // ---------- Safe getters ----------
   T? _get<T>(Map<String, dynamic> m, String key) {
@@ -113,18 +133,16 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
     return false;
   }
 
-  // ---------- Category match logic (very robust) ----------
+  // ---------- Category matching ----------
   bool _matchesCategory(Map<String, dynamic> data) {
     final cat = selectedCategory;
 
     if (cat == 'All Products') return true;
 
-    // Genre fallback across fields
     final genreLike = _norm(
       _getAny(data, ['genre', 'category', 'type'])?.toString(),
     );
 
-    // Tag & flag sets
     final tags = _collectTags(data);
 
     if (cat == 'Featured') {
@@ -176,11 +194,11 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
       return flag || inTags;
     }
 
-    // Otherwise treat as a genre category
+    // treat as a genre/category name
     return genreLike == _norm(cat);
   }
 
-  // ---------- Search match ----------
+  // ---------- Search matching ----------
   bool _matchesSearch(Map<String, dynamic> data, String q) {
     if (q.isEmpty) return true;
     final title = _norm(data['title']?.toString());
@@ -207,479 +225,468 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
     return true;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    final searchQuery = ref.watch(searchQueryProvider).toLowerCase();
-    return Scaffold(
-      backgroundColor: AppTheme.screenBg(context),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Categories chips
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('categories')
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: LoadingLogo());
-                    }
-                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                      return const Center(
-                        child: NotFoundWidget(
-                          title: "No categories found",
-                          message: "",
-                        ),
-                      );
-                    }
+  // ---------- Derived filtered list ----------
+  List<QueryDocumentSnapshot> _filteredBooks(String searchQuery) {
+    final q = searchQuery.trim().toLowerCase();
+    final byCategory = _allBooks.where((doc) {
+      final data = (doc.data() as Map<String, dynamic>?) ?? {};
+      return _matchesCategory(data);
+    }).toList();
 
-                    final docs = snapshot.data!.docs;
-                    final dynamicCategories = [
-                      'All Products',
-                      ...docs.map((e) => e['name'].toString()).toList(),
-                    ];
+    final bySearch = byCategory.where((doc) {
+      final data = (doc.data() as Map<String, dynamic>);
+      return _matchesSearch(data, q);
+    }).toList();
 
-                    return SizedBox(
-                      height: 45,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: dynamicCategories.length,
-                        itemBuilder: (context, index) {
-                          final cat = dynamicCategories[index];
-                          final isSelected = selectedCategory == cat;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 10),
-                            child: InkWell(
-                              onTap: () =>
-                                  setState(() => selectedCategory = cat),
-                              child: Container(
-                                height: 8,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? MyColors.primary
-                                      : AppTheme.customListBg(context),
-                                  borderRadius: BorderRadius.circular(30),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? MyColors.primary
-                                        : AppTheme.sliderHighlightBg(context),
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    cat,
-                                    style: AppTheme.textLabel(context).copyWith(
-                                      fontSize: 12,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : AppTheme.iconColor(context),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
+    return bySearch;
+  }
+
+  List<String> _categoryNames() {
+    final names = _allCategories
+        .map((d) {
+          final data = d.data() as Map<String, dynamic>;
+          return (data['name'] ?? '').toString();
+        })
+        .where((s) => s.isNotEmpty)
+        .toList();
+    return ['All Products', ...names];
+  }
+
+  // ---------- UI helpers ----------
+  Widget _buildChips() {
+    final dynamicCategories = _categoryNames();
+
+    return SizedBox(
+      height: 45,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: dynamicCategories.length,
+        itemBuilder: (context, index) {
+          final cat = dynamicCategories[index];
+          final isSelected = selectedCategory == cat;
+          return Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: InkWell(
+              onTap: () => setState(() => selectedCategory = cat),
+              child: Container(
+                height: 30,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? MyColors.primary
+                      : AppTheme.customListBg(context),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(
+                    color: isSelected
+                        ? MyColors.primary
+                        : AppTheme.sliderHighlightBg(context),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    cat,
+                    style: AppTheme.textLabel(context).copyWith(
+                      fontSize: 12,
+                      color: isSelected
+                          ? Colors.white
+                          : AppTheme.iconColor(context),
+                    ),
+                  ),
                 ),
               ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 
-              const SizedBox(height: 16),
+  Widget _buildBookTile(QueryDocumentSnapshot doc, int index) {
+    final data = doc.data() as Map<String, dynamic>;
 
-              // Books list
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: StreamBuilder<QuerySnapshot>(
-                  // Saare books laao; filtering neeche client-side hogi
-                  stream: FirebaseFirestore.instance
-                      .collection('books')
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: LoadingLogo());
-                    }
-                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                      return const Center(
-                        child: NotFoundWidget(
-                          title: "No products found",
-                          message: "",
-                        ),
-                      );
-                    }
-
-                    final q = searchQuery;
-                    final docs = snapshot.data!.docs;
-
-                    // 1) Category filter
-                    final byCategory = docs.where((doc) {
-                      final data = (doc.data() as Map<String, dynamic>?) ?? {};
-                      return _matchesCategory(data);
-                    }).toList();
-
-                    // 2) Search filter
-                    final filteredBooks = byCategory.where((doc) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      return _matchesSearch(data, q);
-                    }).toList();
-
-                    if (filteredBooks.isEmpty) {
-                      return const Center(
-                        child: NotFoundWidget(
-                          title: "No products found",
-                          message: "",
-                        ),
-                      );
-                    }
-
-                    return Column(
-                      spacing: 12,
-                      children: filteredBooks.map((doc) {
-                        final data = doc.data() as Map<String, dynamic>;
-
-                        return Dismissible(
-                          key: Key(doc.id),
-                          direction: DismissDirection.horizontal,
-                          background: Container(
-                            alignment: Alignment.centerLeft,
-                            padding: const EdgeInsets.only(left: 16),
-                            decoration: BoxDecoration(
-                              color: AppTheme.cardBg(context),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Shimmer(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      AppTheme.sliderHighlightBg(context),
-                                      AppTheme.iconColorThree(context),
-                                      AppTheme.sliderHighlightBg(context),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  direction: ShimmerDirection.ltr,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    spacing: 12,
-                                    children: [
-                                      Icon(
-                                        HugeIconsSolid.delete01,
-                                        color: AppColor.accent_50,
-                                        size: 24,
-                                      ),
-                                      Text(
-                                        "Swipe right to remove",
-                                        style: AppTheme.textLink(context)
-                                            .copyWith(
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 14,
-                                            ),
-                                      ),
-                                      const Icon(HugeIconsStroke.swipeRight01),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          secondaryBackground: Container(
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 16),
-                            decoration: BoxDecoration(
-                              color: AppTheme.cardBg(context),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Shimmer(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      AppTheme.sliderHighlightBg(context),
-                                      AppTheme.iconColorThree(context),
-                                      AppTheme.sliderHighlightBg(context),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  direction: ShimmerDirection.rtl,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    spacing: 12,
-                                    children: [
-                                      const Icon(HugeIconsStroke.swipeLeft01),
-                                      Text(
-                                        "Swipe left to edit",
-                                        style: AppTheme.textLink(context)
-                                            .copyWith(
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 14,
-                                            ),
-                                      ),
-                                      Icon(
-                                        HugeIconsSolid.edit01,
-                                        color: AppColor.accent_50,
-                                        size: 24,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          confirmDismiss: (direction) async {
-                            if (direction == DismissDirection.endToStart) {
-                              showModalBottomSheet(
-                                context: context,
-                                isDismissible: false,
-                                enableDrag: false,
-                                showDragHandle: true,
-                                isScrollControlled: true,
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).scaffoldBackgroundColor,
-                                shape: const RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.vertical(
-                                    top: Radius.circular(30),
-                                  ),
-                                ),
-                                builder: (context) =>
-                                    EditBooks(bookId: doc.id, bookData: data),
-                              );
-                              return false;
-                            }
-
-                            if (direction == DismissDirection.startToEnd) {
-                              final bool?
-                              confirmDelete = await showModalBottomSheet<bool>(
-                                context: context,
-                                isDismissible: false,
-                                enableDrag: false,
-                                showDragHandle: true,
-                                isScrollControlled: true,
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).scaffoldBackgroundColor,
-                                shape: const RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.vertical(
-                                    top: Radius.circular(30),
-                                  ),
-                                ),
-                                builder: (context) {
-                                  return Padding(
-                                    padding: EdgeInsets.only(
-                                      bottom:
-                                          MediaQuery.of(
-                                            context,
-                                          ).viewInsets.bottom +
-                                          20,
-                                      left: 20,
-                                      right: 20,
-                                    ),
-                                    child: Column(
-                                      spacing: 16,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          "Confirm Delete",
-                                          textAlign: TextAlign.center,
-                                          style: AppTheme.textLabel(context)
-                                              .copyWith(
-                                                fontSize: 17,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                        ),
-                                        Divider(
-                                          height: 1,
-                                          color: AppTheme.dividerBg(context),
-                                        ),
-
-                                        Text(
-                                          "Are you sure you want to delete '${data['title']}' product?",
-                                          textAlign: TextAlign.center,
-                                          style: AppTheme.textLabel(context),
-                                        ),
-
-                                        ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            overlayColor: AppColor.accent_50
-                                                .withOpacity(0.1),
-                                            backgroundColor: AppColor.accent_50,
-                                          ),
-                                          child: Text(
-                                            'Yes, Remove',
-                                            style: TextStyle(
-                                              color: AppColor.white,
-                                            ),
-                                          ),
-                                          onPressed: () {
-                                            Navigator.pop(context, true);
-                                          },
-                                        ),
-                                        OutlinedButton(
-                                          child: Text("Cancel"),
-                                          onPressed: () {
-                                            Navigator.pop(context, false);
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              );
-
-                              if (confirmDelete == true) {
-                                // perform delete
-                                await FirebaseFirestore.instance
-                                    .collection('books')
-                                    .doc(doc.id)
-                                    .delete();
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Product deleted successfully!",
-                                    ),
-                                  ),
-                                );
-
-                                return true; // dismiss item
-                              }
-                            }
-                            return false;
-                          },
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                PageRouteBuilder(
-                                  opaque: false,
-                                  pageBuilder:
-                                      (
-                                        context,
-                                        animation,
-                                        secondaryAnimation,
-                                      ) => BookDetailPage(
-                                        bookId: doc.id,
-                                        forAdmin: true,
-                                      ),
-                                  transitionsBuilder:
-                                      (
-                                        context,
-                                        animation,
-                                        secondaryAnimation,
-                                        child,
-                                      ) {
-                                        const begin = Offset(0.0, 1.0);
-                                        const end = Offset.zero;
-                                        const curve = Curves.easeInOut;
-                                        final tween = Tween(
-                                          begin: begin,
-                                          end: end,
-                                        ).chain(CurveTween(curve: curve));
-                                        return SlideTransition(
-                                          position: animation.drive(tween),
-                                          child: child,
-                                        );
-                                      },
-                                ),
-                              );
-                            },
-                            child: Card(
-                              color: AppTheme.customListBg(context),
-                              margin: EdgeInsets.all(0),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Row(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child:
-                                          (data['cover_image_url'] != null &&
-                                              data['cover_image_url']
-                                                  .toString()
-                                                  .isNotEmpty)
-                                          ? Image.network(
-                                              data['cover_image_url'],
-                                              width: 80,
-                                              height: 80,
-                                              fit: BoxFit.cover,
-                                            )
-                                          : const Icon(
-                                              Icons.broken_image,
-                                              color: Colors.grey,
-                                            ),
-                                    ),
-
-                                    const SizedBox(width: 12),
-                                    Flexible(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            (data['title'] ?? '').toString(),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: AppTheme.textTitle(context),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            (_getAny(data, [
-                                                      'genre',
-                                                      'category',
-                                                      'type',
-                                                    ]) ??
-                                                    '')
-                                                .toString(),
-                                            style: AppTheme.textLabel(context),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            '\$${(data['price'] ?? '').toString()}',
-                                            style:
-                                                AppTheme.textSearchInfoLabeled(
-                                                  context,
-                                                ).copyWith(fontSize: 14),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    );
-                  },
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Dismissible(
+        key: Key(doc.id),
+        direction: DismissDirection.horizontal,
+        background: Container(
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.only(left: 16),
+          decoration: BoxDecoration(
+            color: AppTheme.cardBg(context),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Shimmer(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.sliderHighlightBg(context),
+                    AppTheme.iconColorThree(context),
+                    AppTheme.sliderHighlightBg(context),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                direction: ShimmerDirection.ltr,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      HugeIconsSolid.delete01,
+                      color: AppColor.accent_50,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Swipe right to remove",
+                      style: AppTheme.textLink(
+                        context,
+                      ).copyWith(fontWeight: FontWeight.w500, fontSize: 14),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(HugeIconsStroke.swipeRight01),
+                  ],
                 ),
               ),
             ],
           ),
         ),
+        secondaryBackground: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 16),
+          decoration: BoxDecoration(
+            color: AppTheme.cardBg(context),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Shimmer(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.sliderHighlightBg(context),
+                    AppTheme.iconColorThree(context),
+                    AppTheme.sliderHighlightBg(context),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                direction: ShimmerDirection.rtl,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(HugeIconsStroke.swipeLeft01),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Swipe left to edit",
+                      style: AppTheme.textLink(
+                        context,
+                      ).copyWith(fontWeight: FontWeight.w500, fontSize: 14),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      HugeIconsSolid.edit01,
+                      color: AppColor.accent_50,
+                      size: 24,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        confirmDismiss: (direction) async {
+          if (direction == DismissDirection.endToStart) {
+            // edit
+            showModalBottomSheet(
+              context: context,
+              isDismissible: false,
+              enableDrag: false,
+              showDragHandle: true,
+              isScrollControlled: true,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              ),
+              builder: (ctx) => EditBooks(bookId: doc.id, bookData: data),
+            );
+            return false;
+          }
+
+          if (direction == DismissDirection.startToEnd) {
+            final bool? confirmDelete = await showModalBottomSheet<bool>(
+              context: context,
+              isDismissible: false,
+              enableDrag: false,
+              showDragHandle: true,
+              isScrollControlled: true,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              ),
+              builder: (ctx) {
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+                    left: 20,
+                    right: 20,
+                  ),
+                  child: Column(
+                    spacing: 16,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "Confirm Delete",
+                        textAlign: TextAlign.center,
+                        style: AppTheme.textLabel(
+                          ctx,
+                        ).copyWith(fontSize: 17, fontWeight: FontWeight.w600),
+                      ),
+                      Divider(height: 1, color: AppTheme.dividerBg(ctx)),
+                      Text(
+                        "Are you sure you want to delete '${data['title'] ?? ''}' product?",
+                        textAlign: TextAlign.center,
+                        style: AppTheme.textLabel(ctx),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          overlayColor: AppColor.accent_50.withOpacity(0.1),
+                          backgroundColor: AppColor.accent_50,
+                        ),
+                        child: Text(
+                          'Yes, Remove',
+                          style: TextStyle(color: AppColor.white),
+                        ),
+                        onPressed: () => Navigator.pop(ctx, true),
+                      ),
+                      OutlinedButton(
+                        child: const Text("Cancel"),
+                        onPressed: () => Navigator.pop(ctx, false),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+
+            if (confirmDelete == true) {
+              await FirebaseFirestore.instance
+                  .collection('books')
+                  .doc(doc.id)
+                  .delete();
+              if (!mounted) return true;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Product deleted successfully!")),
+              );
+              return true;
+            }
+            return false;
+          }
+
+          return false;
+        },
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              PageRouteBuilder(
+                opaque: false,
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    BookDetailPage(bookId: doc.id, forAdmin: true),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                      const begin = Offset(0.0, 1.0);
+                      const end = Offset.zero;
+                      const curve = Curves.easeInOut;
+                      final tween = Tween(
+                        begin: begin,
+                        end: end,
+                      ).chain(CurveTween(curve: curve));
+                      return SlideTransition(
+                        position: animation.drive(tween),
+                        child: child,
+                      );
+                    },
+              ),
+            );
+          },
+          child: Card(
+            color: AppTheme.customListBg(context),
+            margin: EdgeInsets.zero,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child:
+                        (data['cover_image_url'] != null &&
+                            data['cover_image_url'].toString().isNotEmpty)
+                        ? Image.network(
+                            data['cover_image_url'],
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                          )
+                        : const Icon(Icons.broken_image, color: Colors.grey),
+                  ),
+                  const SizedBox(width: 12),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          (data['title'] ?? '').toString(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTheme.textTitle(context),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          (_getAny(data, ['genre', 'category', 'type']) ?? '')
+                              .toString(),
+                          style: AppTheme.textLabel(context),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '\$${(data['price'] ?? '').toString()}',
+                          style: AppTheme.textSearchInfoLabeled(
+                            context,
+                          ).copyWith(fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    // watch search provider reactively
+    final searchQuery = ref.watch(searchQueryProvider).toLowerCase();
+
+    // compute filtered list from local cache
+    final filteredBooks = _filteredBooks(searchQuery);
+
+    return Scaffold(
+      body: Column(
+        children: [
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _refresh,
+              child: _loading
+                  ? const Center(child: LoadingLogo())
+                  : _error != null
+                  ? Center(child: Text(_error!))
+                  : _allBooks.isEmpty
+                  ? Center(
+                    child: NotFoundWidget(
+                      title: "No products found",
+                      message: "",
+                    ),
+                  )
+                  : SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // chips
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 20,
+                              right: 20,
+                              bottom: 12,
+                            ),
+                            child: _buildChips(),
+                          ),
+            
+                          // search result header (if searching)
+                          if (searchQuery.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  RichText(
+                                    text: TextSpan(
+                                      style: AppTheme.textSearchInfo(context),
+                                      children: [
+                                        const TextSpan(text: 'Result for "'),
+                                        TextSpan(
+                                          text: searchQuery,
+                                          style: AppTheme.textSearchInfoLabeled(
+                                            context,
+                                          ),
+                                        ),
+                                        const TextSpan(text: '"'),
+                                      ],
+                                    ),
+                                  ),
+                                  RichText(
+                                    text: TextSpan(
+                                      style: AppTheme.textSearchInfoLabeled(
+                                        context,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: filteredBooks.length.toString(),
+                                        ),
+                                        const TextSpan(text: ' found'),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+            
+                          const SizedBox(height: 8),
+            
+                          // list
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: filteredBooks.isEmpty
+                                ? Center(
+                                    child: NotFoundWidget(
+                                      title: "No products found",
+                                      message: "",
+                                    ),
+                                  )
+                                : Column(
+                                    children: List.generate(filteredBooks.length, (
+                                      i,
+                                    ) {
+                                      final doc = filteredBooks[i];
+                                      return _buildBookTile(doc, i);
+                                    }),
+                                  ),
+                          ),
+            
+                          const SizedBox(height: 80), // spacing for FAB
+                        ],
+                      ),
+                    ),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         isExtended: true,
@@ -688,8 +695,8 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
         focusElevation: 0,
         hoverElevation: 0,
         highlightElevation: 0,
-        onPressed: () {
-          showModalBottomSheet(
+        onPressed: () async {
+          await showModalBottomSheet(
             context: context,
             isDismissible: false,
             enableDrag: false,
@@ -699,7 +706,7 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
             ),
-            builder: (context) => AddBooks(),
+            builder: (context) => const AddBooks(),
           );
         },
         backgroundColor: AppTheme.customListBg(context),

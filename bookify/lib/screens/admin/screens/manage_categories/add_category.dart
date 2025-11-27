@@ -131,7 +131,7 @@ class _AddCategoryBottomSheetState extends State<AddCategoryBottomSheet> {
                           height: 180,
                           width: 150,
                           fit: BoxFit.cover,
-                          alignment: Alignment.topCenter,
+                          alignment: Alignment.center,
                         ),
                       )
                     : Container(
