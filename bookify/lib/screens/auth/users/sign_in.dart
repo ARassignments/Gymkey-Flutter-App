@@ -360,32 +360,7 @@ class _SignInState extends ConsumerState<SignIn> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Divider(
-                              color: AppTheme.dividerBg(context),
-                              thickness: 1,
-                              endIndent: 10,
-                            ),
-                          ),
-                          Text(
-                            'Or continue with',
-                            style: AppTheme.textSearchInfo(
-                              context,
-                            ).copyWith(fontSize: 14),
-                          ),
-                          Expanded(
-                            child: Divider(
-                              color: AppTheme.dividerBg(context),
-                              thickness: 1,
-                              indent: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 25),
-
+                   
                       const SizedBox(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
