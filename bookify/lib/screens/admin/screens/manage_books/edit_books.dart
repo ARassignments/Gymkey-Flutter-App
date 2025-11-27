@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:typed_data';
 import '/components/appsnackbar.dart';
 import '/utils/themes/themes.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
@@ -8,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 
 class EditBooks extends StatefulWidget {
   final String bookId;
@@ -19,6 +21,7 @@ class EditBooks extends StatefulWidget {
   State<EditBooks> createState() => _EditBooksState();
 }
 
+
 class _EditBooksState extends State<EditBooks> {
   final _formKey = GlobalKey<FormState>();
   final _auth = FirebaseAuth.instance;
@@ -26,6 +29,7 @@ class _EditBooksState extends State<EditBooks> {
 
   late TextEditingController titleController;
   late TextEditingController priceController;
+  late TextEditingController discountController;
   late TextEditingController descriptionController;
   late TextEditingController quantityController;
 
@@ -43,6 +47,9 @@ class _EditBooksState extends State<EditBooks> {
     priceController = TextEditingController(
       text: widget.bookData['price'].toString(),
     );
+    discountController = TextEditingController(
+      text: widget.bookData['discount'].toString(),
+    );
     descriptionController = TextEditingController(
       text: widget.bookData['description'],
     );
@@ -52,14 +59,11 @@ class _EditBooksState extends State<EditBooks> {
 
     currentImageUrl = widget.bookData['cover_image_url'];
 
-    final genre = widget.bookData['genre'];
-    // ✅ Handle missing or unknown genres safely
-    if (genre != null && genre is String && genre.isNotEmpty) {
-      if (!categories.contains(genre)) {
-        categories.insert(0, genre);
-      }
-      selectedCategory = genre;
-    }
+    // Show current book genre immediately
+    selectedCategory = widget.bookData['genre'] ?? 'All Products';
+
+    // Fetch all categories in the background
+    fetchCategories();
   }
 
   Future<void> fetchCategories() async {
@@ -111,6 +115,7 @@ class _EditBooksState extends State<EditBooks> {
         .update({
           'title': titleController.text.trim(),
           'price': double.tryParse(priceController.text.trim()) ?? 0.0,
+          'discount': double.tryParse(discountController.text.trim()) ?? 0.0,
           'description': descriptionController.text.trim(),
           'quantity': int.tryParse(quantityController.text) ?? 0,
           'genre': selectedCategory,
@@ -202,6 +207,7 @@ class _EditBooksState extends State<EditBooks> {
                 'Title',
                 'Enter Product Name',
                 HugeIconsSolid.textFont,
+                maxLength: 40
               ),
               _buildTextField(
                 priceController,
@@ -209,6 +215,7 @@ class _EditBooksState extends State<EditBooks> {
                 'Enter Price',
                 HugeIconsSolid.money01,
                 keyboardType: TextInputType.number,
+                maxLength: 5
               ),
               _buildTextField(
                 quantityController,
@@ -216,6 +223,15 @@ class _EditBooksState extends State<EditBooks> {
                 'Enter Quantity',
                 HugeIconsSolid.package,
                 keyboardType: TextInputType.number,
+                maxLength: 3
+              ),
+              _buildTextField(
+                discountController,
+                'Discount',
+                'Enter Discount',
+                HugeIconsSolid.discount01,
+                keyboardType: TextInputType.number,
+                maxLength: 2
               ),
               _buildTextField(
                 descriptionController,
@@ -299,6 +315,7 @@ class _EditBooksState extends State<EditBooks> {
     IconData icon, {
     int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
+    int maxLength = 20
   }) {
     return TextFormField(
       controller: controller,
@@ -309,7 +326,9 @@ class _EditBooksState extends State<EditBooks> {
         labelText: label,
         hintText: hint,
         prefixIcon: Icon(icon),
+        counter: SizedBox.shrink()
       ),
+      maxLength: maxLength,
       validator: (value) =>
           value == null || value.isEmpty ? "$label is required" : null,
     );

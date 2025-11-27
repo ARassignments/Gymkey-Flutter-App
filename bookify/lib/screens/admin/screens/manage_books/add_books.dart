@@ -25,6 +25,7 @@ class _AddBooksState extends State<AddBooks> {
   final titleController = TextEditingController();
   final priceController = TextEditingController();
   final descriptionController = TextEditingController();
+  final discountController = TextEditingController();
   final quantityController = TextEditingController();
 
   String? selectedCategory;
@@ -64,8 +65,6 @@ class _AddBooksState extends State<AddBooks> {
   Future<String?> uploadImageToSupabase(Uint8List bytes, String name) async {
     try {
       final fileName = 'prod_${DateTime.now().millisecondsSinceEpoch}_$name';
-
-      // Upload binary using .upload
       final response = await Supabase.instance.client.storage
           .from('images')
           .uploadBinary(
@@ -74,7 +73,6 @@ class _AddBooksState extends State<AddBooks> {
             fileOptions: const FileOptions(upsert: true),
           );
 
-      // Generate public URL
       final publicUrl = Supabase.instance.client.storage
           .from('images')
           .getPublicUrl(fileName);
@@ -89,13 +87,14 @@ class _AddBooksState extends State<AddBooks> {
     await FirebaseFirestore.instance.collection('books').add({
       'title': titleController.text,
       'price': double.tryParse(priceController.text) ?? 0.0,
+      'discount': double.tryParse(discountController.text) ?? 0.0,
       'description': descriptionController.text,
       'category': selectedCategory ?? '',
       'cover_image_url': imageUrl,
       'quantity': int.tryParse(quantityController.text) ?? 0,
-      'is_featured': selectedCategory == "Featured",
-      'is_popular': selectedCategory == "Popular",
-      'is_best_selling': selectedCategory == "Best Selling",
+      // 'is_featured': selectedCategory == "Featured",
+      // 'is_popular': selectedCategory == "Popular",
+      // 'is_best_selling': selectedCategory == "Best Selling",
       'created_at': FieldValue.serverTimestamp(),
     });
   }
@@ -166,30 +165,41 @@ class _AddBooksState extends State<AddBooks> {
                         ),
                 ),
               ),
-              _buildTextField(
+               _buildTextField(
                 titleController,
                 'Title',
                 'Enter Product Name',
                 HugeIconsSolid.textFont,
+                maxLength: 40
               ),
               _buildTextField(
                 priceController,
                 'Price',
-                'Enter Product Price',
+                'Enter Price',
                 HugeIconsSolid.money01,
-                isNumber: true,
+                keyboardType: TextInputType.number,
+                maxLength: 5
               ),
               _buildTextField(
                 quantityController,
                 'Quantity',
-                'Enter Product quantity',
+                'Enter Quantity',
                 HugeIconsSolid.package,
-                isNumber: true,
+                keyboardType: TextInputType.number,
+                maxLength: 3
+              ),
+              _buildTextField(
+                discountController,
+                'Discount',
+                'Enter Discount',
+                HugeIconsSolid.discount01,
+                keyboardType: TextInputType.number,
+                maxLength: 2
               ),
               _buildTextField(
                 descriptionController,
                 'Description',
-                'Enter Product Description',
+                'Enter Description',
                 HugeIconsSolid.documentValidation,
                 maxLines: 4,
               ),
@@ -366,18 +376,21 @@ class _AddBooksState extends State<AddBooks> {
     String hint,
     IconData icon, {
     int maxLines = 1,
-    bool isNumber = false,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLength = 20,
   }) {
     return TextFormField(
       controller: controller,
-      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       maxLines: maxLines,
+      keyboardType: keyboardType,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
         prefixIcon: Icon(icon),
+        counter: SizedBox.shrink(),
       ),
+      maxLength: maxLength,
       validator: (value) =>
           value == null || value.isEmpty ? "$label is required" : null,
     );
