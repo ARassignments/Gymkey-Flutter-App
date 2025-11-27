@@ -1,15 +1,12 @@
 import 'dart:typed_data';
-import 'dart:typed_data';
 import '/components/appsnackbar.dart';
 import '/utils/themes/themes.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import '/utils/constants/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 
 class EditBooks extends StatefulWidget {
   final String bookId;
@@ -21,10 +18,8 @@ class EditBooks extends StatefulWidget {
   State<EditBooks> createState() => _EditBooksState();
 }
 
-
 class _EditBooksState extends State<EditBooks> {
   final _formKey = GlobalKey<FormState>();
-  final _auth = FirebaseAuth.instance;
   final _storageSupabase = Supabase.instance.client.storage.from("images");
 
   late TextEditingController titleController;
@@ -38,6 +33,7 @@ class _EditBooksState extends State<EditBooks> {
   String? currentImageUrl;
   String selectedCategory = 'All Books';
   List<String> categories = [];
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -109,6 +105,7 @@ class _EditBooksState extends State<EditBooks> {
 
   // ---------- Update Firestore ----------
   Future<void> updateBook(String? newImageUrl) async {
+    setState(() => _isLoading = true);
     await FirebaseFirestore.instance
         .collection('books')
         .doc(widget.bookId)
@@ -121,6 +118,7 @@ class _EditBooksState extends State<EditBooks> {
           'genre': selectedCategory,
           'cover_image_url': newImageUrl ?? currentImageUrl,
         });
+    setState(() => _isLoading = false);
   }
 
   @override
@@ -207,7 +205,7 @@ class _EditBooksState extends State<EditBooks> {
                 'Title',
                 'Enter Product Name',
                 HugeIconsSolid.textFont,
-                maxLength: 40
+                maxLength: 40,
               ),
               _buildTextField(
                 priceController,
@@ -215,7 +213,7 @@ class _EditBooksState extends State<EditBooks> {
                 'Enter Price',
                 HugeIconsSolid.money01,
                 keyboardType: TextInputType.number,
-                maxLength: 5
+                maxLength: 5,
               ),
               _buildTextField(
                 quantityController,
@@ -223,7 +221,7 @@ class _EditBooksState extends State<EditBooks> {
                 'Enter Quantity',
                 HugeIconsSolid.package,
                 keyboardType: TextInputType.number,
-                maxLength: 3
+                maxLength: 3,
               ),
               _buildTextField(
                 discountController,
@@ -231,7 +229,7 @@ class _EditBooksState extends State<EditBooks> {
                 'Enter Discount',
                 HugeIconsSolid.discount01,
                 keyboardType: TextInputType.number,
-                maxLength: 2
+                maxLength: 2,
               ),
               _buildTextField(
                 descriptionController,
@@ -247,10 +245,7 @@ class _EditBooksState extends State<EditBooks> {
                     .map(
                       (cat) => DropdownMenuItem(
                         value: cat,
-                        child: Text(
-                          cat,
-                          style: AppTheme.textLabel(context),
-                        ),
+                        child: Text(cat, style: AppTheme.textLabel(context)),
                       ),
                     )
                     .toList(),
@@ -293,7 +288,17 @@ class _EditBooksState extends State<EditBooks> {
                     Navigator.pop(context);
                   }
                 },
-                child: Text("Update Product"),
+                child: _isLoading
+                    ? SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          strokeCap: StrokeCap.round,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text("Update Product"),
               ),
 
               OutlinedButton(
@@ -315,7 +320,7 @@ class _EditBooksState extends State<EditBooks> {
     IconData icon, {
     int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
-    int maxLength = 20
+    int maxLength = 20,
   }) {
     return TextFormField(
       controller: controller,
@@ -326,7 +331,7 @@ class _EditBooksState extends State<EditBooks> {
         labelText: label,
         hintText: hint,
         prefixIcon: Icon(icon),
-        counter: SizedBox.shrink()
+        counter: SizedBox.shrink(),
       ),
       maxLength: maxLength,
       validator: (value) =>

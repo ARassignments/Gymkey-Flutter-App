@@ -40,44 +40,49 @@ class OrderDetailsPage extends StatelessWidget {
       ),
       body: uid == null
           ? const Center(child: Text("User not logged in"))
-          : StreamBuilder<DocumentSnapshot>(
+          : StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
-                  .collection("users")
-                  .doc(uid)
                   .collection("orders")
-                  .doc(orderId)
+                  .where("orderId", isEqualTo: orderId)
                   .snapshots(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: LoadingLogo());
                 }
 
-                if (!snapshot.data!.exists) {
+                final List<QueryDocumentSnapshot> documents =
+                    snapshot.data!.docs;
+                if (documents.isEmpty) {
                   return const Center(
                     child: NotFoundWidget(
-                      title: "Order Not Found",
-                      message: "",
+                      title: "No Orders Found",
+                      message:
+                          "It looks like you haven't placed any orders yet.",
                     ),
                   );
                 }
-
-                final order = snapshot.data!.data() as Map<String, dynamic>;
-
-                final items = List<Map<String, dynamic>>.from(
-                  order["items"] ?? [],
-                );
-
-                return ListView(
+                return ListView.builder(
+                  itemCount: documents.length,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  children: [
-                    _orderHeader(order, context),
-                    const SizedBox(height: 16),
-                    _itemsCard(items, context),
-                    const SizedBox(height: 16),
-                    _shippingCard(order, context),
-                    const SizedBox(height: 16),
-                    _promoPriceCard(order, context),
-                  ],
+                  itemBuilder: (context, index) {
+                    final orderDocument = documents[index];
+                    final order = orderDocument.data() as Map<String, dynamic>;
+                    final items = List<Map<String, dynamic>>.from(
+                      order["items"] ?? [],
+                    );
+
+                    return Column(
+                      children: [
+                        _orderHeader(order, context),
+                        const SizedBox(height: 16),
+                        _itemsCard(items, context),
+                        const SizedBox(height: 16),
+                        _shippingCard(order, context),
+                        const SizedBox(height: 16),
+                        _promoPriceCard(order, context),
+                      ],
+                    );
+                  },
                 );
               },
             ),

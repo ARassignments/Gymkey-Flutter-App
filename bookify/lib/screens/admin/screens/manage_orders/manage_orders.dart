@@ -63,8 +63,6 @@ class _ManageOrdersState extends ConsumerState<ManageOrders>
     String newStatus,
   ) async {
     await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
         .collection('orders')
         .doc(orderId)
         .update({'status': newStatus});
@@ -90,7 +88,7 @@ class _ManageOrdersState extends ConsumerState<ManageOrders>
   Widget _buildOrdersList(String searchQuery) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collectionGroup('orders')
+          .collection('orders')
           .orderBy('orderDate', descending: true)
           .snapshots(),
       builder: (context, snapshot) {

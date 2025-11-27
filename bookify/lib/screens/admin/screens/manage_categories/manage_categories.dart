@@ -32,7 +32,16 @@ class _ManageCategoriesState extends ConsumerState<ManageCategories>
   @override
   void initState() {
     super.initState();
-    fetchCategories();
+    // fetchCategories();
+    FirebaseFirestore.instance
+      .collection('categories')
+      .orderBy('created_at', descending: true)
+      .snapshots()
+      .listen((snapshot) {
+        allCategories = snapshot.docs;
+        applySearchFilter();
+        setState(() => isLoading = false);
+      });
   }
 
   Future<void> fetchCategories() async {
@@ -211,7 +220,7 @@ class _ManageCategoriesState extends ConsumerState<ManageCategories>
             ),
             builder: (context) => const AddCategoryBottomSheet(),
           );
-          fetchCategories();
+          // fetchCategories();
         },
         backgroundColor: AppTheme.customListBg(context),
         label: Row(

@@ -68,7 +68,8 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
     (sum, item) =>
         sum +
         (item.discount! > 0
-            ? (item.price - ((item.price * (item.discount ?? 0)) / 100))
+            ? (item.price - ((item.price * (item.discount ?? 0)) / 100)) *
+                  item.quantity
             : item.price * item.quantity),
   );
 }

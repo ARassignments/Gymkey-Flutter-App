@@ -79,7 +79,7 @@ class _UserOrdersState extends State<UserOrders>
         // FILTER ORDERS
         final docs = snapshot.data!.docs.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
-          final status = data['status'] ?? 'Processing';
+          final status = data['status'] ?? 'Pending';
 
           if (filterCompleted) {
             return status == 'Delivered' || status == 'Completed';
@@ -330,9 +330,12 @@ class _UserOrdersState extends State<UserOrders>
             ),
           ),
 
-          buildOrdersList(
-            uid: uid,
-            filterCompleted: true,
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: buildOrdersList(
+              uid: uid,
+              filterCompleted: true,
+            ),
           ),
         ],
       ),

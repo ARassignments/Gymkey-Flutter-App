@@ -1,3 +1,4 @@
+import 'dart:async';
 import '/components/loading_screen.dart';
 import '/components/not_found.dart';
 import '/screens/book_detail_page.dart';
@@ -23,6 +24,8 @@ class ManageBooks extends ConsumerStatefulWidget {
 class _ManageBooksState extends ConsumerState<ManageBooks>
     with AutomaticKeepAliveClientMixin {
   final auth = FirebaseAuth.instance;
+  StreamSubscription? _catsSub;
+  StreamSubscription? _booksSub;
 
   // Local caches (offline filtering)
   List<QueryDocumentSnapshot> _allBooks = [];
@@ -39,7 +42,59 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
   @override
   void initState() {
     super.initState();
-    _loadAll();
+    _listenToFirestore();
+    // _loadAll();
+  }
+
+  void _listenToFirestore() {
+    setState(() => _loading = true);
+
+    // Listen to categories
+    _catsSub = FirebaseFirestore.instance
+        .collection('categories')
+        .orderBy('created_at', descending: true)
+        .snapshots()
+        .listen(
+          (snapshot) {
+            setState(() {
+              _allCategories = snapshot.docs;
+              _loading = false;
+            });
+          },
+          onError: (error) {
+            setState(() {
+              _error = "Failed to load categories";
+              _loading = false;
+            });
+          },
+        );
+
+    // Listen to books
+    _booksSub = FirebaseFirestore.instance
+        .collection('books')
+        .orderBy('created_at', descending: true)
+        .snapshots()
+        .listen(
+          (snapshot) {
+            setState(() {
+              _allBooks = snapshot.docs;
+              _loading = false;
+            });
+          },
+          onError: (error) {
+            setState(() {
+              _error = "Failed to load books";
+              _loading = false;
+            });
+          },
+        );
+  }
+
+  @override
+  void dispose() {
+    _catsSub?.cancel();
+    _booksSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadAll() async {
@@ -76,7 +131,7 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
     }
   }
 
-  Future<void> _refresh() async => _loadAll();
+  Future<void> _refresh() async => _listenToFirestore();
 
   // ---------- Safe getters ----------
   T? _get<T>(Map<String, dynamic> m, String key) {
@@ -306,6 +361,12 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
 
   Widget _buildBookTile(QueryDocumentSnapshot doc, int index) {
     final data = doc.data() as Map<String, dynamic>;
+    final num discount = int.tryParse(data['discount']?.toString() ?? '0') ?? 0;
+    final double discountedPrice =
+        (double.tryParse(data['price']?.toString() ?? '0') ?? 0.0) -
+        (((double.tryParse(data['price']?.toString() ?? '0') ?? 0.0) *
+                discount) /
+            100);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -527,18 +588,63 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
               padding: const EdgeInsets.all(12.0),
               child: Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child:
-                        (data['cover_image_url'] != null &&
-                            data['cover_image_url'].toString().isNotEmpty)
-                        ? Image.network(
-                            data['cover_image_url'],
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
-                          )
-                        : const Icon(Icons.broken_image, color: Colors.grey),
+                  Container(
+                    width: 25,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: AppTheme.sliderHighlightBg(context),
+                    ),
+                    child: Center(
+                      child: Text(
+                        (index + 1).toString().padLeft(2, '0'),
+                        style: AppTheme.textSearchInfoLabeled(context),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child:
+                            (data['cover_image_url'] != null &&
+                                data['cover_image_url'].toString().isNotEmpty)
+                            ? Image.network(
+                                data['cover_image_url'],
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                              )
+                            : const Icon(
+                                Icons.broken_image,
+                                color: Colors.grey,
+                              ),
+                      ),
+                      if (discount > 0)
+                        Positioned(
+                          top: 6,
+                          right: 6,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColor.accent_50,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              "${discount.toString().padLeft(2, '0')}% OFF",
+                              style: AppTheme.textLabel(context).copyWith(
+                                fontSize: 7,
+                                color: AppColor.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(width: 12),
                   Flexible(
@@ -558,11 +664,26 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
                           style: AppTheme.textLabel(context),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          '\$${(data['price'] ?? '').toString()}',
-                          style: AppTheme.textSearchInfoLabeled(
-                            context,
-                          ).copyWith(fontSize: 14),
+                        Row(
+                          spacing: 6,
+                          children: [
+                            Text(
+                              '\$${discount > 0 ? discountedPrice :(data['price'] ?? '' as int).toString()}',
+                              style: AppTheme.textSearchInfoLabeled(
+                                context,
+                              ).copyWith(fontSize: 14),
+                            ),
+                            if (discount > 0)
+                              Text(
+                                '\$${(data['price'] ?? '' as int).toString()}',
+                                style: AppTheme.textSearchInfoLabeled(context)
+                                    .copyWith(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      decoration: TextDecoration.lineThrough,
+                                    ),
+                              ),
+                          ],
                         ),
                       ],
                     ),
@@ -598,11 +719,11 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
                   ? Center(child: Text(_error!))
                   : _allBooks.isEmpty
                   ? Center(
-                    child: NotFoundWidget(
-                      title: "No products found",
-                      message: "",
-                    ),
-                  )
+                      child: NotFoundWidget(
+                        title: "No products found",
+                        message: "",
+                      ),
+                    )
                   : SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: Column(
@@ -618,13 +739,16 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
                             ),
                             child: _buildChips(),
                           ),
-            
+
                           // search result header (if searching)
                           if (searchQuery.isNotEmpty)
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                              ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   RichText(
                                     text: TextSpan(
@@ -657,9 +781,9 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
                                 ],
                               ),
                             ),
-            
+
                           const SizedBox(height: 8),
-            
+
                           // list
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -671,15 +795,16 @@ class _ManageBooksState extends ConsumerState<ManageBooks>
                                     ),
                                   )
                                 : Column(
-                                    children: List.generate(filteredBooks.length, (
-                                      i,
-                                    ) {
-                                      final doc = filteredBooks[i];
-                                      return _buildBookTile(doc, i);
-                                    }),
+                                    children: List.generate(
+                                      filteredBooks.length,
+                                      (i) {
+                                        final doc = filteredBooks[i];
+                                        return _buildBookTile(doc, i);
+                                      },
+                                    ),
                                   ),
                           ),
-            
+
                           const SizedBox(height: 80), // spacing for FAB
                         ],
                       ),

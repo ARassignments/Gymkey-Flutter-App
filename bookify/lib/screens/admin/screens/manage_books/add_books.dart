@@ -4,7 +4,6 @@ import '/utils/themes/themes.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import '/utils/constants/colors.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -20,7 +19,6 @@ class AddBooks extends StatefulWidget {
 class _AddBooksState extends State<AddBooks> {
   @override
   final _formKey = GlobalKey<FormState>();
-  final _auth = FirebaseAuth.instance;
   final _storageSupabase = Supabase.instance.client.storage.from("images");
   final titleController = TextEditingController();
   final priceController = TextEditingController();
@@ -31,6 +29,7 @@ class _AddBooksState extends State<AddBooks> {
   String? selectedCategory;
   Uint8List? _imageBytes;
   String? _imageName;
+  bool _isLoading = false;
 
   List<String> categories = [];
   void initState() {
@@ -84,6 +83,7 @@ class _AddBooksState extends State<AddBooks> {
   }
 
   Future<void> addBookToFirestore(String imageUrl) async {
+    setState(() => _isLoading = true);
     await FirebaseFirestore.instance.collection('books').add({
       'title': titleController.text,
       'price': double.tryParse(priceController.text) ?? 0.0,
@@ -97,6 +97,7 @@ class _AddBooksState extends State<AddBooks> {
       // 'is_best_selling': selectedCategory == "Best Selling",
       'created_at': FieldValue.serverTimestamp(),
     });
+    setState(() => _isLoading = false);
   }
 
   @override
@@ -165,12 +166,12 @@ class _AddBooksState extends State<AddBooks> {
                         ),
                 ),
               ),
-               _buildTextField(
+              _buildTextField(
                 titleController,
                 'Title',
                 'Enter Product Name',
                 HugeIconsSolid.textFont,
-                maxLength: 40
+                maxLength: 40,
               ),
               _buildTextField(
                 priceController,
@@ -178,7 +179,7 @@ class _AddBooksState extends State<AddBooks> {
                 'Enter Price',
                 HugeIconsSolid.money01,
                 keyboardType: TextInputType.number,
-                maxLength: 5
+                maxLength: 5,
               ),
               _buildTextField(
                 quantityController,
@@ -186,7 +187,7 @@ class _AddBooksState extends State<AddBooks> {
                 'Enter Quantity',
                 HugeIconsSolid.package,
                 keyboardType: TextInputType.number,
-                maxLength: 3
+                maxLength: 3,
               ),
               _buildTextField(
                 discountController,
@@ -194,7 +195,7 @@ class _AddBooksState extends State<AddBooks> {
                 'Enter Discount',
                 HugeIconsSolid.discount01,
                 keyboardType: TextInputType.number,
-                maxLength: 2
+                maxLength: 2,
               ),
               _buildTextField(
                 descriptionController,
@@ -356,7 +357,17 @@ class _AddBooksState extends State<AddBooks> {
                     );
                   }
                 },
-                child: Text("Add Product"),
+                child: _isLoading
+                    ? SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          strokeCap: StrokeCap.round,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text("Add Product"),
               ),
 
               OutlinedButton(

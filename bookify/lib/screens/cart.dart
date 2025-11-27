@@ -405,7 +405,7 @@ class CartScreen extends ConsumerWidget {
                                         if (item.discount! > 0)
                                           Positioned(
                                             top: 6,
-                                            left: 6,
+                                            right: 6,
                                             child: Container(
                                               padding: const EdgeInsets.all(6),
                                               decoration: BoxDecoration(

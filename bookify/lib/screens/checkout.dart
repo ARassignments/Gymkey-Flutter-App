@@ -34,6 +34,7 @@ class _CheckoutState extends ConsumerState<Checkout> {
   double deliveryCharge = 0;
   int promoDiscount = 0;
   String userAddress = "Loading address...";
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -134,6 +135,8 @@ class _CheckoutState extends ConsumerState<Checkout> {
       return;
     }
 
+    setState(() => _isLoading = true);
+
     /// 🔥 Generate Unique Order ID
     final String orderId =
         "ORD-${DateTime.now().millisecondsSinceEpoch.toString()}";
@@ -174,17 +177,16 @@ class _CheckoutState extends ConsumerState<Checkout> {
         "cancelledAt": null,
       },
     };
-
     try {
       final firestore = FirebaseFirestore.instance;
 
       /// 🔥 Soft Store 1 (User Orders)
-      await firestore
-          .collection("users")
-          .doc(uid)
-          .collection("orders")
-          .doc(orderId)
-          .set(orderData);
+      // await firestore
+      //     .collection("users")
+      //     .doc(uid)
+      //     .collection("orders")
+      //     .doc(orderId)
+      //     .set(orderData);
 
       /// 🔥 Soft Store 2 (Admin All Orders)
       await firestore.collection("orders").doc(orderId).set(orderData);
@@ -284,6 +286,8 @@ class _CheckoutState extends ConsumerState<Checkout> {
         message: "Failed to place order: $e",
         type: AppSnackBarType.error,
       );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -809,14 +813,24 @@ class _CheckoutState extends ConsumerState<Checkout> {
                                   deliveryCharge)),
                           cartItems,
                         ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    spacing: 12,
-                    children: [
-                      Text("Continue to Payment"),
-                      Icon(HugeIconsSolid.arrowRight04),
-                    ],
-                  ),
+                  child: _isLoading
+                      ? SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            strokeCap: StrokeCap.round,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          spacing: 12,
+                          children: [
+                            Text("Continue to Payment"),
+                            Icon(HugeIconsSolid.arrowRight04),
+                          ],
+                        ),
                 ),
 
                 SizedBox(height: 20),
