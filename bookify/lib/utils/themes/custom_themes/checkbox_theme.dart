@@ -11,6 +11,7 @@ class MyCheckboxTheme {
       } else {
         Colors.black;
       }
+      return null;
     }),
     fillColor: MaterialStateProperty.resolveWith((states) {
       if (states.contains(MaterialState.selected)) {
@@ -29,6 +30,7 @@ class MyCheckboxTheme {
       } else {
         Colors.black;
       }
+      return null;
     }),
     fillColor: MaterialStateProperty.resolveWith((states) {
       if (states.contains(MaterialState.selected)) {

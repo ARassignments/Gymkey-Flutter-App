@@ -35,28 +35,87 @@ class _UserOrdersState extends State<UserOrders>
     final uid = auth.currentUser?.uid;
     if (uid == null) return;
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('orders')
-        .doc(orderId)
-        .update({
-          "status": "Cancelled",
-          "tracking.cancelledAt": Timestamp.now(),
-        });
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      showDragHandle: true,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            left: 20,
+            right: 20,
+          ),
+          child: Column(
+            spacing: 16,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Cancel Your Order?",
+                textAlign: TextAlign.center,
+                style: AppTheme.textLabel(
+                  context,
+                ).copyWith(fontSize: 17, fontWeight: FontWeight.w600),
+              ),
+              Divider(height: 1, color: AppTheme.dividerBg(context)),
 
-    AppSnackBar.show(
-      context,
-      message: "Order cancelled successfully.",
-      type: AppSnackBarType.success,
+              Text(
+                "Are you sure you want to 'Cancelled' your order?",
+                textAlign: TextAlign.center,
+                style: AppTheme.textLabel(context),
+              ),
+
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColor.accent_50,
+                ),
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await FirebaseFirestore.instance
+                      .collection('orders')
+                      .doc(orderId)
+                      .update({
+                        "status": "Cancelled",
+                        "tracking.cancelledAt": Timestamp.now(),
+                      });
+                  // await FirebaseFirestore.instance
+                  //     .collection('orders')
+                  //     .doc(orderId)
+                  //     .delete();
+
+                  AppSnackBar.show(
+                    context,
+                    message: "Order cancelled successfully.",
+                    type: AppSnackBarType.success,
+                  );
+                },
+                child: Text(
+                  "Yes, Cancel Order",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Cancel"),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget buildOrdersList({required String uid, required bool filterCompleted}) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
           .collection('orders')
           .orderBy('orderDate', descending: true)
           .snapshots(),
@@ -65,46 +124,62 @@ class _UserOrdersState extends State<UserOrders>
           return const Center(child: LoadingLogo());
         }
 
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        if (!snapshot.hasData) {
           return Center(
             child: NotFoundWidget(
               title: "You don't have an order yet",
               message: filterCompleted
-                  ? "You don't have an complete orders at this time"
-                  : "You don't have an active orders at this time",
+                  ? "You don't have complete orders at this time"
+                  : "You don't have active orders at this time",
             ),
           );
         }
 
-        // FILTER ORDERS
-        final docs = snapshot.data!.docs.where((doc) {
+        // ---------- FILTER BY USER ID ----------
+        final userOrders = snapshot.data!.docs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return data['userId'] == uid;
+        }).toList();
+
+        if (userOrders.isEmpty) {
+          return Center(
+            child: NotFoundWidget(
+              title: "You don't have an order yet",
+              message: filterCompleted
+                  ? "You don't have complete orders at this time"
+                  : "You don't have active orders at this time",
+            ),
+          );
+        }
+
+        // ---------- FILTER BY STATUS ----------
+        final filteredDocs = userOrders.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
           final status = data['status'] ?? 'Pending';
 
-          if (filterCompleted) {
-            return status == 'Delivered' || status == 'Completed';
-          } else {
-            return status != 'Delivered' && status != 'Completed';
-          }
+          return filterCompleted
+              ? (status == 'Delivered' || status == 'Completed')
+              : (status != 'Delivered' && status != 'Completed');
         }).toList();
 
-        if (docs.isEmpty) {
+        if (filteredDocs.isEmpty) {
           return Center(
             child: NotFoundWidget(
               title: "You don't have an order yet",
               message: filterCompleted
-                  ? "You don't have an complete orders at this time"
-                  : "You don't have an active orders at this time",
+                  ? "You don't have complete orders at this time"
+                  : "You don't have active orders at this time",
             ),
           );
         }
 
+        // ---------- BUILD LIST ----------
         return ListView.builder(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: docs.length,
+          itemCount: filteredDocs.length,
           itemBuilder: (context, index) {
-            final doc = docs[index];
+            final doc = filteredDocs[index];
             final order = doc.data() as Map<String, dynamic>;
 
             return buildOrderCard(doc.id, order);
@@ -115,16 +190,63 @@ class _UserOrdersState extends State<UserOrders>
   }
 
   Widget buildOrderCard(String orderId, Map<String, dynamic> order) {
-    final status = order['status'] ?? 'Processing';
+    final status = order['status'] ?? 'Pending';
     final timestamp = order['orderDate'];
+    final timestampConfirm = order['tracking']['confirmedAt'];
+    final timestampShipped = order['tracking']['shippedAt'];
+    final timestampDelivered = order['tracking']['deliveredAt'];
+    final timestampCancel = order['tracking']['cancelledAt'];
     final total = order['totalAmount']?.toDouble() ?? 0.0;
     final items = List<Map<String, dynamic>>.from(order['items'] ?? []);
 
     String formattedDate = "Unknown";
+    String formattedConfirmDate = "Unknown";
+    String formattedShippedDate = "Unknown";
+    String formattedDeliveredDate = "Unknown";
+    String formattedCancelDate = "Unknown";
+    String statuDate = "";
 
     if (timestamp is Timestamp) {
       final orderDate = timestamp.toDate();
       formattedDate = DateFormat('MMM dd, yyyy | hh:mm a').format(orderDate);
+    }
+
+    if (timestampConfirm is Timestamp) {
+      final orderConfirmDate = timestampConfirm.toDate();
+      formattedConfirmDate = DateFormat(
+        'MMM dd, yyyy | hh:mm a',
+      ).format(orderConfirmDate);
+    }
+
+    if (timestampShipped is Timestamp) {
+      final orderShippedDate = timestampShipped.toDate();
+      formattedShippedDate = DateFormat(
+        'MMM dd, yyyy | hh:mm a',
+      ).format(orderShippedDate);
+    }
+
+    if (timestampDelivered is Timestamp) {
+      final orderDeliveredDate = timestampDelivered.toDate();
+      formattedDeliveredDate = DateFormat(
+        'MMM dd, yyyy | hh:mm a',
+      ).format(orderDeliveredDate);
+    }
+
+    if (timestampCancel is Timestamp) {
+      final orderCancelDate = timestampCancel.toDate();
+      formattedCancelDate = DateFormat(
+        'MMM dd, yyyy | hh:mm a',
+      ).format(orderCancelDate);
+    }
+
+    if (status == 'Confirmed') {
+      statuDate = formattedConfirmDate;
+    } else if (status == 'Shipped') {
+      statuDate = formattedShippedDate;
+    } else if (status == 'Delivered') {
+      statuDate = formattedDeliveredDate;
+    } else if (status == 'Cancelled') {
+      statuDate = formattedCancelDate;
     }
 
     return InkWell(
@@ -208,29 +330,54 @@ class _UserOrdersState extends State<UserOrders>
 
                         const SizedBox(height: 4),
 
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 6,vertical: 4),
-                          decoration: BoxDecoration(
-                            color: status == 'Delivered'
-                                ? Colors.green.shade50
-                                : status == 'Cancelled'
-                                ? Colors.red.shade50
-                                : AppTheme.sliderHighlightBg(context),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            status,
-                            style: AppTheme.textSearchInfoLabeled(context)
-                                .copyWith(
-                                  color: status == 'Delivered'
-                                      ? Colors.green
-                                      : status == 'Cancelled'
-                                      ? Colors.red
-                                      : AppTheme.iconColorThree(context),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 9,
+                        Row(
+                          spacing: 6,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: status == 'Delivered'
+                                    ? Colors.green.shade50
+                                    : status == 'Cancelled'
+                                    ? Colors.red.shade50
+                                    : AppTheme.sliderHighlightBg(context),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                status,
+                                style: AppTheme.textSearchInfoLabeled(context)
+                                    .copyWith(
+                                      color: status == 'Delivered'
+                                          ? Colors.green
+                                          : status == 'Cancelled'
+                                          ? Colors.red
+                                          : AppTheme.iconColorThree(context),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 9,
+                                    ),
+                              ),
+                            ),
+                            if (status != 'Pending')
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 4,
                                 ),
-                          ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.sliderHighlightBg(context),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  "On $statuDate",
+                                  style: AppTheme.textSearchInfoLabeled(
+                                    context,
+                                  ).copyWith(fontSize: 9),
+                                ),
+                              ),
+                          ],
                         ),
                         const SizedBox(height: 6),
 
@@ -246,16 +393,19 @@ class _UserOrdersState extends State<UserOrders>
                                 fontSize: 15,
                               ),
                             ),
-                            if (status != 'Delivered' && status != 'Cancelled')
+                            if (status != 'Delivered' &&
+                                status != 'Cancelled' &&
+                                status != 'Shipped' &&
+                                status != 'Confirmed')
                               TextButton.icon(
                                 onPressed: () => cancelOrder(orderId),
-                                icon: const Icon(
-                                  Icons.cancel,
-                                  color: Colors.red,
+                                icon: Icon(
+                                  HugeIconsSolid.cancelCircle,
+                                  color: AppColor.accent_50,
                                 ),
-                                label: const Text(
+                                label: Text(
                                   "Cancel Order",
-                                  style: TextStyle(color: Colors.red),
+                                  style: TextStyle(color: AppColor.accent_50),
                                 ),
                               ),
                           ],
@@ -324,18 +474,12 @@ class _UserOrdersState extends State<UserOrders>
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 20),
-            child: buildOrdersList(
-              uid: uid,
-              filterCompleted: false,
-            ),
+            child: buildOrdersList(uid: uid, filterCompleted: false),
           ),
 
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 20),
-            child: buildOrdersList(
-              uid: uid,
-              filterCompleted: true,
-            ),
+            child: buildOrdersList(uid: uid, filterCompleted: true),
           ),
         ],
       ),
