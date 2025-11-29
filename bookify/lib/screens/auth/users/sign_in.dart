@@ -214,13 +214,7 @@ class _SignInState extends ConsumerState<SignIn> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    AppSnackBar.show(context, message: message, type: AppSnackBarType.error);
   }
 
   @override
@@ -360,7 +354,7 @@ class _SignInState extends ConsumerState<SignIn> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                   
+
                       const SizedBox(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,

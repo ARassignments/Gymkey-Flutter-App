@@ -185,7 +185,8 @@ class _ManageOrdersState extends ConsumerState<ManageOrders>
 
         return ListView.builder(
           itemCount: filtered.length,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
           itemBuilder: (context, index) {
             final doc = filtered[index];
             final data = doc.data() as Map<String, dynamic>;
